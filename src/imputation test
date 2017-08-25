@@ -1,0 +1,30 @@
+imput = read.delim("/home/borgthor/impute_kinases.txt",header = FALSE)
+
+phos = read.delim("/home/borgthor/Kinase_activities/data/Supplementary_Table_2.csv")
+phos = phos[2:nrow(phos),2:ncol(phos)]
+phos.num = as.matrix(sapply(phos, as.character))
+
+phos.num = matrix(sapply(phos.num, as.numeric),nrow = nrow(phos))
+
+diff = c()
+rdiff = c()
+sd = sd(unlist(phos.num)[!is.na(phos.num)])
+
+mean = mean(unlist(phos.num)[!is.na(phos.num)])
+
+
+
+for(i in 1:nrow(phos)){
+
+a = imput[i,!is.na(phos[i,])]
+b = phos.num[i,!is.na(phos.num[i,])]
+diff = c(diff,abs(a-b))
+rand = rnorm(length(b), mean , sd )
+rdiff = c(rdiff,abs(b-rand))
+}
+
+
+wilcox.test(as.numeric(diff),as.numeric(rdiff))
+
+summary(as.numeric(diff))
+summary(as.numeric(rdiff))

@@ -1,0 +1,59 @@
+<sglib>
+	<opt  threads = "10"  />
+
+	<namespaces>
+		<nm prefix="GO" ref="http://purl.org/obo/owl/GO#" />
+	</namespaces>
+
+	<graphs>    
+		<graph uri="http://bio/"  >    
+			<data>
+				<file format="OBO"   path="data/external/go-basic-2017-10-04.obo"/>    
+				<file format="GAF2"   path="data/external/goa_human-2017-09-26.gaf"/>    
+			</data>
+
+			<actions>
+				<action type="VERTICES_REDUCTION" root_uri="http://purl.org/obo/owl/GO#0008150" />
+				<action type="TRANSITIVE_REDUCTION" target="CLASSES" />
+				<action type="TRANSITIVE_REDUCTION" target="INSTANCES" />
+			</actions>
+		</graph>    
+	</graphs>
+
+	<filters>
+		<filter
+			id = "filter_gaf_2"
+			type = "GAF2"
+			remove_ec="ISS,ISO,ISA,ISM,IGC,IBA,IBD,IKR,KRD,RCA,TAS,NAS,HTP,HDA,HMP,HGI,HEP"
+		/>
+	</filters>
+	<sml module="sm" graph="http://bio/" >
+
+		<opt_module threads="10" 	quiet = "true"
+/>
+
+
+		<ics>
+			<ic id   = "resnik" flag = "IC_ANNOT_RESNIK_1995"  />
+			<ic id   = "ic_prob_propagatted" flag = "ICI_PROB_OCCURENCE_PROPAGATED"  />
+		</ics>
+
+		<measures type = "pairwise">
+			<measure   id   = "schlicker" flag = "SIM_PAIRWISE_DAG_NODE_SCHLICKER_2006"  ic = "resnik"  ic_prob = "ic_prob_propagatted" />
+		</measures>
+
+		<measures type = "groupwise">
+			<measure   id   = "bma" flag = "SIM_GROUPWISE_BMA"  pairwise_measure = "schlicker"  />
+		</measures>
+
+		<queries id= "query" 
+			type    = "oTOo" 
+			file    = "tmp/kinome-all-vs-all.tsv" 
+			output  = "out/go-bp-sem-sim-uniprot.tsv" 
+			noAnnots = "set=-1"
+			notFound = "set=-1"
+			uri_prefix = "http://bio/"
+			output_basename = "false" 
+		/>
+	</sml>
+</sglib>
