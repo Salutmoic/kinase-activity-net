@@ -66,15 +66,15 @@ data: $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KIN_ACT_DATA) $(IMP_EGF_KIN_ACT_DA
 
 .PHONY: clean-data
 clean-data:
-	rm -v $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KIN_ACT_DATA) $(IMP_EGF_KIN_ACT_DATA)
+	-rm -v $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KIN_ACT_DATA) $(IMP_EGF_KIN_ACT_DATA)
 
 .PHONY: clean-ossoc
 clean-assoc:
-	rm -v $(KINACT_ASSOC)
+	-rm -v $(KINACT_ASSOC)
 
 .PHONY: clean-posterior
 clean-posterior:
-	rm -v $(KINACT_POSTERIOR_PROB)
+	-rm -v $(KINACT_POSTERIOR_PROB)
 
 .PHONY: clean-results
 clean-results: clean-assoc clean-posterior
@@ -101,5 +101,5 @@ $(OUTDIR)/%-scor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
 $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 	$(ASSOCNET_FILTER) --header-in $< >$@
 
-$(OUTDIR)/%-posterior.tsv: $(OUTDIR)/%.tsv
+$(OUTDIR)/%-posterior.tsv: $(OUTDIR)/%.tsv $(POSTERIOR_PROB_SCRIPT)
 	$(RSCRIPT) $(POSTERIOR_PROB_SCRIPT) $(ASSOC_METHOD) $< $@
