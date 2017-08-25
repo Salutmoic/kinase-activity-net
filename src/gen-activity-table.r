@@ -259,25 +259,25 @@ message("Creating table with maximum rows and columns")
 max.table <- make.max.table(kin.act.filt, na.threshold)
 max.table.filt <- filter.by.entropy(max.table, entropy.threshold, entropy.bins)
 print.table.info(max.table.filt)
-write.activity.table(max.table.filt, "kinase-activity-max-rows-max-cols.tsv")
+write.activity.table(max.table.filt, "data/kinase-activity-max-rows-max-cols.tsv")
 max.table.imp <- impute.on.table(max.table.filt)
-write.activity.table(max.table.imp, "kinase-activity-max-rows-max-cols-imp.tsv")
+write.activity.table(max.table.imp, "data/kinase-activity-max-rows-max-cols-imp.tsv")
 
 message("Creating table with maximum rows")
 max.row.table <- make.max.row.table(kin.act.filt, na.threshold, 20)
 max.row.table.filt <- filter.by.entropy(max.row.table, entropy.threshold, entropy.bins)
 print.table.info(max.row.table)
-write.activity.table(max.row.table, "kinase-activity-max-rows.tsv")
+write.activity.table(max.row.table, "data/kinase-activity-max-rows.tsv")
 max.row.table.imp <- impute.on.table(max.row.table)
-write.activity.table(max.row.table.imp, "kinase-activity-max-rows-imp.tsv")
+write.activity.table(max.row.table.imp, "data/kinase-activity-max-rows-imp.tsv")
 
 message("Creating table with maximum columns")
 max.col.table <- make.max.col.table(kin.act.filt, na.threshold, 20)
 max.col.table.filt <- filter.by.entropy(max.col.table, entropy.threshold, entropy.bins)
 print.table.info(max.col.table)
-write.activity.table(max.col.table, "kinase-activity-max-cols.tsv")
+write.activity.table(max.col.table, "data/kinase-activity-max-cols.tsv")
 max.col.table.imp <- impute.on.table(max.col.table)
-write.activity.table(max.col.table.imp, "kinase-activity-max-cols-imp.tsv")
+write.activity.table(max.col.table.imp, "data/kinase-activity-max-cols-imp.tsv")
 
 ## egf.kinases <- c("AKT1", "AKT2", "ARAF", "BRAF", "CDK2", "CDK4",
 ##                  "CHUK", "GSK3A", "GSK3B", "JAK2", "MAP2K1", "MAP2K2",
@@ -289,14 +289,14 @@ egf.kinases <- c("AKT1", "BRAF", "MAP2K1", "MAPK1", "MTOR", "PDPK1", "PRKACA", "
 kinase.conditions <- read.delim("data/kinase-condition-pairs.tsv", as.is=TRUE)
 
 kinase.invivoconditions <- read.delim("data/kinase_invivoconditions.csv", as.is=TRUE, sep=",")
-names(kinase.invivoconditions) <- c("Condition", "Kinase", "Description", "invivoAct", "pAct")
+## names(kinase.invivoconditions) <- c("Condition", "Kinase", "Description", "invivoAct", "pAct")
 
 kinase.cond <- subset(kinase.conditions, Kinase %in% egf.kinases)
 ## kinase.invivocond <- subset(kinase.invivoconditions, Kinase %in% egf.kinases)
 egf.kin.act <- kin.act.filt[rownames(kin.act.filt) %in% egf.kinases, ]
 egf.kin.act.pert <- make.max.table(egf.kin.act[,unique(kinase.cond$Condition)], na.threshold)
 print.table.info(egf.kin.act.pert)
-write.activity.table(egf.kin.act.pert, "egf-kinase-activity-perturbed.tsv")
+write.activity.table(egf.kin.act.pert, "data/egf-kinase-activity-perturbed.tsv")
 egf.kin.act.pert.imp <- impute.on.table(egf.kin.act.pert)
 egf.kin.act.pert.imp.df <- melt(egf.kin.act.pert.imp)
 names(egf.kin.act.pert.imp.df) <- c("kinase", "condition", "value")
@@ -308,13 +308,13 @@ egf.kin.act.pert.imp.df$is.pert <- unlist(apply(kinase.cond.pairs, 1,
                                                 }))
 egf.kin.act.pert.imp.df <- egf.kin.act.pert.imp.df[order(egf.kin.act.pert.imp.df$kinase,
                                                          egf.kin.act.pert.imp.df$condition),]
-write.table(egf.kin.act.pert.imp.df, "egf-kinase-activity-perturbed-imp.tsv", sep="\t",
+write.table(egf.kin.act.pert.imp.df, "data/egf-kinase-activity-perturbed-imp.tsv", sep="\t",
             quote=FALSE, row.names=FALSE, col.names=FALSE)
 
 non.pert.conds <- setdiff(colnames(egf.kin.act), kinase.cond$Condition)
 egf.kin.act.nonpert <- make.max.table(subset(egf.kin.act, select=non.pert.conds), na.threshold)
 print.table.info(egf.kin.act.nonpert)
-write.activity.table(egf.kin.act.nonpert, "egf-kinase-activity-unperturbed.tsv")
+write.activity.table(egf.kin.act.nonpert, "data/egf-kinase-activity-unperturbed.tsv")
 egf.kin.act.nonpert.imp <- impute.on.table(egf.kin.act.nonpert)
 egf.kin.act.nonpert.imp.df <- melt(egf.kin.act.nonpert.imp)
 names(egf.kin.act.nonpert.imp.df) <- c("kinase", "condition", "value")
@@ -326,12 +326,12 @@ egf.kin.act.nonpert.imp.df$is.pert <- unlist(apply(kinase.cond.pairs, 1,
                                                    }))
 egf.kin.act.nonpert.imp.df <- egf.kin.act.nonpert.imp.df[order(egf.kin.act.nonpert.imp.df$kinase,
                                                                egf.kin.act.nonpert.imp.df$condition),]
-write.table(egf.kin.act.nonpert.imp.df, "egf-kinase-activity-unperturbed-imp.tsv", sep="\t",
+write.table(egf.kin.act.nonpert.imp.df, "data/egf-kinase-activity-unperturbed-imp.tsv", sep="\t",
             quote=FALSE, row.names=FALSE, col.names=FALSE)
 
 kin.act.egf.nonpert <- make.max.table(subset(kin.act, select=non.pert.conds), na.threshold)
 print.table.info(kin.act.egf.nonpert)
-write.activity.table(kin.act.egf.nonpert, "kinase-activity-egf-unperturbed.tsv")
+write.activity.table(kin.act.egf.nonpert, "data/kinase-activity-egf-unperturbed.tsv")
 kin.act.egf.nonpert.imp <- impute.on.table(kin.act.egf.nonpert)
 kin.act.egf.nonpert.imp.df <- melt(kin.act.egf.nonpert.imp)
 names(kin.act.egf.nonpert.imp.df) <- c("kinase", "condition", "value")
@@ -343,5 +343,5 @@ kin.act.egf.nonpert.imp.df$is.pert <- unlist(apply(kinase.cond.pairs, 1,
                                                    }))
 kin.act.egf.nonpert.imp.df <- kin.act.egf.nonpert.imp.df[order(kin.act.egf.nonpert.imp.df$kinase,
                                                                kin.act.egf.nonpert.imp.df$condition),]
-write.table(kin.act.egf.nonpert.imp.df, "kinase-activity-egf-unperturbed-imp.tsv", sep="\t",
+write.table(kin.act.egf.nonpert.imp.df, "data/kinase-activity-egf-unperturbed-imp.tsv", sep="\t",
             quote=FALSE, row.names=FALSE, col.names=FALSE)
