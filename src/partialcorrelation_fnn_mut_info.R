@@ -60,7 +60,7 @@ source("/nfs/research/petsalaki/users/borgthor/Kinase_activities/Scripts/plot_di
 plot_dist(known,all,"pcor",u,file)
 
 
-
+library(FNN)
 #Find mutual information between each kinase-pair
 mut.info = c()
 gena = c()
