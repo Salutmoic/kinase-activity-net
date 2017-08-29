@@ -20,7 +20,7 @@ def read_data():
         else:
             ktable[line[0]] = [line[tside]]
        
-        return tside,ktable
+    return tside,ktable
 
 def amino_acids():
     #returns a dictionary containing a list of the common 20 amino acids 
@@ -121,14 +121,15 @@ def kin_phosphosites(ks):
     for line in f:
         
         line = line.split("\t")
-        if line[0] not in psites:
-            psites[line[0]] = [line[seqind]]
-        else:
-            psites[line[0]].append(line[seqind])
+        if line[0] in ks.keys():
+            if line[0] not in psites:
+                psites[line[0]] = [line[seqind]]
+            else:
+                psites[line[0]].append(line[seqind])
 
     return psites
 
-def score_kin_pairs(ks):
+def score_kin_pairs(ks,pmms):
     # loads a netwoek of kinase-> kinase interactions and scores them with the pssm
     # it returns a dictionary with kinasa A and kinase B and list of scores for each phosphosite found
     # on B
@@ -136,21 +137,21 @@ def score_kin_pairs(ks):
     #f is some imaginary network
     f =  open("/home/borgthor/network.txt")
     psites = kin_phosphosites(ks)
-    pmms = pmms(ks)
+    
     scores = {}
     for line in f:
         line = line.split("\t")
         A = line[0]
-        B= line[1]
+        B= line[1][0:(len(line[1])-1)]
 
         sites = psites[B]
         for i in sites:
             sc = score(i,pmms[A])
-            if (A,B) in scores:
-               scores[(A,B)] = [sc]
-            else:
+            if (A,B) in scores.keys():
                 scores[(A,B)].append(sc)
-
+               
+            else:
+                scores[(A,B)] = [sc]
     return scores
 
 
@@ -174,11 +175,11 @@ pmms = pmms(ks)
 
 seqs = subseqs()
 
-score = score_kin_pairs(ks)
-
 dist = dist(seqs,pmms)
 
 psites = kin_phosphosites(ks)
+
+scores = score_kin_pairs(ks,pmms)
 
 pvals = assess_edges(scores,dist)
 
@@ -186,7 +187,7 @@ np.save('/home/borgthor/Kinase_activities/cons_matrices', pmms)
 np.save('/home/borgthor/Kinase_activities/score_distributions', dist)
 np.save('/home/borgthor/Kinase_activities/kinase pairs score', score) 
 np.save('/home/borgthor/Kinase_activities/phosphosites per kinases', psites) 
-np.save('/home/borgthor/Kinase_activities/pcals for each kinase pair', pavals) 
+np.save('/home/borgthor/Kinase_activities/pcals for each kinase pair', pvals) 
 
 read_dictionary = np.load('/home/borgthor/Kinase_activities/cons_matrices.npy').item()    
     
