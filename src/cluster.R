@@ -1,7 +1,7 @@
 
 library("mclust")
 
-function <- whole(kin.num){
+whole <- function(kin.num){
 #kin.num stores kinase activities
 #All values fed to Mclust as a one dimensional vector
 p = as.vector(kin.num)
@@ -14,7 +14,7 @@ return(discrete)
 }
 
 
-function <- by_row(kin.num){
+by_row <- function(kin.num){
 
 ######
 # kin.num stores the kinase activites acorss conditions
@@ -40,7 +40,7 @@ return(discrete)
 }
 
 
-function <- manual(kin.num){
+manual <- function(kin.num){
 #kin.num stores kinase activites acorss conditions
 
 discrete = c()
