@@ -1,0 +1,31 @@
+checkifknown <- function(a,b,ksub){
+
+t = 0
+
+c = ksub[toupper(ksub[,1]) ==a,]
+
+if(b %in% toupper(c[,2])){
+t = 1
+}
+
+return(t)
+
+}
+
+
+
+known = c()
+all = c()
+for(j in 1:nrow(scores)){
+
+t = checkifknown(scores[j,1],scores[j,2],ksub)
+
+if(t == 1){
+
+known = c(known,as.numeric(scores[j,3]))
+}
+
+all = c(all,as.numeric(scores[j,3]))
+
+
+}
