@@ -1,10 +1,11 @@
 library(ppcor)
+library(FNN)
 #known_interactions provides list of known kinase substrate information, protien-protein interactions
 source("known_interactions")
 
-files = list.files("/nfs/research/petsalaki/users/borgthor/Kinase_activity/Kinase-activity/")
+files = list.files("/nfs/research/petsalaki/users/borgthor/Kinase_activities/Kinase-activity/")
 
-dir = "/nfs/research/petsalaki/users/borgthor/Kinase_activity/Kinase-activity/"
+dir = "/nfs/research/petsalaki/users/borgthor/Kinase_activities/Kinase-activity/"
 
 for(file in files){
 
@@ -90,9 +91,6 @@ write.table(scores,paste("/nfs/research/petsalaki/users/borgthor/Kinase_activiti
 
 source("check_if_known")
 
-vals =extract_known(scores,ksub)
-known = vals[[1]]
-all = vals[[2]]
 
 
 
