@@ -1,7 +1,7 @@
 #known_interactions provides list of known kinase substrate information, protien-protein interactions
 source("/nfs/research/petsalaki/users/borgthor/Kinase_activities/Scripts/known_interactions.R")
 
-files = list.files("/nfs/research/petsalaki/users/borgthor//Kinase_activities/Kinase-activity/")
+files = list.files("/nfs/research/petsalaki/users/borgthor/Kinase_activities/Kinase-activity/")
 
 dir = "/nfs/research/petsalaki/users/borgthor//Kinase_activities/Kinase-activity/"
 clust.methods = c("whole","by row","manual") 
@@ -75,9 +75,7 @@ write.table(scores,paste("/nfs/research/petsalaki/users/borgthor/Kinase_activiti
 #subsequent steps test if associations are known and plot the distribution of the socres of known-edges compared to random sample 
 source("check_if_known")
 
-vals =extract_known(scores,ksub)
-known = vals[[1]]
-all = vals[[2]]
+
 
 
 source("/nfs/research/petsalaki/users/borgthor/Kinase_activities/Scripts/plot_distributions")
@@ -114,11 +112,8 @@ write.table(scores,paste("/nfs/research/petsalaki/users/borgthor/Kinase_activiti
 
 
 #subsequent steps test if associations are known and plot the distribution of the socres of known-edges compared to random sample 
+source("check_if_known")
 
-
-vals =extract_known(scores,ksub)
-known = vals[[1]]
-all = vals[[2]]
 
 
 plot_dist(known,all,"mutual-information",u,file)
