@@ -1,3 +1,9 @@
+#known contains list of alledges found in the reactome dataset.
+#all is a sample of length length(known) obtained from the list of all edges
+# u is the clustering method used and file is the datasets' filename
+# s is the name of the statistical method
+# The function plots the score distribution of the known edges and the sample from all edges.
+
 
 plot_dist<-function(known,all,s,u,file){
 
