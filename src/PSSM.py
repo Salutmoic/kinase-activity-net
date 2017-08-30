@@ -158,14 +158,14 @@ def score_kin_pairs(ks,pmms):
 def assess_edges(scores,dist):
     #Finds the highest scoreing phosphosite for ech A,B pair and compares it to the
     #distribution generated for B (A-> B) from the dist() function
-    pvals = {}
+    zscores = {}
 
     for i in scores.keys():
         m = max(scores[i])
-        p = np.percentile(dist[i[1]],m)
-        pvals[i] = p
+        z = (m-np.mean(dist[i[0]]))/np.std(dist[i[0]])
+        zscores[i] = z
 
-    return pvals
+    return zscores
     
     
                
@@ -181,7 +181,7 @@ psites = kin_phosphosites(ks)
 
 scores = score_kin_pairs(ks,pmms)
 
-pvals = assess_edges(scores,dist)
+zscores = assess_edges(scores,dist)
 
 np.save('/home/borgthor/Kinase_activities/cons_matrices', pmms) 
 np.save('/home/borgthor/Kinase_activities/score_distributions', dist)
@@ -189,7 +189,7 @@ np.save('/home/borgthor/Kinase_activities/kinase pairs score', score)
 np.save('/home/borgthor/Kinase_activities/phosphosites per kinases', psites) 
 np.save('/home/borgthor/Kinase_activities/pcals for each kinase pair', pvals) 
 
-read_dictionary = np.load('/home/borgthor/Kinase_activities/cons_matrices.npy').item()    
+  
     
 
         
