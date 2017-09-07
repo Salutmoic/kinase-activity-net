@@ -1,5 +1,8 @@
 import numpy as np
 import random
+from os import listdir
+from os.path import isfile, join, walk
+
 
 def read_data():
     #Reads kinase-substrate table where substrate and kinase are found in 
@@ -129,13 +132,13 @@ def kin_phosphosites(ks):
 
     return psites
 
-def score_kin_pairs(ks,pmms):
+def score_kin_pairs(ks,pmms,netdir):
     # loads a netwoek of kinase-> kinase interactions and scores them with the pssm
     # it returns a dictionary with kinasa A and kinase B and list of scores for each phosphosite found
     # on B
 
     #f is some imaginary network
-    f =  open("/home/borgthor/network.txt")
+    f =  open(netdir)
     psites = kin_phosphosites(ks)
     
     scores = {}
@@ -143,7 +146,7 @@ def score_kin_pairs(ks,pmms):
         line = line.split("\t")
         A = line[0]
         B= line[1][0:(len(line[1])-1)]
-
+        
         sites = psites[B]
         for i in sites:
             sc = score(i,pmms[A])
@@ -166,30 +169,39 @@ def assess_edges(scores,dist):
         zscores[i] = z
 
     return zscores
-    
-    
-               
-t,ks = read_data()
 
-pmms = pmms(ks)
+def score_network(path):
+    #This takes network files and scores all edges according to pssm
 
-seqs = subseqs()
+    t,ks = read_data()
+    pmm = pmms(ks)
 
-dist = dist(seqs,pmms)
+    seqs = subseqs()
 
-psites = kin_phosphosites(ks)
+    d = dist(seqs,pmm)
+    files = listdir(path)
 
-scores = score_kin_pairs(ks,pmms)
+    for file in files:
+        netdir = path + file
+        score = score_kin_pairs(ks,pmm,netdir)
+        zscores = assess_edges(score,d)
 
-zscores = assess_edges(scores,dist)
+        
+        v = open(path+file+"zscore.txt","w")
+        for i in zscores:
+            s = ""
+            s = s+ i[0]+"\t"+i[1]+"\t" + str(zscores[i])
+            v.write(s+ "\n")
 
-np.save('/home/borgthor/Kinase_activities/cons_matrices', pmms) 
-np.save('/home/borgthor/Kinase_activities/score_distributions', dist)
-np.save('/home/borgthor/Kinase_activities/kinase pairs score', score) 
-np.save('/home/borgthor/Kinase_activities/phosphosites per kinases', psites) 
-np.save('/home/borgthor/Kinase_activities/pcals for each kinase pair', pvals) 
 
-  
+path = "/home/borgthor/Kinase_activities/Results/networks/"    
+
+read_dictionary = np.load('/home/borgthor/Kinase_activities/cons_matrices.npy').item()
+
+
+
+score_network(path)
+
     
 
         
