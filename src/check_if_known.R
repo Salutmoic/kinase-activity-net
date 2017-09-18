@@ -28,6 +28,7 @@ i = 0
 
 while(i < d){
 
+substrates = substrates[!(substrates %in% kinases)]
 for(j in substrates){
 #here I see if sub interacts with any of the substrates of kinase
 
@@ -37,7 +38,7 @@ ksub.sub = ksub[which(ksub[,1] == j),]
 #therefore the substrates of the subsrates in substrates are collected.
 substrates.next = c(substrates.next,as.character(ksub.sub[,2]))
 
-if(sub %in%  ksub.sub[,2] & !(sub %in% kinases) ){
+if(sub %in%  ksub.sub[,2]){
 
 return(1)
 }
