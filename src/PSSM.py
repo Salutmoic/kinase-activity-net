@@ -52,7 +52,7 @@ def pmms(ks):
                 
             
         #I use 0.01 as pseudocount 
-        cmat = cmat + 0.01*len(seqs)
+        cmat = cmat + (float(1)/(len(seqs)+2))*len(seqs)
         cmat = cmat/len(seqs)
         pmms[i] = cmat
 
