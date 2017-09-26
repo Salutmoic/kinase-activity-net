@@ -6,10 +6,11 @@ BINDIR = /nfs/research2/beltrao/software-rh7/bin
 # Parameters
 TABLE_STRATEGIES = max-rows max-cols max-rows-max-cols
 TABLE_STRATEGY ?= max-rows-max-cols
-ASSOC_METHODS = pcor pcor-filter scor scor-filter
+ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq
 ASSOC_METHOD ?= scor
 ASSOCNET_FILTER_METHOD ?= deconvolution
 ASSOCNET_FILTER_SCALE_METHOD ?= standard
+DISCR_METHOD ?= mclust.whole
 DECONVOLUTION_A ?= 1.0
 DECONVOLUTION_B ?= 0.99
 
@@ -27,6 +28,7 @@ KIN_INVIVO_CONDS = $(DATADIR)/kinase_invivoconditions.tsv
 # maximize #rows, #cols or both.  Raw and imputed datasets
 KINACT_DATA = $(DATADIR)/kinase-activity-$(TABLE_STRATEGY).tsv
 IMP_KINACT_DATA = $(DATADIR)/kinase-activity-$(TABLE_STRATEGY)-imp.tsv
+DISCR_KINACT_DATA = $(DATADIR)/kinase-activity-$(TABLE_STRATEGY)-discr.tsv
 # EGF-signaling-related kinase activity
 EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,DATADIR)/egf-kinase-activity-$(T).tsv)
 IMP_EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,$(DATADIR)/egf-kinase-activity-$(T)-imp.tsv)
@@ -53,12 +55,17 @@ ASSOCNET_FILTER ?= $(BINDIR)/assocnet-filter $(NET_FILTER_PARAMS)
 # Scripts
 GEN_KINACT_TBL_SCRIPT = $(SRCDIR)/gen-activity-table.r
 POSTERIOR_PROB_SCRIPT = $(SRCDIR)/posterior-prob.r
+DISCRETIZE_SCRIPT = $(SRCDIR)/discretize.r
+NFCHISQ_SCRIPT = $(SRCDIR)/nfchisq.r
+
+# Precious...do not delete
+.PRECIOUS: $(DISCR_KINACT_DATA)
 
 # Phony targets
 .PHONY: posterior
 posterior: $(KINACT_POSTERIOR_PROB)
 
-.PHONY: cor-results
+.PHONY: assoc-results
 assoc-results: $(KINACT_ASSOC)
 
 .PHONY: data
@@ -92,11 +99,17 @@ $(EGF_KIN_ACT_DATA) \
 $(IMP_EGF_KIN_ACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(GSEA_DATA) $(KIN_COND_PAIRS)
 	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT)
 
+$(DATADIR)/%-discr.tsv: $(DATADIR)/%-imp.tsv $(DISCRETIZE_SCRIPT)
+	$(RSCRIPT) $(DISCRETIZE_SCRIPT) $(DISCR_METHOD) $< $@
+
 $(OUTDIR)/%-pcor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
 	$(ASSOCNET) --method=pearson $< >$@
 
 $(OUTDIR)/%-scor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
 	$(ASSOCNET) --method=spearman $< >$@
+
+$(OUTDIR)/%-nfchisq.tsv: $(DATADIR)/%-discr.tsv $(NFCHISQ_SCRIPT) $(OUTDIR)
+	$(RSCRIPT) $(NFCHISQ_SCRIPT) $< $@
 
 $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 	$(ASSOCNET_FILTER) --header-in $< >$@
