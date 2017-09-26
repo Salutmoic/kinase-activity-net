@@ -183,15 +183,15 @@ def score_network(path):
 
     for file in files:
         netdir = path + file
-        score = score_kin_pairs(ks,pmm,netdir)
+        scores = score_kin_pairs(ks,pmm,netdir)
         zscores = assess_edges(score,d)
 
         
-        v = open(path+file+"zscore.txt","w")
-        for i in zscores:
-            s = ""
-            s = s+ i[0]+"\t"+i[1]+"\t" + str(zscores[i])
-            v.write(s+ "\n")
+        v = open(path+file+"scores.txt","w")
+        for i in scores:
+        
+            m_score = max(scores[i])
+            n.write(str(i[0])+"\t"+str(i[1])+ "\t"+ str(m_score)+"\n")
 
 
 path = "/home/borgthor/Kinase_activities/Results/networks/"    
