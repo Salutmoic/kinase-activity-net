@@ -18,6 +18,19 @@ cor.prior <- function(cor.vals, is.reg){
     return (prior)
 }
 
+nfchisq.prior <- function(nfchisq.vals, is.reg){
+    ## Normalized functional Chi^2 statistics are normally distributed
+    if (is.reg){
+        ig.b <- 9
+     }else{
+         ig.b <- 0.1
+    }
+    prior <- ((gamma(ig.a+0.5)/gamma(ig.a))*
+              ((2*pi*ig.b)^-0.5)*
+              ((1+(nfchisq.vals^2)/(2*ig.b))^(-(ig.a+0.5))))
+    return (prior)
+}
+
 is.reg.prior <- function(){
     ## Calculate uniform prior probability of a regulatory relationship
     kinases <- read.table("~/nfs-home/data/annotation/human-kinome.txt", as.is=TRUE)
@@ -63,6 +76,9 @@ dat.tbl[which(dat.tbl$node1==dat.tbl$node2), "assoc"] <- NA
 if (prior.type %in% c("pcor", "scor")){
     dat.prior.given.reg <- cor.prior(dat.tbl$assoc, TRUE)
     dat.prior.given.nreg <- cor.prior(dat.tbl$assoc, FALSE)
+}else if (prior.type == "nfchisq"){
+    dat.prior.given.reg <- nfchisq.prior(dat.tbl$assoc, TRUE)
+    dat.prior.given.nreg <- nfchisq.prior(dat.tbl$assoc, FALSE)
 }
 
 p.reg <- is.reg.prior()
