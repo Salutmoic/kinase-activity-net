@@ -88,7 +88,7 @@ def score(seq,pmms):
         if seq[i] != "_":
             score = score*pmms[i][aminos[seq[i].upper()]]
         else:
-           score = score*0.01 
+           score = score*(float(1)/(len(seqs)+2))
 
     return score
         
@@ -199,6 +199,27 @@ def score_network(filename):
         n.write(str(i[0])+"\t"+str(i[1])+ "\t"+ str(m_score)+"\n")
 
     v.close()
+    
+    
+def known_scores(pmms,ks):
+
+    
+    v = open("known_kinase_psite-score","w")
+    f = open("/home/borgthor/Kinase_activities/data/human_kinase_table","r")
+    columns = f.readline()
+    columns =columns.split("\t")
+    seqind = columns.index("SITE_...7_AA")
+
+    for line in f:
+        line = line.split("\t")
+        kinase = line[0] 
+        psite = line[seqind]
+        sc = score(psite,pmms[kinase],ks[kinase])
+        v.write(kinase+"\t"+psite+"\t"+str(sc)+ "\n")
+
+    v.close()
+    f.close()
+    return    
    
 
 
