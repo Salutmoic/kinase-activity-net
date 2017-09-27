@@ -189,6 +189,7 @@ def score_network(filename):
             line = line + str(j) + "\t"
 
         distf.write(line + "\n")     
+    v.close()
     
     scores = score_kin_pairs(ks,pmm,filename)
     v = open("kinase_kinase_scores.tsv","w")
@@ -197,7 +198,7 @@ def score_network(filename):
         m_score = max(scores[i])
         n.write(str(i[0])+"\t"+str(i[1])+ "\t"+ str(m_score)+"\n")
 
-
+    v.close()
    
 
 
