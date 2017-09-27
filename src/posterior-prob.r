@@ -70,10 +70,11 @@ data.file <- argv[2]
 out.file <- argv[3]
 
 dat.tbl <- read.delim(data.file, as.is=TRUE)
+names(dat.tbl) <- c("node1", "node2", "assoc")
 
 dat.tbl[which(dat.tbl$node1==dat.tbl$node2), "assoc"] <- NA
 
-if (prior.type %in% c("pcor", "scor")){
+if (prior.type %in% c("pcor", "pcor-filter", "scor", "scor-filter")){
     dat.prior.given.reg <- cor.prior(dat.tbl$assoc, TRUE)
     dat.prior.given.nreg <- cor.prior(dat.tbl$assoc, FALSE)
 }else if (prior.type == "nfchisq"){
