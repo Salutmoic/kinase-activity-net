@@ -6,7 +6,7 @@ from os.path import isfile, join, walk
 
 def read_data():
     #Reads kinase-substrate table where substrate and kinase are found in 
-    f = open("/home/borgthor/Kinase_activities/data/reduced_kinase_table","r")
+    f = open("data/reduced_kinase_table","r")
 
     
 
@@ -63,7 +63,7 @@ def pmms(ks):
 def subseqs():
     #This function extracts peptides surrounding phospho sites found in the phosphosite plus
     # human_kinase_table
-    f = open("/home/borgthor/Kinase_activities/data/human_kinase_table","r")
+    f = open("data/human_kinase_table","r")
     
     columns = f.readline()
 
@@ -114,7 +114,7 @@ def kin_phosphosites(ks):
     #returns dictionary with every known phosphosite found on each kinase in the
     #Ochoa et al. dataset
     
-    f =  open("/home/borgthor/phosphosites_reduced.txt")
+    f =  open("data/phosphosites_reduced.txt")
     psites = {}
     columns = f.readline()
 
@@ -170,7 +170,7 @@ def assess_edges(scores,dist):
 
     return zscores
 
-def score_network(path):
+def score_network(filename):
     #This takes network files and scores all edges according to pssm
 
     t,ks = read_data()
@@ -181,23 +181,24 @@ def score_network(path):
     d = dist(seqs,pmm)
     files = listdir(path)
 
-    for file in files:
-        netdir = path + file
-        scores = score_kin_pairs(ks,pmm,netdir)
-        zscores = assess_edges(score,d)
+    v = open("kinase_distributions.tsv","w")
+    for i in dist:
 
+        line = i + "\t"
+        for j in dist[i]:
+            line = line + str(j) + "\t"
+
+        distf.write(line + "\n")     
+    
+    scores = score_kin_pairs(ks,pmm,filename)
+    v = open("kinase_kinase_scores.tsv","w")
+    for i in scores:
         
-        v = open(path+file+"scores.txt","w")
-        for i in scores:
-        
-            m_score = max(scores[i])
-            n.write(str(i[0])+"\t"+str(i[1])+ "\t"+ str(m_score)+"\n")
+        m_score = max(scores[i])
+        n.write(str(i[0])+"\t"+str(i[1])+ "\t"+ str(m_score)+"\n")
 
 
-path = "/home/borgthor/Kinase_activities/Results/networks/"    
-
-read_dictionary = np.load('/home/borgthor/Kinase_activities/cons_matrices.npy').item()
-
+   
 
 
 score_network(path)
