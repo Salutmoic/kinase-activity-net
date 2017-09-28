@@ -130,15 +130,15 @@ $(OUTDIR)/%-scor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
 $(OUTDIR)/%-nfchisq.tsv: $(DATADIR)/%-discr.tsv $(NFCHISQ_SCRIPT) $(OUTDIR)
 	$(RSCRIPT) $(NFCHISQ_SCRIPT) $< $@
 # Here I create three different correlation tables with the same script assoc_methods.r
-# I need three arguments: input,output and method, hope this si not too far off
+
 $(OUTDIR)/%-partcor.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
-	$(RSCRIPT) $(ASSOC_SCRIPT) --method= pcor$< $@	
+	$(RSCRIPT) $(ASSOC_SCRIPT) partcor $< $@	
 
 $(OUTDIR)/%-mut_info.tsv: $(DATADIR)/%-discr.tsv $(ASSOC_SCRIPT) $(OUTDIR)
-	$(RSCRIPT) $(ASSOC_SCRIPT) --method= mut_info $< $@
+	$(RSCRIPT) $(ASSOC_SCRIPT) mut_info $< $@
 	
 $(OUTDIR)/%-fnn_mut_info.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
-	$(RSCRIPT) $(ASSOC_SCRIPT) --method= fnn_mut_info $< $@
+	$(RSCRIPT) $(ASSOC_SCRIPT) fnn_mut_info $< $@
 #-----------------------------------------------------------------------
 $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 	$(ASSOCNET_FILTER) --header-in $< >$@
