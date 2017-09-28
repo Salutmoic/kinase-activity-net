@@ -1,29 +1,34 @@
 library(dplyr)
 library(reshape2)
 
-cor.prior <- function(cor.vals, is.reg){
+cor.prior <- function(cor.vals, is.reg, pscore){
     ## Fisher's r-to-Z
     F.r <- atanh(cor.vals)
     ## Inverse-Gamma hyperparameters for the unknown variance.  Scale
     ## ('b') is larger when it's a regulatory relationship.
     ig.a <- 9
+    pscore.mod <- 1/(1+exp(-0.1*pscore))
     if (is.reg){
-        ig.b <- 9
-     }else{
-         ig.b <- 0.1
+        ig.b <- 9*pscore.mod
+    }else{
+        ig.b <- 0.1*pscore.mod
     }
+    if (any(ig.b < 0))
+        print(ig.b)
     prior <- ((gamma(ig.a+0.5)/gamma(ig.a))*
               ((2*pi*ig.b)^-0.5)*
               ((1+(F.r^2)/(2*ig.b))^(-(ig.a+0.5))))
     return (prior)
 }
 
-nfchisq.prior <- function(nfchisq.vals, is.reg){
+nfchisq.prior <- function(nfchisq.vals, is.reg, pscore){
     ## Normalized functional Chi^2 statistics are normally distributed
+    ig.a <- 9
+    pscore.mod <- 1/(1+exp(-0.1*pscore))
     if (is.reg){
-        ig.b <- 9
-     }else{
-         ig.b <- 0.1
+        ig.b <- 9*pscore.mod
+    }else{
+        ig.b <- 0.1*pscore.mod
     }
     prior <- ((gamma(ig.a+0.5)/gamma(ig.a))*
               ((2*pi*ig.b)^-0.5)*
@@ -61,34 +66,67 @@ is.reg.prior <- function(){
 }
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 3){
-    stop("USAGE: <script> PRIOR_TYPE DATA_FILE OUT_FILE")
+if (length(argv) != 5){
+    stop("USAGE: <script> ASSOC_TYPE ASSOC_FILE PHOS_SCORE_FILE PHOS_BACK_FILE OUT_FILE")
 }
 
-prior.type <- argv[1]
-data.file <- argv[2]
-out.file <- argv[3]
+assoc.type <- argv[1]
+assoc.file <- argv[2]
+phos.score.file <- argv[3]
+phos.back.file <- argv[4]
+out.file <- argv[5]
 
-dat.tbl <- read.delim(data.file, as.is=TRUE)
-names(dat.tbl) <- c("node1", "node2", "assoc")
+assoc.tbl <- read.delim(assoc.file, as.is=TRUE)
+names(assoc.tbl) <- c("kin1", "kin2", "assoc")
 
-dat.tbl[which(dat.tbl$node1==dat.tbl$node2), "assoc"] <- NA
+phos.score.tbl <- read.table(phos.score.file, as.is=TRUE)
+names(phos.score.tbl) <- c("kin1", "kin2", "phos.score")
+phos.score.mean <- mean(phos.score.tbl$phos.score)
+phos.score.sd <- sd(phos.score.tbl$phos.score)
 
-if (prior.type %in% c("pcor", "pcor-filter", "scor", "scor-filter")){
-    dat.prior.given.reg <- cor.prior(dat.tbl$assoc, TRUE)
-    dat.prior.given.nreg <- cor.prior(dat.tbl$assoc, FALSE)
-}else if (prior.type == "nfchisq"){
-    dat.prior.given.reg <- nfchisq.prior(dat.tbl$assoc, TRUE)
-    dat.prior.given.nreg <- nfchisq.prior(dat.tbl$assoc, FALSE)
+dat.tbl <- merge(assoc.tbl, phos.score.tbl)
+
+phos.back.tbl.tmp <- read.table(phos.back.file, as.is=TRUE)
+phos.back.tbl <- phos.back.tbl.tmp[2:ncol(phos.back.tbl.tmp)]
+phos.back.mean <- mean(as.matrix(phos.back.tbl))
+phos.back.sd <- sd(as.matrix(phos.back.tbl))
+
+dat.tbl[which(dat.tbl$kin1==dat.tbl$kin2), "assoc"] <- NA
+
+if (assoc.type %in% c("pcor", "pcor-filter", "scor", "scor-filter")){
+    p.assoc.given.reg.pscore <- cor.prior(dat.tbl$assoc, TRUE,
+                                          dat.tbl$phos.score)
+    p.assoc.given.nreg.pscore <- cor.prior(dat.tbl$assoc, FALSE,
+                                           dat.tbl$phos.score)
+}else if (assoc.type == "nfchisq"){
+    p.assoc.given.reg.pscore <- nfchisq.prior(dat.tbl$assoc, TRUE,
+                                              dat.tbl$phos.score)
+    p.assoc.given.nreg.pscore <- nfchisq.prior(dat.tbl$assoc, FALSE,
+                                               dat.tbl$phos.score)
 }
 
 p.reg <- is.reg.prior()
 
-posterior <- (dat.prior.given.reg*p.reg)/(dat.prior.given.reg*p.reg+dat.prior.given.nreg*(1-p.reg))
+## A bit of a cheat here.  We want the probability of seeing the PSSM
+## score for A->B given that A regulates B (or that A doesn't regulate
+## B).  However, since "A regulates B" implies "A phosphorylates B",
+## and since we don't expect regulatory sites to have significantly
+## different PSSM scores from nonregulatory sites, we can just use the
+## probability of seeing the A->B PSSM score given that A
+## phosphorylates B (or that A doesn't phosphorylate B).
+p.pscore.given.reg <- pnorm(dat.tbl$phos.score, mean=phos.score.mean,
+                            sd=phos.score.sd)
+p.pscore.given.nreg <- pnorm(dat.tbl$phos.score, mean=phos.back.mean,
+                                sd=phos.back.sd)
 
-posterior.tbl <- data.frame(node1=dat.tbl$node1, node2=dat.tbl$node2,
+p.cor.pscore.given.reg <- p.assoc.given.reg.pscore * p.pscore.given.reg
+p.cor.pscore.given.nreg <- p.assoc.given.nreg.pscore * p.pscore.given.nreg
+
+posterior <- (p.cor.pscore.given.reg*p.reg)/(p.cor.pscore.given.reg*p.reg+p.cor.pscore.given.nreg*(1-p.reg))
+
+posterior.tbl <- data.frame(kin1=dat.tbl$kin1, kin2=dat.tbl$kin2,
                             posterior=posterior)
-posterior.tbl$posterior[which(posterior.tbl$node1==posterior.tbl$node2)] <- 0.00
+posterior.tbl$posterior[which(posterior.tbl$kin1==posterior.tbl$kin2)] <- 0.00
 
 write.table(posterior.tbl, out.file, sep="\t", row.names=FALSE,
             col.names=FALSE, quote=FALSE)

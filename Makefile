@@ -132,8 +132,10 @@ $(OUTDIR)/%-nfchisq.tsv: $(DATADIR)/%-discr.tsv $(NFCHISQ_SCRIPT) $(OUTDIR)
 $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 	$(ASSOCNET_FILTER) --header-in $< >$@
 
-$(OUTDIR)/%-posterior.tsv: $(OUTDIR)/%.tsv $(POSTERIOR_PROB_SCRIPT)
-	$(RSCRIPT) $(POSTERIOR_PROB_SCRIPT) $(ASSOC_METHOD) $< $@
+$(OUTDIR)/%-posterior.tsv: $(OUTDIR)/%.tsv $(POSTERIOR_PROB_SCRIPT) \
+							$(KIN_KIN_SCORES) $(KIN_SCORE_DIST)
+	$(RSCRIPT) $(POSTERIOR_PROB_SCRIPT) $(ASSOC_METHOD) $< $(KIN_KIN_SCORES) \
+		$(KIN_SCORE_DIST) $@
 
 $(KIN_KIN_SCORES) \
 $(KIN_KNOWN_PSITE_SCORES) \
