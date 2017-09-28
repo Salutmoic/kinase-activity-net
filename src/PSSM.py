@@ -170,7 +170,7 @@ def assess_edges(scores,dist):
 
     return zscores
 
-def score_network(filename):
+def score_network():
     #This takes network files and scores all edges according to pssm
 
     t,ks = read_data()
@@ -179,7 +179,7 @@ def score_network(filename):
     seqs = subseqs()
 
     d = dist(seqs,pmm)
-    files = listdir(path)
+    
 
     v = open("out/kinase_distributions.tsv","w")
     for i in dist:
@@ -223,7 +223,7 @@ def known_scores(pmms,ks):
    
 
 
-score_network(path)
+score_network()
 
     
 
