@@ -205,7 +205,7 @@ def known_scores(pmms,ks):
 
     
     v = open("known_kinase_psite-score","w")
-    f = open("/home/borgthor/Kinase_activities/data/human_kinase_table","r")
+    f = open("data/human_kinase_table","r")
     columns = f.readline()
     columns =columns.split("\t")
     seqind = columns.index("SITE_...7_AA")
