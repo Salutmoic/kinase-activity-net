@@ -38,8 +38,6 @@ def read_aa_freqs():
     with open("data/aa-freqs.tsv") as h:
         for line in h:
             aa, freq = line.strip().split()
-            if aa in ('U', 'X'):
-                continue
             aa_freqs[aa] = float(freq)
     return aa_freqs
 

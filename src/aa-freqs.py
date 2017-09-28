@@ -13,6 +13,8 @@ def calc_aa_freqs(proteome):
     aa_count = 0
     for seqrec in proteome:
         for aa in seqrec.seq:
+            if aa in ('U', 'X'):
+                continue
             if aa not in aa_freqs:
                 aa_freqs[aa] = 1
             else:
