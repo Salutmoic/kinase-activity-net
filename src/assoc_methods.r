@@ -68,7 +68,7 @@ res.tbl<- outer(rownames(kin.act.m), rownames(kin.act.m),v.do.nfchisq, kin.act.m
 
 }
 
-if(method == "pcor"){
+if(method == "partcor"){
 res.tbl = pcor(t(kin.act.m),method = "s")$estimate
 
 }
