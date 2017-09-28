@@ -146,17 +146,16 @@ def score_kin_pairs(ks,pmms,netdir):
         line = line.split("\t")
         A = line[0]
         B= line[1][0:(len(line[1])-1)]
-        
+
         sites = psites[B]
         for i in sites:
-            sc = score(i,pmms[A])
+            sc = score(i,pmms[A],ks[A])
             if (A,B) in scores.keys():
                 scores[(A,B)].append(sc)
                
             else:
                 scores[(A,B)] = [sc]
     return scores
-
 
 def assess_edges(scores,dist):
     #Finds the highest scoreing phosphosite for ech A,B pair and compares it to the
@@ -170,7 +169,7 @@ def assess_edges(scores,dist):
 
     return zscores
 
-def score_network():
+def score_network(filename):
     #This takes network files and scores all edges according to pssm
 
     t,ks = read_data()
@@ -178,10 +177,10 @@ def score_network():
 
     seqs = subseqs()
 
-    d = dist(seqs,pmm)
+    d = dist(seqs,pmm,ks)
     
 
-    v = open("out/kinase_distributions.tsv","w")
+    v = open("/home/borgthor/kinase_distributions.tsv","w")
     for i in d:
 
         line = i + "\t"
@@ -192,13 +191,14 @@ def score_network():
     v.close()
     
     scores = score_kin_pairs(ks,pmm,filename)
-    v = open("out/kinase_kinase_scores.tsv","w")
+    v = open("/home/borgthor/kinase_kinase_scores.tsv","w")
     for i in scores:
         
         m_score = max(scores[i])
         v.write(str(i[0])+"\t"+str(i[1])+ "\t"+ str(m_score)+"\n")
 
     v.close()
+
     
     
 def known_scores(pmms,ks):
@@ -222,8 +222,9 @@ def known_scores(pmms,ks):
     return    
    
 
+filename = "data/network_kinase-activity-max-rows-imp.tsv.txt"    
+score_network(filename)
 
-score_network()
 
     
 
