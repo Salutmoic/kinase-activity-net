@@ -182,13 +182,13 @@ def score_network():
     
 
     v = open("out/kinase_distributions.tsv","w")
-    for i in dist:
+    for i in d:
 
         line = i + "\t"
-        for j in dist[i]:
+        for j in d[i]:
             line = line + str(j) + "\t"
 
-        distf.write(line + "\n")     
+        v.write(line + "\n")     
     v.close()
     
     scores = score_kin_pairs(ks,pmm,filename)
@@ -196,7 +196,7 @@ def score_network():
     for i in scores:
         
         m_score = max(scores[i])
-        n.write(str(i[0])+"\t"+str(i[1])+ "\t"+ str(m_score)+"\n")
+        v.write(str(i[0])+"\t"+str(i[1])+ "\t"+ str(m_score)+"\n")
 
     v.close()
     
