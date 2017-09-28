@@ -80,7 +80,7 @@ def subseqs():
     return seqs
 
 
-def score(seq,pmms):
+def score(seq,pmms,ks):
     #scores peptites with pssm
     aminos = amino_acids()
     score = 1
@@ -88,12 +88,12 @@ def score(seq,pmms):
         if seq[i] != "_":
             score = score*pmms[i][aminos[seq[i].upper()]]
         else:
-           score = score*(float(1)/(len(seqs)+2))
+           score = score*(float(1)/(len(ks)+2))
 
     return score
         
         
-def dist(seqs,pmms):
+def dist(seqs,pmms,ks):
     #creates distribution of pmms scores
     #scores are calculated by scoring a random phosphosite relative to to kinase i
     dist = {}
@@ -105,7 +105,7 @@ def dist(seqs,pmms):
             rand =  random.randint(0,(len(seqs)-1))
             seq = seqs[rand]
 
-            d.append(score(seq,pmms[i]))
+            d.append(score(seq,pmms[i],ks[i]))
         dist[i] = d
 
     return dist
@@ -205,7 +205,7 @@ def known_scores(pmms,ks):
 
     
     v = open("out/known_kinase_psite-score","w")
-    f = open("data/human_kinase_table","r")
+    f = open("data/borgthor/human_kinase_table","r")
     columns = f.readline()
     columns =columns.split("\t")
     seqind = columns.index("SITE_...7_AA")
