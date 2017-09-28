@@ -2,6 +2,7 @@ import numpy as np
 import random
 from os import listdir
 from os.path import isfile, join, walk
+from math import log
 
 
 def read_data():
@@ -32,6 +33,17 @@ def amino_acids():
     return aminos
 
 
+def read_aa_freqs():
+    aa_freqs = dict()
+    with open("data/aa-freqs.tsv") as h:
+        for line in h:
+            aa, freq = line.strip().split()
+            if aa in ('U', 'X'):
+                continue
+            aa_freqs[aa] = float(freq)
+    return aa_freqs
+
+
 def pmms(ks):
     # returns a dictionary where keys are kinases and values are pmms matrices made from the known substrates
     # for each kinase
@@ -39,6 +51,7 @@ def pmms(ks):
     aminos = amino_acids()
     pmms = {}
 
+    aa_freqs = read_aa_freqs()
     kinases = ks.keys()
 
     for i in kinases:
@@ -48,12 +61,16 @@ def pmms(ks):
             j = j.upper()
             for k in range(0,len(j)):
                 if j[k] in aminos:
-                    cmat[k][aminos[j[k]]] = cmat[k][aminos[j[k]]] +1
-                
+                    cmat[k][aminos[j[k]]] = cmat[k][aminos[j[k]]] + 1.0
             
+        pc = 0.1
+        cmat = cmat + pc #(float(1)/(len(seqs)+2))*len(seqs)
+        cmat = cmat/(len(seqs)+pc*20.0)
+
+        for k in range(15):
+            for aa in aa_freqs:
+                cmat[k][aminos[aa]] = log(cmat[k][aminos[aa]]/aa_freqs[aa])/log(2.0)
         
-        cmat = cmat + (float(1)/(len(seqs)+2))*len(seqs)
-        cmat = cmat/len(seqs)
         pmms[i] = cmat
 
     return pmms
@@ -86,9 +103,9 @@ def score(seq,pmms,ks):
     score = 1
     for i in range(0,len(seq)):
         if seq[i] != "_":
-            score = score*pmms[i][aminos[seq[i].upper()]]
+            score = score + pmms[i][aminos[seq[i].upper()]]
         else:
-           score = score*(float(1)/(len(ks)+2))
+            score = score + np.min(pmms[i]) #(float(1)/(len(ks)+2))
 
     return score
         

@@ -23,6 +23,12 @@ PSITE_DATA = $(DATADIR)/esetNR.Rdata
 KIN_COND_PAIRS = $(DATADIR)/kinase-condition-pairs.tsv
 # tries to calculate which kinases are perturbed in each condition
 KIN_INVIVO_CONDS = $(DATADIR)/kinase_invivoconditions.tsv 
+# Human kinases
+ALL_KINASES_TABLE = $(DATADIR)/human_kinase_table
+# Kinases with activity predictions
+KINASE_TABLE = $(DATADIR)/reduced_kinase_table
+# PhosphositePlus data
+PHOSPHOSITES = $(DATADIR)/phosphosites_reduced.txt
 
 # Generated data sets Initial kinase-activity tables, trying to
 # maximize #rows, #cols or both.  Raw and imputed datasets
@@ -36,6 +42,12 @@ IMP_EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,$(DATADIR)/egf-kinase-a
 KINACT_ASSOC = $(OUTDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD).tsv
 # Posterior probabilities
 KINACT_POSTERIOR_PROB = $(OUTDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-posterior.tsv
+# Human amino acid frequencies
+AA_FREQS = $(DATADIR)/aa-freqs.tsv
+# PSSM files
+KIN_KIN_SCORES = $(OUTDIR)/kinase_kinase_scores.tsv
+KIN_KNOWN_PSITE_SCORES = $(OUTDIR)/known_kinase_psite-score
+KIN_SCORE_DIST = $(OUTDIR)/kinase_distributions.tsv
 
 # Program Options
 ASSOCNET_PARAMS = --unbiased-correlation --p-method=none
@@ -47,6 +59,7 @@ endif
 
 # Programs
 PYTHON3 ?= $(BINDIR)/python3
+PYTHON2 ?= $(BINDIR)/python2
 PYTHON ?= $(PYTHON3)
 RSCRIPT ?= $(BINDIR)/Rscript
 ASSOCNET ?= $(BINDIR)/assocnet $(ASSOCNET_PARAMS)
@@ -57,6 +70,8 @@ GEN_KINACT_TBL_SCRIPT = $(SRCDIR)/gen-activity-table.r
 POSTERIOR_PROB_SCRIPT = $(SRCDIR)/posterior-prob.r
 DISCRETIZE_SCRIPT = $(SRCDIR)/discretize.r
 NFCHISQ_SCRIPT = $(SRCDIR)/nfchisq.r
+PSSM_SCRIPT = $(SRCDIR)/PSSM.py
+AA_FREQS_SCRIPT = $(SRCDIR)/aa-freqs.py
 
 # Precious...do not delete
 .PRECIOUS: $(DISCR_KINACT_DATA)
@@ -68,6 +83,9 @@ posterior: $(KINACT_POSTERIOR_PROB)
 .PHONY: assoc-results
 assoc-results: $(KINACT_ASSOC)
 
+.PHONY: pssm
+pssm: $(KIN_KIN_SCORES) $(KIN_KNOWN_PSITE_SCORES) $(KIN_SCORE_DIST)
+
 .PHONY: data
 data: $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KIN_ACT_DATA) $(IMP_EGF_KIN_ACT_DATA)
 
@@ -75,7 +93,7 @@ data: $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KIN_ACT_DATA) $(IMP_EGF_KIN_ACT_DA
 clean-data:
 	-rm -v $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KIN_ACT_DATA) $(IMP_EGF_KIN_ACT_DATA)
 
-.PHONY: clean-ossoc
+.PHONY: clean-assoc
 clean-assoc:
 	-rm -v $(KINACT_ASSOC)
 
@@ -116,3 +134,11 @@ $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 
 $(OUTDIR)/%-posterior.tsv: $(OUTDIR)/%.tsv $(POSTERIOR_PROB_SCRIPT)
 	$(RSCRIPT) $(POSTERIOR_PROB_SCRIPT) $(ASSOC_METHOD) $< $@
+
+$(KIN_KIN_SCORES) \
+$(KIN_KNOWN_PSITE_SCORES) \
+$(KIN_SCORE_DIST): $(PSSM_SCRIPT)
+	$(PYTHON2) $(PSSM_SCRIPT)
+
+$(AA_FREQS): $(AA_FREQS_SCRIPT)
+	$(PYTHON) $(AA_FREQS_SCRIPT) >$@
