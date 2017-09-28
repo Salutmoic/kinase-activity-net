@@ -181,7 +181,7 @@ def score_network(filename):
     d = dist(seqs,pmm)
     files = listdir(path)
 
-    v = open("kinase_distributions.tsv","w")
+    v = open("out/kinase_distributions.tsv","w")
     for i in dist:
 
         line = i + "\t"
@@ -192,7 +192,7 @@ def score_network(filename):
     v.close()
     
     scores = score_kin_pairs(ks,pmm,filename)
-    v = open("kinase_kinase_scores.tsv","w")
+    v = open("out/kinase_kinase_scores.tsv","w")
     for i in scores:
         
         m_score = max(scores[i])
@@ -204,7 +204,7 @@ def score_network(filename):
 def known_scores(pmms,ks):
 
     
-    v = open("known_kinase_psite-score","w")
+    v = open("out/known_kinase_psite-score","w")
     f = open("data/human_kinase_table","r")
     columns = f.readline()
     columns =columns.split("\t")
