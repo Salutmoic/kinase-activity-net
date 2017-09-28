@@ -6,7 +6,7 @@ BINDIR = /nfs/research2/beltrao/software-rh7/bin
 # Parameters
 TABLE_STRATEGIES = max-rows max-cols max-rows-max-cols
 TABLE_STRATEGY ?= max-rows-max-cols
-ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq
+ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info fnn_mut_info partcor
 ASSOC_METHOD ?= scor
 ASSOCNET_FILTER_METHOD ?= deconvolution
 ASSOCNET_FILTER_SCALE_METHOD ?= standard
@@ -70,6 +70,7 @@ GEN_KINACT_TBL_SCRIPT = $(SRCDIR)/gen-activity-table.r
 POSTERIOR_PROB_SCRIPT = $(SRCDIR)/posterior-prob.r
 DISCRETIZE_SCRIPT = $(SRCDIR)/discretize.r
 NFCHISQ_SCRIPT = $(SRCDIR)/nfchisq.r
+ASSOC_SCRIPT = $(SRCDIR)/assoc_methods.r
 PSSM_SCRIPT = $(SRCDIR)/PSSM.py
 AA_FREQS_SCRIPT = $(SRCDIR)/aa-freqs.py
 
@@ -128,7 +129,17 @@ $(OUTDIR)/%-scor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
 
 $(OUTDIR)/%-nfchisq.tsv: $(DATADIR)/%-discr.tsv $(NFCHISQ_SCRIPT) $(OUTDIR)
 	$(RSCRIPT) $(NFCHISQ_SCRIPT) $< $@
+# Here I create three different correlation tables with the same script assoc_methods.r
+# I need three arguments: input,output and method, hope this si not too far off
+$(OUTDIR)/%-partcor.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
+	$(RSCRIPT) $(ASSOC_SCRIPT) --method= pcor$< $@	
 
+$(OUTDIR)/%-mut_info.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
+	$(RSCRIPT) $(ASSOC_SCRIPT) --method= mut_info $< $@
+	
+$(OUTDIR)/%-fnn_mut_info.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
+	$(RSCRIPT) $(ASSOC_SCRIPT) --method= fnn_mut_info $< $@
+#-----------------------------------------------------------------------
 $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 	$(ASSOCNET_FILTER) --header-in $< >$@
 
