@@ -51,7 +51,7 @@ def pmms(ks):
                     cmat[k][aminos[j[k]]] = cmat[k][aminos[j[k]]] +1
                 
             
-        #I use 0.01 as pseudocount 
+        
         cmat = cmat + (float(1)/(len(seqs)+2))*len(seqs)
         cmat = cmat/len(seqs)
         pmms[i] = cmat
@@ -180,7 +180,7 @@ def score_network(filename):
     d = dist(seqs,pmm,ks)
     
 
-    v = open("/home/borgthor/kinase_distributions.tsv","w")
+    v = open("out/kinase_distributions.tsv","w")
     for i in d:
 
         line = i + "\t"
@@ -191,7 +191,7 @@ def score_network(filename):
     v.close()
     
     scores = score_kin_pairs(ks,pmm,filename)
-    v = open("/home/borgthor/kinase_kinase_scores.tsv","w")
+    v = open("out/kinase_kinase_scores.tsv","w")
     for i in scores:
         
         m_score = max(scores[i])
