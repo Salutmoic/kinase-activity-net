@@ -1,12 +1,12 @@
 library("glasso")
 
-grlasso <-function(cor){
+grlasso <-function(cor,p){
 
 #input : cor is p * p weigthed, intergrated correlation matrix 
 #outpur: wi is the inverse covariance matrix while w is the estimated covariance matrix
-# I put the regularization parameter to 0.06 which should remove ~ 60% of the edges
+#  p is the regularization parameter, for instance 0.06 should remove ~ 60% of the edges
 
-g =glasso(cor,p = 0.06)
+g =glasso(cor,p)
 
 
 
