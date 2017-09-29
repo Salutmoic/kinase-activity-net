@@ -23,12 +23,11 @@ PSITE_DATA = $(DATADIR)/esetNR.Rdata
 KIN_COND_PAIRS = $(DATADIR)/kinase-condition-pairs.tsv
 # tries to calculate which kinases are perturbed in each condition
 KIN_INVIVO_CONDS = $(DATADIR)/kinase_invivoconditions.tsv 
-# Human kinases
-ALL_KINASES_TABLE = $(DATADIR)/human_kinase_table
-# Kinases with activity predictions
-KINASE_TABLE = $(DATADIR)/reduced_kinase_table
 # PhosphositePlus data
-PHOSPHOSITES = $(DATADIR)/phosphosites_reduced.txt
+PHOSPHOSITE_PLUS_VERSION = 2017-09-08
+FULL_KIN_SUBSTR_TABLE = $(DATADIR)/Kinase_Substrate_Dataset_$(PHOSPHOSITE_PLUS_VERSION)
+FULL_REG_SITES_TABLE = $(DATADIR)/Regulatory_sites_$(PHOSPHOSITE_PLUS_VERSION)
+FULL_PHOS_SITES_TABLE = $(DATADIR)/Phosphorylation_site_dataset_$(PHOSPHOSITE_PLUS_VERSION)
 
 # Generated data sets Initial kinase-activity tables, trying to
 # maximize #rows, #cols or both.  Raw and imputed datasets
@@ -48,6 +47,10 @@ AA_FREQS = $(DATADIR)/aa-freqs.tsv
 KIN_KIN_SCORES = $(OUTDIR)/kinase_kinase_scores.tsv
 KIN_KNOWN_PSITE_SCORES = $(OUTDIR)/known_kinase_psite-score
 KIN_SCORE_DIST = $(OUTDIR)/kinase_distributions.tsv
+# PhosphositePlus derived files
+KIN_SUBSTR_TABLE = $(DATADIR)/reduced_kinase_table.tsv
+HUMAN_KINASE_TABLE = $(DATADIR)/human_kinase_table.tsv
+PHOSPHOSITES = $(DATADIR)/phosphosites_reduced.tsv
 
 # Program Options
 ASSOCNET_PARAMS = --unbiased-correlation --p-method=none
@@ -72,6 +75,7 @@ DISCRETIZE_SCRIPT = $(SRCDIR)/discretize.r
 NFCHISQ_SCRIPT = $(SRCDIR)/nfchisq.r
 PSSM_SCRIPT = $(SRCDIR)/PSSM.py
 AA_FREQS_SCRIPT = $(SRCDIR)/aa-freqs.py
+FILTER_PSITE_PLUS_SCRIPT = $(SRCDIR)/filter-psite-plus-tbl.r
 
 # Precious...do not delete
 .PRECIOUS: $(DISCR_KINACT_DATA)
@@ -137,9 +141,20 @@ $(OUTDIR)/%-posterior.tsv: $(OUTDIR)/%.tsv $(POSTERIOR_PROB_SCRIPT) \
 	$(RSCRIPT) $(POSTERIOR_PROB_SCRIPT) $(ASSOC_METHOD) $< $(KIN_KIN_SCORES) \
 		$(KIN_SCORE_DIST) $@
 
+$(HUMAN_KINASE_TABLE): $(FULL_KIN_SUBSTR_TABLE)
+	sed '1,3d;4s|+/-|...|' $< | awk -F"\t" '{if (NR==1 || ($$4=="human" && $$9=="human")){print}}' >$@
+
+$(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT)
+	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $< $@
+
+$(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT)
+	sed '1,3d' $< >$@.tmp
+	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
+	rm $@.tmp
+
 $(KIN_KIN_SCORES) \
 $(KIN_KNOWN_PSITE_SCORES) \
-$(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT)
+$(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) $(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)
 	$(PYTHON2) $(PSSM_SCRIPT)
 
 $(AA_FREQS): $(AA_FREQS_SCRIPT)

@@ -7,7 +7,7 @@ from math import log
 
 def read_data():
     #Reads kinase-substrate table where substrate and kinase are found in 
-    f = open("data/reduced_kinase_table","r")
+    f = open("data/reduced_kinase_table.tsv","r")
 
     
 
@@ -35,7 +35,7 @@ def amino_acids():
 
 def read_aa_freqs():
     aa_freqs = dict()
-    with open("data/aa-freqs.tsv") as h:
+    with open("data/aa-freqs.tsv", "r") as h:
         for line in h:
             aa, freq = line.strip().split()
             aa_freqs[aa] = float(freq)
@@ -78,7 +78,7 @@ def pmms(ks):
 def subseqs():
     #This function extracts peptides surrounding phospho sites found in the phosphosite plus
     # human_kinase_table
-    f = open("data/human_kinase_table","r")
+    f = open("data/human_kinase_table.tsv","r")
     
     columns = f.readline()
 
@@ -129,7 +129,7 @@ def kin_phosphosites(ks):
     #returns dictionary with every known phosphosite found on each kinase in the
     #Ochoa et al. dataset
     
-    f =  open("data/phosphosites_reduced.txt")
+    f =  open("data/phosphosites_reduced.tsv")
     psites = {}
     columns = f.readline()
 
