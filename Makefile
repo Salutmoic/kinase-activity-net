@@ -1,6 +1,7 @@
 SRCDIR = src
 DATADIR = data
 OUTDIR = out
+IMGDIR = img
 BINDIR = /nfs/research2/beltrao/software-rh7/bin
 
 # Parameters
@@ -77,6 +78,7 @@ ASSOC_SCRIPT = $(SRCDIR)/assoc_methods.r
 PSSM_SCRIPT = $(SRCDIR)/PSSM.py
 AA_FREQS_SCRIPT = $(SRCDIR)/aa-freqs.py
 FILTER_PSITE_PLUS_SCRIPT = $(SRCDIR)/filter-psite-plus-tbl.r
+VAL_SCRIPT = $(SRCDIR)/validation.r
 
 # Precious...do not delete
 .PRECIOUS: $(DISCR_KINACT_DATA)
@@ -116,6 +118,9 @@ clean: clean-data clean-results
 $(OUTDIR):
 	mkdir -p $(OUTDIR)
 
+$(IMGDIR):
+	mkdir -p $(IMGDIR)
+
 $(KINACT_DATA) \
 $(IMP_KINACT_DATA) \
 $(EGF_KIN_ACT_DATA) \
@@ -140,7 +145,7 @@ $(OUTDIR)/%-partcor.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
 
 $(OUTDIR)/%-mut_info.tsv: $(DATADIR)/%-discr.tsv $(ASSOC_SCRIPT) $(OUTDIR)
 	$(RSCRIPT) $(ASSOC_SCRIPT) mut_info $< $@
-	
+
 $(OUTDIR)/%-fnn_mut_info.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
 	$(RSCRIPT) $(ASSOC_SCRIPT) fnn_mut_info $< $@
 #-----------------------------------------------------------------------
@@ -170,3 +175,6 @@ $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) $(HUMAN_KINASE
 
 $(AA_FREQS): $(AA_FREQS_SCRIPT)
 	$(PYTHON) $(AA_FREQS_SCRIPT) >$@
+
+$(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(IMGDIR) $(VAL_SCRIPT)
+	$(RSCRIPT) $(VAL_SCRIPT) $<
