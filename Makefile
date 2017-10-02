@@ -121,60 +121,93 @@ $(OUTDIR):
 $(IMGDIR):
 	mkdir -p $(IMGDIR)
 
+########################
+## Processed data tables
+
+# Kinase activity tables
 $(KINACT_DATA) \
 $(IMP_KINACT_DATA) \
 $(EGF_KIN_ACT_DATA) \
 $(IMP_EGF_KIN_ACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(GSEA_DATA) $(KIN_COND_PAIRS)
 	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT)
 
+# Discretized kinase activity
 $(DATADIR)/%-discr.tsv: $(DATADIR)/%-imp.tsv $(DISCRETIZE_SCRIPT)
 	$(RSCRIPT) $(DISCRETIZE_SCRIPT) $(DISCR_METHOD) $< $@
 
-$(OUTDIR)/%-pcor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
-	$(ASSOCNET) --method=pearson $< >$@
-
-$(OUTDIR)/%-scor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
-	$(ASSOCNET) --method=spearman $< >$@
-
-$(OUTDIR)/%-nfchisq.tsv: $(DATADIR)/%-discr.tsv $(NFCHISQ_SCRIPT) $(OUTDIR)
-	$(RSCRIPT) $(NFCHISQ_SCRIPT) $< $@
-# Here I create three different correlation tables with the same script assoc_methods.r
-
-$(OUTDIR)/%-partcor.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
-	$(RSCRIPT) $(ASSOC_SCRIPT) partcor $< $@	
-
-$(OUTDIR)/%-mut_info.tsv: $(DATADIR)/%-discr.tsv $(ASSOC_SCRIPT) $(OUTDIR)
-	$(RSCRIPT) $(ASSOC_SCRIPT) mut_info $< $@
-
-$(OUTDIR)/%-fnn_mut_info.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
-	$(RSCRIPT) $(ASSOC_SCRIPT) fnn_mut_info $< $@
-#-----------------------------------------------------------------------
-$(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
-	$(ASSOCNET_FILTER) --header-in $< >$@
-
-$(OUTDIR)/%-posterior.tsv: $(OUTDIR)/%.tsv $(POSTERIOR_PROB_SCRIPT) \
-							$(KIN_KIN_SCORES) $(KIN_SCORE_DIST)
-	$(RSCRIPT) $(POSTERIOR_PROB_SCRIPT) $(ASSOC_METHOD) $< $(KIN_KIN_SCORES) \
-		$(KIN_SCORE_DIST) $@
-
+# Grab just the human kinase-substrate relationships
 $(HUMAN_KINASE_TABLE): $(FULL_KIN_SUBSTR_TABLE)
 	sed '1,3d;4s|+/-|...|' $< | awk -F"\t" '{if (NR==1 || ($$4=="human" && $$9=="human")){print}}' >$@
 
+# Filter the human kinase-substrates to just those for which we have
+# kinase activities
 $(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT)
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $< $@
 
+# Filter the PhosphoSitePlus site list to just those on kinases for
+# which we have kinase activities
 $(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT)
 	sed '1,3d' $< >$@.tmp
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
 	rm $@.tmp
 
+# Calculate human proteome amino-acid frequencies
+$(AA_FREQS): $(AA_FREQS_SCRIPT)
+	$(PYTHON) $(AA_FREQS_SCRIPT) >$@
+
+###########################
+## Association score tables
+
+# Pearson's correlation
+$(OUTDIR)/%-pcor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
+	$(ASSOCNET) --method=pearson $< >$@
+
+# Spearman's correlation
+$(OUTDIR)/%-scor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
+	$(ASSOCNET) --method=spearman $< >$@
+
+# Normalized FunChisq
+$(OUTDIR)/%-nfchisq.tsv: $(DATADIR)/%-discr.tsv $(NFCHISQ_SCRIPT) $(OUTDIR)
+	$(RSCRIPT) $(NFCHISQ_SCRIPT) $< $@
+# Here I create three different correlation tables with the same script assoc_methods.r
+
+# Partial correlation
+$(OUTDIR)/%-partcor.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
+	$(RSCRIPT) $(ASSOC_SCRIPT) partcor $< $@	
+
+# Mutual information
+$(OUTDIR)/%-mut_info.tsv: $(DATADIR)/%-discr.tsv $(ASSOC_SCRIPT) $(OUTDIR)
+	$(RSCRIPT) $(ASSOC_SCRIPT) mut_info $< $@
+
+# Fast-nearest-neighbors (FNN) mutual information
+$(OUTDIR)/%-fnn_mut_info.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
+	$(RSCRIPT) $(ASSOC_SCRIPT) fnn_mut_info $< $@
+
+# Filter out indirect associations
+$(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
+	$(ASSOCNET_FILTER) --header-in $< >$@
+
+###############################
+## Kinase-substrate predictions
+
+# Calculate kinase-substrate PSSM scores
 $(KIN_KIN_SCORES) \
 $(KIN_KNOWN_PSITE_SCORES) \
 $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) $(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)
 	$(PYTHON2) $(PSSM_SCRIPT)
 
-$(AA_FREQS): $(AA_FREQS_SCRIPT)
-	$(PYTHON) $(AA_FREQS_SCRIPT) >$@
+###################
+## Merged predictor
+
+# Calculate a merged/posterior probability given all evidence.
+$(OUTDIR)/%-posterior.tsv: $(OUTDIR)/%.tsv $(POSTERIOR_PROB_SCRIPT) \
+							$(KIN_KIN_SCORES) $(KIN_SCORE_DIST)
+	$(RSCRIPT) $(POSTERIOR_PROB_SCRIPT) $(ASSOC_METHOD) $< $(KIN_KIN_SCORES) \
+		$(KIN_SCORE_DIST) $@
+
+#############
+## Validation
 
 $(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(IMGDIR) $(VAL_SCRIPT)
 	$(RSCRIPT) $(VAL_SCRIPT) $<
+
