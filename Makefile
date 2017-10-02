@@ -1,10 +1,19 @@
+#################
+### Variables ###
+#################
+
+##############
+## Directories
+
 SRCDIR = src
 DATADIR = data
 OUTDIR = out
 IMGDIR = img
 BINDIR = /nfs/research2/beltrao/software-rh7/bin
 
-# Parameters
+#############
+## Parameters
+
 TABLE_STRATEGIES = max-rows max-cols max-rows-max-cols
 TABLE_STRATEGY ?= max-rows-max-cols
 ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info fnn_mut_info partcor
@@ -15,7 +24,9 @@ DISCR_METHOD ?= mclust.whole
 DECONVOLUTION_A ?= 1.0
 DECONVOLUTION_B ?= 0.99
 
-# External data sets
+#####################
+## External data sets
+
 # Kinase activity predictions
 GSEA_DATA = $(DATADIR)/log.wGSEA.kinase_condition.clean.Rdata
 # Raw phosphosite data
@@ -30,7 +41,10 @@ FULL_KIN_SUBSTR_TABLE = $(DATADIR)/Kinase_Substrate_Dataset_$(PHOSPHOSITE_PLUS_V
 FULL_REG_SITES_TABLE = $(DATADIR)/Regulatory_sites_$(PHOSPHOSITE_PLUS_VERSION)
 FULL_PHOS_SITES_TABLE = $(DATADIR)/Phosphorylation_site_dataset_$(PHOSPHOSITE_PLUS_VERSION)
 
-# Generated data sets Initial kinase-activity tables, trying to
+######################
+## Generated data sets
+
+# Initial kinase-activity tables, trying to
 # maximize #rows, #cols or both.  Raw and imputed datasets
 KINACT_DATA = $(DATADIR)/kinase-activity-$(TABLE_STRATEGY).tsv
 IMP_KINACT_DATA = $(DATADIR)/kinase-activity-$(TABLE_STRATEGY)-imp.tsv
@@ -53,7 +67,9 @@ KIN_SUBSTR_TABLE = $(DATADIR)/reduced_kinase_table.tsv
 HUMAN_KINASE_TABLE = $(DATADIR)/human_kinase_table.tsv
 PHOSPHOSITES = $(DATADIR)/phosphosites_reduced.tsv
 
-# Program Options
+##################
+## Program Options
+
 ASSOCNET_PARAMS = --unbiased-correlation --p-method=none
 ASSOCNET_FILTER_PARAMS = --method=$(ASSOCNET_FILTER_METHOD) --scale-method=$(ASSOCNET_FILTER_SCALE_METHOD) --header-in
 ifeq ($(NET_FILTER_METHOD),deconvolution)
@@ -61,7 +77,9 @@ ASSOCNET_FILTER_PARAMS += --deconvolution-a=$(DECONVOLUTION_A)	\
 						  --deconvolution-b=$(DECONVOLUTION_B)
 endif
 
-# Programs
+###########
+## Programs
+
 PYTHON3 ?= $(BINDIR)/python3
 PYTHON2 ?= $(BINDIR)/python2
 PYTHON ?= $(PYTHON3)
@@ -69,7 +87,9 @@ RSCRIPT ?= $(BINDIR)/Rscript
 ASSOCNET ?= $(BINDIR)/assocnet $(ASSOCNET_PARAMS)
 ASSOCNET_FILTER ?= $(BINDIR)/assocnet-filter $(NET_FILTER_PARAMS)
 
-# Scripts
+##########
+## Scripts
+
 GEN_KINACT_TBL_SCRIPT = $(SRCDIR)/gen-activity-table.r
 POSTERIOR_PROB_SCRIPT = $(SRCDIR)/posterior-prob.r
 DISCRETIZE_SCRIPT = $(SRCDIR)/discretize.r
@@ -83,7 +103,10 @@ VAL_SCRIPT = $(SRCDIR)/validation.r
 # Precious...do not delete
 .PRECIOUS: $(DISCR_KINACT_DATA)
 
-# Phony targets
+#####################
+### Phony targets ###
+#####################
+
 .PHONY: posterior
 posterior: $(KINACT_POSTERIOR_PROB)
 
@@ -114,7 +137,13 @@ clean-results: clean-assoc clean-posterior
 .PHONY: clean
 clean: clean-data clean-results
 
-# Rules
+#############
+### Rules ###
+#############
+
+##############
+## Directories
+
 $(OUTDIR):
 	mkdir -p $(OUTDIR)
 
