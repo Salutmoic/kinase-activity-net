@@ -22,7 +22,7 @@ possible.false.intxns <- setdiff(possible.intxns, true.intxns)
 pred.data <- NULL
 label.data <- NULL
 
-n <- 50
+n <- 100
 
 ## This procedure is sufficient for training-free predictions.
 for (i in 1:n){
@@ -54,9 +54,12 @@ perf.roc <- performance(pred, measure="tpr", x.measure="fpr")
 perf.auc <- performance(pred, "auc")
 mean.auc <- mean(unlist(perf.auc@y.values))
 se.auc <- sd(unlist(perf.auc@y.values))/sqrt(n)
-message(paste("Mean AUC =", mean.auc, "S.E.M. =", se.auc))
+message(paste("Mean AUC =", mean.auc))
+message(paste("S.E.M. =", se.auc))
+message(paste("n =", n))
 plot(perf.roc, avg="vertical",
-     main=paste(data.basename, paste0("Mean AUC=", mean.auc), sep="\n"))
+     main=paste(data.basename, paste0("Mean AUC=", mean.auc),
+                paste0("S.E.M.=", se.auc), sep="\n"))
 
 ## Precision-recall curve
 perf.pr <- performance(pred, measure="prec", x.measure="rec")
