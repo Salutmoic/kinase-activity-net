@@ -7,6 +7,7 @@
 
 SRCDIR = src
 DATADIR = data
+EXT_DATADIR = $(DATADIR)/ext
 OUTDIR = out
 IMGDIR = img
 BINDIR = /nfs/research2/beltrao/software-rh7/bin
@@ -30,18 +31,18 @@ VAL_SET = $(PSITE_PLUS_VALSET)
 ## External data sets
 
 # Kinase activity predictions
-GSEA_DATA = $(DATADIR)/log.wGSEA.kinase_condition.clean.Rdata
-# Raw phosphosite data
-PSITE_DATA = $(DATADIR)/esetNR.Rdata
+GSEA_DATA = $(EXT_DATADIR)/log.wGSEA.kinase_condition.clean.Rdata
+# Ext phosphosite data
+PSITE_DATA = $(EXT_DATADIR)/esetNR.Rdata
 # specifies kinases perturbed in each condition
-KIN_COND_PAIRS = $(DATADIR)/kinase-condition-pairs.tsv
+KIN_COND_PAIRS = $(EXT_DATADIR)/kinase-condition-pairs.tsv
 # tries to calculate which kinases are perturbed in each condition
-KIN_INVIVO_CONDS = $(DATADIR)/kinase_invivoconditions.tsv 
+KIN_INVIVO_CONDS = $(EXT_DATADIR)/kinase_invivoconditions.tsv 
 # PhosphositePlus data
 PHOSPHOSITE_PLUS_VERSION = 2017-09-08
-FULL_KIN_SUBSTR_TABLE = $(DATADIR)/Kinase_Substrate_Dataset_$(PHOSPHOSITE_PLUS_VERSION)
-FULL_REG_SITES_TABLE = $(DATADIR)/Regulatory_sites_$(PHOSPHOSITE_PLUS_VERSION)
-FULL_PHOS_SITES_TABLE = $(DATADIR)/Phosphorylation_site_dataset_$(PHOSPHOSITE_PLUS_VERSION)
+FULL_KIN_SUBSTR_TABLE = $(EXT_DATADIR)/Kinase_Substrate_Dataset_$(PHOSPHOSITE_PLUS_VERSION)
+FULL_REG_SITES_TABLE = $(EXT_DATADIR)/Regulatory_sites_$(PHOSPHOSITE_PLUS_VERSION)
+FULL_PHOS_SITES_TABLE = $(EXT_DATADIR)/Phosphorylation_site_dataset_$(PHOSPHOSITE_PLUS_VERSION)
 
 ######################
 ## Generated data sets
