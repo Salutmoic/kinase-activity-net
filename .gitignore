@@ -1,0 +1,6 @@
+data/external/*
+data/*
+out/*
+img/*
+.RData
+.Rhistory
