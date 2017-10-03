@@ -7,7 +7,7 @@
 
 SRCDIR = src
 DATADIR = data
-EXT_DATADIR = $(DATADIR)/ext
+EXT_DATADIR = $(DATADIR)/external
 OUTDIR = out
 IMGDIR = img
 BINDIR = /nfs/research2/beltrao/software-rh7/bin
