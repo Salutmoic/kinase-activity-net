@@ -107,7 +107,7 @@ ASSOCNET_FILTER ?= $(BINDIR)/assocnet-filter $(NET_FILTER_PARAMS)
 ## Scripts
 
 GEN_KINACT_TBL_SCRIPT = $(SRCDIR)/gen-activity-table.r
-POSTERIOR_PROB_SCRIPT = $(SRCDIR)/posterior-prob.r
+FINAL_PREDICTOR_SCRIPT = $(SRCDIR)/final-predictor.r
 DISCRETIZE_SCRIPT = $(SRCDIR)/discretize.r
 NFCHISQ_SCRIPT = $(SRCDIR)/nfchisq.r
 ASSOC_SCRIPT = $(SRCDIR)/assoc_methods.r
@@ -124,8 +124,8 @@ VAL_SCRIPT = $(SRCDIR)/validation.r
 ### Phony targets ###
 #####################
 
-.PHONY: posterior
-posterior: $(KINACT_POSTERIOR_PROB)
+.PHONY: final-predictor
+final-predictor: $(PREDICTOR)
 
 .PHONY: assoc-results
 assoc-results: $(KINACT_ASSOC)
@@ -147,9 +147,9 @@ clean-data:
 clean-assoc:
 	-rm -v $(KINACT_ASSOC)
 
-.PHONY: clean-posterior
-clean-posterior:
-	-rm -v $(KINACT_POSTERIOR_PROB)
+.PHONY: clean-final-predictor
+clean-final-predictor:
+	-rm -v $(PREDICTOR)
 
 .PHONY: clean-results
 clean-results: clean-assoc clean-posterior
@@ -263,9 +263,9 @@ $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) $(HUMAN_KINASE
 ## Merged predictor
 
 # Calculate a merged/posterior probability given all evidence.
-$(PREDICTOR): $(KINACT_ASSOC) $(POSTERIOR_PROB_SCRIPT) \
+$(PREDICTOR): $(KINACT_ASSOC) $(FINAL_PREDICTOR_SCRIPT) \
 			  $(KIN_KIN_SCORES) $(KIN_SCORE_DIST)
-	$(RSCRIPT) $(POSTERIOR_PROB_SCRIPT) $(ASSOC_METHOD) $< $(KIN_KIN_SCORES) \
+	$(RSCRIPT) $(FINAL_PREDICTOR_SCRIPT) $(ASSOC_METHOD) $< $(KIN_KIN_SCORES) \
 		$(KIN_SCORE_DIST) $@
 
 #############
