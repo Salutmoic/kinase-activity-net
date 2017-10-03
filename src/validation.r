@@ -1,16 +1,17 @@
 library(ROCR)
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 1){
-    stop("USAGE: <script> DATA_FILE")
+if (length(argv) != 2){
+    stop("USAGE: <script> DATA_FILE VAL_SET")
 }
 
 pred.score.file <- argv[1]
+val.set.file <- argv[2]
 
 pred.score <- read.delim(pred.score.file, as.is=TRUE)
 rownames(pred.score) <- paste(pred.score[,1], pred.score[,2], sep="-")
 
-true.intxns.tbl <- read.table("data/true-intxns.tsv")
+true.intxns.tbl <- read.table(val.set.file)
 true.intxns <- paste(true.intxns.tbl[,1], true.intxns.tbl[,2], sep="-")
 true.intxns <- true.intxns[which(true.intxns %in% rownames(pred.score))]
 
@@ -49,7 +50,7 @@ for (i in 1:100){
 pred <- prediction(pred.data, label.data)
 
 data.basename <- strsplit(basename(pred.score.file), split="\\.")[[1]][1]
-out.img <- paste("img/", data.basename, ".pdf")
+out.img <- paste("img/", data.basename, "-val.pdf")
 
 pdf(out.img)
 par(cex=1.25)

@@ -24,6 +24,8 @@ DISCR_METHOD ?= mclust.whole
 DECONVOLUTION_A ?= 1.0
 DECONVOLUTION_B ?= 0.99
 
+VAL_SET = $(PSITE_PLUS_VALSET)
+
 #####################
 ## External data sets
 
@@ -66,6 +68,16 @@ KIN_SCORE_DIST = $(OUTDIR)/kinase_distributions.tsv
 KIN_SUBSTR_TABLE = $(DATADIR)/reduced_kinase_table.tsv
 HUMAN_KINASE_TABLE = $(DATADIR)/human_kinase_table.tsv
 PHOSPHOSITES = $(DATADIR)/phosphosites_reduced.tsv
+HUMAN_REG_SITES = $(DATADIR)/human_reg_sites.tsv
+REG_SITES = $(DATADIR)/reg_sites.tsv
+# Validation sets
+PSITE_PLUS_VALSET = $(DATADIR)/validation-set-psiteplus.tsv
+
+#########
+## Images
+
+# Validation
+VAL_IMGS = $(IMGDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
 
 ##################
 ## Program Options
@@ -98,6 +110,7 @@ ASSOC_SCRIPT = $(SRCDIR)/assoc_methods.r
 PSSM_SCRIPT = $(SRCDIR)/PSSM.py
 AA_FREQS_SCRIPT = $(SRCDIR)/aa-freqs.py
 FILTER_PSITE_PLUS_SCRIPT = $(SRCDIR)/filter-psite-plus-tbl.r
+PSITE_PLUS_VAL_SCRIPT = $(SRCDIR)/make-psiteplus-valset.r
 VAL_SCRIPT = $(SRCDIR)/validation.r
 
 # Precious...do not delete
@@ -118,6 +131,9 @@ pssm: $(KIN_KIN_SCORES) $(KIN_KNOWN_PSITE_SCORES) $(KIN_SCORE_DIST)
 
 .PHONY: data
 data: $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KIN_ACT_DATA) $(IMP_EGF_KIN_ACT_DATA)
+
+.PHONY: validation
+validation: $(VAL_IMGS)
 
 .PHONY: clean-data
 clean-data:
@@ -180,6 +196,20 @@ $(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT)
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
 	rm $@.tmp
 
+# Filter the Regulatory sites table to have just human phosphosites
+$(HUMAN_REG_SITES): $(FULL_REG_SITES_TABLE)
+	sed '1,3d' $< | awk -F"\t" 'BEGIN{OFS="\t"}{if (NR==1 || $$7=="human" && $$8~/-p$$/){print}}' | sed 's/-p//' >$@
+
+# Further filter to just include reg sites on kinases for which we
+# have kinase activities
+$(REG_SITES): $(HUMAN_REG_SITES) $(FILTER_PSITE_PLUS_SCRIPT)
+	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $< $@
+
+# Combine PhosphositePlus kinase-substrate and regulatory sites tables
+# to generate a set of true-positive relationships
+$(PSITE_PLUS_VALSET): $(KIN_SUBSTR_TABLE) $(REG_SITES)
+	$(RSCRIPT) $(PSITE_PLUS_VAL_SCRIPT) $^
+
 # Calculate human proteome amino-acid frequencies
 $(AA_FREQS): $(AA_FREQS_SCRIPT)
 	$(PYTHON) $(AA_FREQS_SCRIPT) >$@
@@ -237,6 +267,6 @@ $(OUTDIR)/%-posterior.tsv: $(OUTDIR)/%.tsv $(POSTERIOR_PROB_SCRIPT) \
 #############
 ## Validation
 
-$(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(IMGDIR) $(VAL_SCRIPT)
-	$(RSCRIPT) $(VAL_SCRIPT) $<
+$(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(IMGDIR) $(VAL_SCRIPT)
+	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,2,$^)
 
