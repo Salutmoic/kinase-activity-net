@@ -13,6 +13,7 @@ rownames(pred.score) <- paste(pred.score[,1], pred.score[,2], sep="-")
 
 true.intxns.tbl <- read.table(val.set.file, as.is=TRUE)
 true.intxns <- paste(true.intxns.tbl[,1], true.intxns.tbl[,2], sep="-")
+true.intxns.tbl <- true.intxns.tbl[which(true.intxns %in% rownames(pred.score)),]
 true.intxns <- true.intxns[which(true.intxns %in% rownames(pred.score))]
 
 all.kinases <- unique(c(true.intxns.tbl[,1], true.intxns.tbl[,2]))
