@@ -1,4 +1,4 @@
-load("data/log.wGSEA.kinase_condition.clean.Rdata")
+load("data/external/log.wGSEA.kinase_condition.clean.Rdata")
 
 argv <- commandArgs(TRUE)
 if (length(argv) != 2){
