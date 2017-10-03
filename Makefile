@@ -8,6 +8,7 @@
 SRCDIR = src
 DATADIR = data
 EXT_DATADIR = $(DATADIR)/external
+KEGGDIR = $(EXT_DATADIR)/kegg-relationships
 OUTDIR = out
 IMGDIR = img
 BINDIR = /nfs/research2/beltrao/software-rh7/bin
@@ -25,7 +26,8 @@ DISCR_METHOD ?= mclust.whole
 DECONVOLUTION_A ?= 1.0
 DECONVOLUTION_B ?= 0.99
 
-VAL_SET = $(PSITE_PLUS_VALSET)
+KEGG_VALSET ?= $(KEGG_ACT_VALSET)
+VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
 
 #####################
 ## External data sets
@@ -43,6 +45,10 @@ PHOSPHOSITE_PLUS_VERSION = 2017-09-08
 FULL_KIN_SUBSTR_TABLE = $(EXT_DATADIR)/Kinase_Substrate_Dataset_$(PHOSPHOSITE_PLUS_VERSION)
 FULL_REG_SITES_TABLE = $(EXT_DATADIR)/Regulatory_sites_$(PHOSPHOSITE_PLUS_VERSION)
 FULL_PHOS_SITES_TABLE = $(EXT_DATADIR)/Phosphorylation_site_dataset_$(PHOSPHOSITE_PLUS_VERSION)
+# Kegg data
+KEGG_RELATIONSHIPS = $(wildcard $(KEGGDIR)/*.ppip)
+# Uniprot data
+FULL_UNIPROT_ID_MAPPING = $(EXT_DATADIR)/HUMAN_9606_idmapping.dat
 
 ######################
 ## Generated data sets
@@ -71,8 +77,17 @@ HUMAN_KINASE_TABLE = $(DATADIR)/human_kinase_table.tsv
 PHOSPHOSITES = $(DATADIR)/phosphosites_reduced.tsv
 HUMAN_REG_SITES = $(DATADIR)/human_reg_sites.tsv
 REG_SITES = $(DATADIR)/reg_sites.tsv
+# Kegg-derived files
+KEGG_ACT = $(DATADIR)/kegg-act-rels.tsv
+KEGG_PHOS_ACT = $(DATADIR)/kegg-phos-act-rels.tsv
+KEGG_PHOS = $(DATADIR)/kegg-phos-rels.tsv
+# Uniprot-derived files
+UNIPROT_ID_MAPPING = $(DATADIR)/uniprot-id-map.tsv
 # Validation sets
 PSITE_PLUS_VALSET = $(DATADIR)/validation-set-psiteplus.tsv
+KEGG_ACT_VALSET = $(DATADIR)/validation-set-kegg-act.tsv
+KEGG_PHOS_ACT_VALSET = $(DATADIR)/validation-set-kegg-phos-act.tsv
+KEGG_PHOS_VALSET = $(DATADIR)/validation-set-kegg-phos.tsv
 
 #########
 ## Images
@@ -115,6 +130,8 @@ PSSM_SCRIPT = $(SRCDIR)/PSSM.py
 AA_FREQS_SCRIPT = $(SRCDIR)/aa-freqs.py
 FILTER_PSITE_PLUS_SCRIPT = $(SRCDIR)/filter-psite-plus-tbl.r
 PSITE_PLUS_VAL_SCRIPT = $(SRCDIR)/make-psiteplus-valset.r
+FILTER_KEGG_RELS_SCRIPT = $(SRCDIR)/filter-kegg-tbl.r
+KEGG_VAL_SCRIPT = $(SRCDIR)/make-kegg-valset.r
 VAL_SCRIPT = $(SRCDIR)/validation.r
 
 # Precious...do not delete
@@ -153,6 +170,10 @@ clean-final-predictor:
 
 .PHONY: clean-results
 clean-results: clean-assoc clean-posterior
+
+.PHONY: clean-validation
+clean-validation:
+	-rm -v $(VAL_IMGS)
 
 .PHONY: clean
 clean: clean-data clean-results
@@ -213,6 +234,33 @@ $(REG_SITES): $(HUMAN_REG_SITES) $(FILTER_PSITE_PLUS_SCRIPT)
 # to generate a set of true-positive relationships
 $(PSITE_PLUS_VALSET): $(KIN_SUBSTR_TABLE) $(REG_SITES)
 	$(RSCRIPT) $(PSITE_PLUS_VAL_SCRIPT) $^
+
+# Get all activation relationships from Kegg
+$(KEGG_ACT): $(KEGG_RELATIONSHIPS)
+	cat $^ | sed -E -n '/activation|inhibition|repression/p' | \
+		awk 'BEGIN{OFS="\t"}{print $$1, $$2}' | \
+		sort | uniq >$@
+
+# Get all activation relationships from Kegg
+$(KEGG_PHOS_ACT): $(KEGG_RELATIONSHIPS)
+	cat $^ | sed -E -n '/activation|inhibition|repression/p' | \
+		sed -n '/phosphorylation/p' | \
+		awk 'BEGIN{OFS="\t"}{print $$1, $$2}' | \
+		sort | uniq >$@
+
+# Get all phospho activation relationships from Kegg
+$(KEGG_PHOS): $(KEGG_RELATIONSHIPS)
+	cat $^ | sed -n '/phosphorylation/p' | \
+		awk 'BEGIN{OFS="\t"}{print $$1, $$2}' | \
+		sort | uniq >$@
+
+# Create the Uniprot ID map
+$(UNIPROT_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING)
+	awk 'BEGIN{OFS="\t"}{if ($$2=="Gene_Name"){print $$1, $$3}}' $< >$@
+
+# Kegg-based validation sets
+$(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv $(UNIPROT_ID_MAPPING) $(KEGG_VAL_SCRIPT)
+	$(RSCRIPT) $(KEGG_VAL_SCRIPT) $(wordlist 1,2,$^) $@
 
 # Calculate human proteome amino-acid frequencies
 $(AA_FREQS): $(AA_FREQS_SCRIPT)
