@@ -57,8 +57,8 @@ EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,DATADIR)/egf-kinase-activit
 IMP_EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,$(DATADIR)/egf-kinase-activity-$(T)-imp.tsv)
 # Association table output
 KINACT_ASSOC = $(OUTDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD).tsv
-# Posterior probabilities
-KINACT_POSTERIOR_PROB = $(OUTDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-posterior.tsv
+# Final, merged predictor
+PREDICTOR = $(OUTDIR)/final-predictor.tsv
 # Human amino acid frequencies
 AA_FREQS = $(DATADIR)/aa-freqs.tsv
 # PSSM files
@@ -78,7 +78,10 @@ PSITE_PLUS_VALSET = $(DATADIR)/validation-set-psiteplus.tsv
 ## Images
 
 # Validation
-VAL_IMGS = $(IMGDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
+ASSOC_VAL_IMG = $(IMGDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
+PSSM_VAL_IMG = $(IMGDIR)/kinase_kinase_scores-val.pdf
+PREDICTOR_VAL_IMG = $(IMGDIR)/final-predictor-val.pdf
+VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(PREDICTOR_VAL_IMG)
 
 ##################
 ## Program Options
@@ -260,8 +263,8 @@ $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) $(HUMAN_KINASE
 ## Merged predictor
 
 # Calculate a merged/posterior probability given all evidence.
-$(OUTDIR)/%-posterior.tsv: $(OUTDIR)/%.tsv $(POSTERIOR_PROB_SCRIPT) \
-							$(KIN_KIN_SCORES) $(KIN_SCORE_DIST)
+$(PREDICTOR): $(KINACT_ASSOC) $(POSTERIOR_PROB_SCRIPT) \
+			  $(KIN_KIN_SCORES) $(KIN_SCORE_DIST)
 	$(RSCRIPT) $(POSTERIOR_PROB_SCRIPT) $(ASSOC_METHOD) $< $(KIN_KIN_SCORES) \
 		$(KIN_SCORE_DIST) $@
 

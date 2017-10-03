@@ -44,7 +44,7 @@ for (i in 1:n){
 pred <- prediction(pred.data, label.data)
 
 data.basename <- strsplit(basename(pred.score.file), split="\\.")[[1]][1]
-out.img <- paste("img/", data.basename, "-val.pdf")
+out.img <- paste0("img/", data.basename, "-val.pdf")
 
 pdf(out.img)
 par(cex=1.25)
