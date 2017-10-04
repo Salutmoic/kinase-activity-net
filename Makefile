@@ -157,7 +157,7 @@ assoc-results: $(KINACT_ASSOC)
 pssm: $(KIN_KIN_SCORES) $(KIN_KNOWN_PSITE_SCORES) $(KIN_SCORE_DIST)
 
 .PHONY: data
-data: $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KIN_ACT_DATA) $(IMP_EGF_KIN_ACT_DATA)
+data: $(KINACT_DATA) $(IMP_KINACT_DATA)
 
 .PHONY: validation
 validation: $(VAL_IMGS)
