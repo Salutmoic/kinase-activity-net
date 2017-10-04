@@ -174,12 +174,12 @@ clean-assoc:
 clean-final-predictor:
 	-rm -v $(PREDICTOR)
 
-.PHONY: clean-results
-clean-results: clean-assoc clean-posterior
-
 .PHONY: clean-validation
 clean-validation:
 	-rm -v $(VAL_IMGS)
+
+.PHONY: clean-results
+clean-results: clean-assoc clean-final-predictor clean-validation
 
 .PHONY: clean
 clean: clean-data clean-results
@@ -202,10 +202,8 @@ $(IMGDIR):
 
 # Kinase activity tables
 $(KINACT_DATA) \
-$(IMP_KINACT_DATA) \
-$(EGF_KIN_ACT_DATA) \
-$(IMP_EGF_KIN_ACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(GSEA_DATA) $(KIN_COND_PAIRS)
-	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT)
+$(IMP_KINACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(GSEA_DATA) $(KIN_COND_PAIRS)
+	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT) $(TABLE_STRATEGY)
 
 # Discretized kinase activity
 $(DATADIR)/%-discr.tsv: $(DATADIR)/%-imp.tsv $(DISCRETIZE_SCRIPT)
