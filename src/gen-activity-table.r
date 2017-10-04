@@ -3,8 +3,8 @@ library(VIM)
 library(entropy)
 ## library(FNN)
 suppressMessages(library(Biobase))
-load("data/esetNR.Rdata")
-load("data/log.wGSEA.kinase_condition.clean.Rdata")
+load("data/external/esetNR.Rdata")
+load("data/external/log.wGSEA.kinase_condition.clean.Rdata")
 
 kin.act <- log.wGSEA.kinase_condition.clean
 
@@ -286,9 +286,9 @@ write.activity.table(max.col.table.imp, "data/kinase-activity-max-cols-imp.tsv")
 ##### Only kinases w/ perturbations
 egf.kinases <- c("AKT1", "BRAF", "MAP2K1", "MAPK1", "MTOR", "PDPK1", "PRKACA", "RPS6KB1", "SRC")
 
-kinase.conditions <- read.delim("data/kinase-condition-pairs.tsv", as.is=TRUE)
+kinase.conditions <- read.delim("data/external/kinase-condition-pairs.tsv", as.is=TRUE)
 
-kinase.invivoconditions <- read.delim("data/kinase_invivoconditions.csv", as.is=TRUE, sep=",")
+kinase.invivoconditions <- read.delim("data/external/kinase_invivoconditions.csv", as.is=TRUE, sep=",")
 ## names(kinase.invivoconditions) <- c("Condition", "Kinase", "Description", "invivoAct", "pAct")
 
 kinase.cond <- subset(kinase.conditions, Kinase %in% egf.kinases)
