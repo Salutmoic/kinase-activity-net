@@ -140,9 +140,8 @@ KEGG_PATH_REF_SCRIPT = $(SRCDIR)/gen-kegg-pathway-ref.py
 KEGG_VAL_SCRIPT = $(SRCDIR)/make-kegg-valset.r
 VAL_SCRIPT = $(SRCDIR)/validation.r
 
-# Precious...do not delete
-.PRECIOUS: $(DISCR_KINACT_DATA) $(KINACT_ASSOC) $(PREDICTOR) $(KIN_KIN_SCORES) \
-	$(KIN_SCORE_DIST)
+# Don't delete intermediate files
+.SECONDARY:
 
 #####################
 ### Phony targets ###
@@ -191,6 +190,10 @@ clean-logs:
 
 .PHONY: clean
 clean: clean-data clean-results
+
+# For debugging purposes
+expand-var-%:
+	@echo $($*)
 
 #############
 ### Rules ###
