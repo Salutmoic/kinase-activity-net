@@ -68,7 +68,7 @@ IMP_EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,$(DATADIR)/egf-kinase-a
 # Association table output
 KINACT_ASSOC = $(OUTDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD).tsv
 # Final, merged predictor
-PREDICTOR = $(OUTDIR)/final-predictor.tsv
+PREDICTOR = $(OUTDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor.tsv
 # Human amino acid frequencies
 AA_FREQS = $(DATADIR)/aa-freqs.tsv
 # PSSM files
@@ -100,7 +100,7 @@ KEGG_PHOS_VALSET = $(DATADIR)/validation-set-kegg-phos.tsv
 # Validation
 ASSOC_VAL_IMG = $(IMGDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
 PSSM_VAL_IMG = $(IMGDIR)/kinase_kinase_scores-val.pdf
-PREDICTOR_VAL_IMG = $(IMGDIR)/final-predictor-val.pdf
+PREDICTOR_VAL_IMG = $(IMGDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor-val.pdf
 VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(PREDICTOR_VAL_IMG)
 
 ##################
