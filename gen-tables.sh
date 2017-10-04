@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TABLE_STRATEGIES="max-rows max-cols max-rows-max-cols"
+TABLE_STRATEGIES="max-rows max-cols balanced"
 LOGDIR=log
 
 mkdir -p $LOGDIR

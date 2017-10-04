@@ -16,8 +16,8 @@ BINDIR = /nfs/research2/beltrao/software-rh7/bin
 #############
 ## Parameters
 
-TABLE_STRATEGIES = max-rows max-cols max-rows-max-cols
-TABLE_STRATEGY ?= max-rows-max-cols
+TABLE_STRATEGIES = max-rows max-cols balanced
+TABLE_STRATEGY ?= balanced
 ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info fnn_mut_info partcor
 ASSOC_METHOD ?= scor
 ASSOCNET_FILTER_METHOD ?= deconvolution
@@ -338,3 +338,5 @@ $(PREDICTOR): $(KINACT_ASSOC) $(FINAL_PREDICTOR_SCRIPT) \
 $(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(PROTEIN_GROUPING) $(IMGDIR) $(VAL_SCRIPT)
 	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^)
 
+$(IMGDIR)/validation.pdf:
+	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$@ $(IMGDIR)/*-val.pdf

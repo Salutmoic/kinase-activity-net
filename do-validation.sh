@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TABLE_STRATEGIES="max-rows max-cols max-rows-max-cols"
+TABLE_STRATEGIES="max-rows max-cols balanced"
 ASSOC_METHODS="pcor pcor-filter scor scor-filter nfchisq mut_info fnn_mut_info partcor"
 LOGDIR=log
 

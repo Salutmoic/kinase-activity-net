@@ -59,7 +59,7 @@ kin.act <- kin.act[which(rownames(kin.act) %in% good.kins & (!rownames(kin.act) 
 
 percent.na <- function(x) return(length(which(is.na(x)))/length(x))
 
-make.max.table <- function(full.tbl, na.threshold){
+make.balanced.table <- function(full.tbl, na.threshold){
     ## Sort the columns by number of missing columns.  Then take one
     ## column at a time until one row has >threshold missing data.  At
     ## that point, stop, revert to previous iteration.
@@ -262,8 +262,8 @@ if (length(argv) != 1){
 
 strategy <- argv[1]
 
-if (strategy=="max-rows-max-cols"){
-    max.table <- make.max.table(kin.act.filt, na.threshold)
+if (strategy=="balanced"){
+    max.table <- make.balanced.table(kin.act.filt, na.threshold)
 }else if (strategy=="max-rows"){
     max.table <- make.max.row.table(kin.act.filt, na.threshold, 20)
 }else if (strategy=="max-cols"){
