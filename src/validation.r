@@ -35,12 +35,14 @@ method <- "other"
 if (grepl("pcor", pred.score.file)){
     assoc.method <- "Pearson's Correlation"
     method <- "cor"
-}else if(grepl("scor", pred.score.file)){
+}else if (grepl("scor", pred.score.file)){
     assoc.method <- "Spearman's Correlation"
     method <- "cor"
-}else if(grepl("nfchisq", pred.score.file)){
+}else if (grepl("nfchisq", pred.score.file)){
     assoc.method <- "FunChiSq"
     method <- "nfchisq"
+}else if (grepl("pssm", pred.score.file)){
+    assoc.method <- "PSSM Score"
 }
 ## The next two append info to the plot title and override for
 ## normalisation purposes the method used, in order of increasing
