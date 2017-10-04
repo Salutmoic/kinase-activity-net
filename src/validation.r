@@ -24,14 +24,34 @@ pred.score.file <- argv[1]
 val.set.file <- argv[2]
 prot.groups.file <- argv[3]
 
-if (grepl("posterior", pred.score.file)){
-    method="predictor"
-}else if (grepl("cor", pred.score.file)){
-    method="cor"
-}else if (grepl("nfchisq", pred.score.file)){
-    method="nfchisq"
-}else{
-    method="other"
+## Get information from the prediction file name.  Build up a name of
+## the prediction method for adding a title to plots, and figure out
+## what kind of method was in use in order to determine any kind of
+## normalisation that should be done before making predictions.
+pred.name <- strsplit(basename(pred.score.file), split="\\.")[[1]][1]
+pred.name <- sub("kinase-activity-", "", pred.name)
+assoc.method <- "[undefined]"
+method <- "other"
+if (grepl("pcor", pred.score.file)){
+    assoc.method <- "Pearson's Correlation"
+    method <- "cor"
+}else if(grepl("scor", pred.score.file)){
+    assoc.method <- "Spearman's Correlation"
+    method <- "cor"
+}else if(grepl("nfchisq", pred.score.file)){
+    assoc.method <- "FunChiSq"
+    method <- "nfchisq"
+}
+## The next two append info to the plot title and override for
+## normalisation purposes the method used, in order of increasing
+## precedence.
+if (grepl("filter", pred.score.file)){
+    assoc.method <- paste0(assoc.method, " (filtered)")
+    method <- "filtered"
+}
+if (grepl("final-predictor", pred.score.file)){
+    assoc.method <- paste0(assoc.method, " (merged)")
+    method <- "predictor"
 }
 
 pred.score <- read.delim(pred.score.file, as.is=TRUE)
@@ -74,7 +94,7 @@ for (i in 1:n){
         ## really necessary I guess
         preds <- abs(preds)/max(abs(preds))
     }else if(method == "nfchisq"){
-        ## normalise
+        ## normalise...again, probably not necessary
         min.pred <- min(preds)
         max.pred <- max(preds)
         preds <- (preds-min.pred)/(max.pred-min.pred)
@@ -110,13 +130,13 @@ message(paste("Mean AUC =", format(mean.auc, digits=2)))
 message(paste("S.E.M. =", format(se.auc, digits=2)))
 message(paste("n =", n))
 plot(perf.roc, avg="vertical", spread.estimate="boxplot",
-     main=paste(data.basename,
+     main=paste(assoc.method,
                 paste0("Mean AUC=", format(mean.auc, digits=2)),
                 paste0("S.E.M.=", format(se.auc, digits=2)),
                 sep="\n"))
 
 ## Precision-recall curve
 perf.pr <- performance(pred, measure="prec", x.measure="rec")
-plot(perf.pr, avg="vertical", spread.estimate="boxplot", main=data.basename)
+plot(perf.pr, avg="vertical", spread.estimate="boxplot", main=assoc.method)
 
 dev.off()
