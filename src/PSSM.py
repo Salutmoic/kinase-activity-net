@@ -204,7 +204,7 @@ def score_network(filename):
 
     out_file_base = splitext(basename(filename))[0]
     dist_out_file = "out/" + out_file_base + "-pssm-dists.tsv"
-    v = open("out/kinase_distributions.tsv","w")
+    v = open(dist_out_file, "w")
     for i in d:
 
         line = i + "\t"
