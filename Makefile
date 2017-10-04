@@ -22,7 +22,7 @@ ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info fnn_mut_info 
 ASSOC_METHOD ?= scor
 ASSOCNET_FILTER_METHOD ?= deconvolution
 ASSOCNET_FILTER_SCALE_METHOD ?= abs
-DISCR_METHOD ?= mclust.whole
+DISCR_METHOD ?= trunc 	# mclust.whole mclust.by.row manual trunc
 DECONVOLUTION_A ?= 1.0
 DECONVOLUTION_B ?= 0.99
 
