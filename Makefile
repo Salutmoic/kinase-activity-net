@@ -59,16 +59,16 @@ FULL_UNIPROT_ID_MAPPING = $(EXT_DATADIR)/HUMAN_9606_idmapping.dat
 
 # Initial kinase-activity tables, trying to
 # maximize #rows, #cols or both.  Raw and imputed datasets
-KINACT_DATA = $(DATADIR)/kinase-activity-$(TABLE_STRATEGY).tsv
-IMP_KINACT_DATA = $(DATADIR)/kinase-activity-$(TABLE_STRATEGY)-imp.tsv
-DISCR_KINACT_DATA = $(DATADIR)/kinase-activity-$(TABLE_STRATEGY)-discr.tsv
+KINACT_DATA = $(DATADIR)/kinact-$(TABLE_STRATEGY).tsv
+IMP_KINACT_DATA = $(DATADIR)/kinact-$(TABLE_STRATEGY)-imp.tsv
+DISCR_KINACT_DATA = $(DATADIR)/kinact-$(TABLE_STRATEGY)-discr.tsv
 # EGF-signaling-related kinase activity
-EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,DATADIR)/egf-kinase-activity-$(T).tsv)
-IMP_EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,$(DATADIR)/egf-kinase-activity-$(T)-imp.tsv)
+EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,DATADIR)/egf-kinact-$(T).tsv)
+IMP_EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,$(DATADIR)/egf-kinact-$(T)-imp.tsv)
 # Association table output
-KINACT_ASSOC = $(OUTDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD).tsv
+KINACT_ASSOC = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD).tsv
 # Final, merged predictor
-PREDICTOR = $(OUTDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor.tsv
+PREDICTOR = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor.tsv
 # Human amino acid frequencies
 AA_FREQS = $(DATADIR)/aa-freqs.tsv
 # PSSM files
@@ -98,9 +98,9 @@ KEGG_PHOS_VALSET = $(DATADIR)/validation-set-kegg-phos.tsv
 ## Images
 
 # Validation
-ASSOC_VAL_IMG = $(IMGDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
+ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
 PSSM_VAL_IMG = $(IMGDIR)/kinase_kinase_scores-val.pdf
-PREDICTOR_VAL_IMG = $(IMGDIR)/kinase-activity-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor-val.pdf
+PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor-val.pdf
 VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(PREDICTOR_VAL_IMG)
 
 ##################

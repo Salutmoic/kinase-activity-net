@@ -271,6 +271,6 @@ if (strategy=="max-rows-max-cols"){
 }
 max.table.filt <- filter.by.entropy(max.table, entropy.filter.stren, entropy.bins)
 print.table.info(max.table.filt)
-write.activity.table(max.table.filt, paste0("data/kinase-activity-", strategy, ".tsv"))
+write.activity.table(max.table.filt, paste0("data/kinact-", strategy, ".tsv"))
 max.table.imp <- impute.on.table(max.table.filt)
-write.activity.table(max.table.imp, paste0("data/kinase-activity-", strategy, "-imp.tsv"))
+write.activity.table(max.table.imp, paste0("data/kinact-", strategy, "-imp.tsv"))

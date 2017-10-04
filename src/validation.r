@@ -29,7 +29,7 @@ prot.groups.file <- argv[3]
 ## what kind of method was in use in order to determine any kind of
 ## normalisation that should be done before making predictions.
 pred.name <- strsplit(basename(pred.score.file), split="\\.")[[1]][1]
-pred.name <- sub("kinase-activity-", "", pred.name)
+pred.name <- sub("kinact-", "", pred.name)
 assoc.method <- "[undefined]"
 method <- "other"
 if (grepl("pcor", pred.score.file)){
