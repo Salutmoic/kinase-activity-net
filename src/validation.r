@@ -145,10 +145,9 @@ plot(perf.roc, avg="vertical", spread.estimate="boxplot",
                 paste0("Mean AUC=", format(mean.auc, digits=2)),
                 paste0("S.E.M.=", format(se.auc, digits=2)),
                 sep="\n"))
-
 ## Precision-recall curve
 perf.pr <- performance(pred, measure="prec", x.measure="rec")
 plot(perf.pr, avg="vertical", spread.estimate="boxplot",
-     main=paste(assoc.method, table.method, sep="\n")
+     main=paste(assoc.method, table.method, sep="\n"))
 
 dev.off()
