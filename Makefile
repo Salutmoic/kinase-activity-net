@@ -74,7 +74,7 @@ AA_FREQS = $(DATADIR)/aa-freqs.tsv
 # PSSM files
 KIN_KIN_SCORES = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-pssm.tsv
 KIN_KNOWN_PSITE_SCORES = $(OUTDIR)/known_kinase_psite-score
-KIN_SCORE_DIST = $(OUTDIR)/kinase_distributions.tsv
+KIN_SCORE_DIST = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-pssm-dists.tsv
 # PhosphositePlus derived files
 KIN_SUBSTR_TABLE = $(DATADIR)/reduced_kinase_table.tsv
 HUMAN_KINASE_TABLE = $(DATADIR)/human_kinase_table.tsv
@@ -141,7 +141,8 @@ KEGG_VAL_SCRIPT = $(SRCDIR)/make-kegg-valset.r
 VAL_SCRIPT = $(SRCDIR)/validation.r
 
 # Precious...do not delete
-.PRECIOUS: $(DISCR_KINACT_DATA)
+.PRECIOUS: $(DISCR_KINACT_DATA) $(KINACT_ASSOC) $(PREDICTOR) $(KIN_KIN_SCORES) \
+	$(KIN_SCORE_DIST)
 
 #####################
 ### Phony targets ###

@@ -202,6 +202,8 @@ def score_network(filename):
     d = dist(seqs,pmm,ks)
     
 
+    out_file_base = splitext(basename(filename))[0]
+    dist_out_file = "out/" + out_file_base + "-pssm-dists.tsv"
     v = open("out/kinase_distributions.tsv","w")
     for i in d:
 
@@ -213,7 +215,7 @@ def score_network(filename):
     v.close()
     
     scores = score_kin_pairs(ks,pmm,filename)
-    out_file = "out/" + splitext(basename(filename))[0] + "-pssm.tsv"
+    out_file = "out/" + out_file_base + "-pssm.tsv"
     v = open(out_file, "w")
     for i in scores:
         
