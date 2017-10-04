@@ -21,13 +21,17 @@ TABLE_STRATEGY ?= max-rows-max-cols
 ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info fnn_mut_info partcor
 ASSOC_METHOD ?= scor
 ASSOCNET_FILTER_METHOD ?= deconvolution
-ASSOCNET_FILTER_SCALE_METHOD ?= standard
+ASSOCNET_FILTER_SCALE_METHOD ?= abs
 DISCR_METHOD ?= mclust.whole
 DECONVOLUTION_A ?= 1.0
 DECONVOLUTION_B ?= 0.99
 
 KEGG_VALSET ?= $(KEGG_ACT_VALSET)
 VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
+# A list of protein annotations used to group proteins so that during
+# validation we don't randomly select two kinases that are known to be
+# functionally related (e.g. in the same pathway) for a true negative.
+PROTEIN_GROUPING = $(KEGG_PATH_REFERENCE)
 
 #####################
 ## External data sets
@@ -81,6 +85,7 @@ REG_SITES = $(DATADIR)/reg_sites.tsv
 KEGG_ACT = $(DATADIR)/kegg-act-rels.tsv
 KEGG_PHOS_ACT = $(DATADIR)/kegg-phos-act-rels.tsv
 KEGG_PHOS = $(DATADIR)/kegg-phos-rels.tsv
+KEGG_PATH_REFERENCE = $(DATADIR)/kegg-path-ref.tsv
 # Uniprot-derived files
 UNIPROT_ID_MAPPING = $(DATADIR)/uniprot-id-map.tsv
 # Validation sets
@@ -131,6 +136,7 @@ AA_FREQS_SCRIPT = $(SRCDIR)/aa-freqs.py
 FILTER_PSITE_PLUS_SCRIPT = $(SRCDIR)/filter-psite-plus-tbl.r
 PSITE_PLUS_VAL_SCRIPT = $(SRCDIR)/make-psiteplus-valset.r
 FILTER_KEGG_RELS_SCRIPT = $(SRCDIR)/filter-kegg-tbl.r
+KEGG_PATH_REF_SCRIPT = $(SRCDIR)/gen-kegg-pathway-ref.py
 KEGG_VAL_SCRIPT = $(SRCDIR)/make-kegg-valset.r
 VAL_SCRIPT = $(SRCDIR)/validation.r
 
@@ -258,6 +264,10 @@ $(KEGG_PHOS): $(KEGG_RELATIONSHIPS)
 $(UNIPROT_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING)
 	awk 'BEGIN{OFS="\t"}{if ($$2=="Gene_Name"){print $$1, $$3}}' $< >$@
 
+# Kegg pathway reference
+$(KEGG_PATH_REFERENCE): $(KEGG_RELATIONSHIPS) $(UNIPROT_ID_MAPPING)
+	$(PYTHON) $(KEGG_PATH_REF_SCRIPT) | sort | uniq >$@
+
 # Kegg-based validation sets
 $(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv $(UNIPROT_ID_MAPPING) $(KEGG_VAL_SCRIPT)
 	$(RSCRIPT) $(KEGG_VAL_SCRIPT) $(wordlist 1,2,$^) $@
@@ -319,6 +329,6 @@ $(PREDICTOR): $(KINACT_ASSOC) $(FINAL_PREDICTOR_SCRIPT) \
 #############
 ## Validation
 
-$(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(IMGDIR) $(VAL_SCRIPT)
-	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,2,$^)
+$(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(PROTEIN_GROUPING) $(IMGDIR) $(VAL_SCRIPT)
+	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^)
 

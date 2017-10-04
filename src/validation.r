@@ -1,24 +1,58 @@
-library(ROCR)
+suppressMessages(library(ROCR))
+
+gen.possible.false.intxns <- function(all.kinases, prot.groups){
+    possible.false.intxns <- c()
+    for (k1 in all.kinases){
+        for (k2 in all.kinases){
+            if (k1 == k2)
+                next
+            k1.groups <- subset(prot.groups, protein == k1)$group
+            k2.groups <- subset(prot.groups, protein == k2)$group
+            if (length(intersect(k1.groups, k2.groups)) == 0)
+                possible.false.intxns <- c(possible.false.intxns, paste(k1, k2, sep="-"))
+        }
+    }
+    return (possible.false.intxns)
+}
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 2){
-    stop("USAGE: <script> DATA_FILE VAL_SET")
+if (length(argv) != 3){
+    stop("USAGE: <script> DATA_FILE VAL_SET PROTEIN_GROUPING")
 }
 
 pred.score.file <- argv[1]
 val.set.file <- argv[2]
+prot.groups.file <- argv[3]
+
+if (grepl("posterior", pred.score.file)){
+    method="predictor"
+}else if (grepl("cor", pred.score.file)){
+    method="cor"
+}else if (grepl("nfchisq", pred.score.file)){
+    method="nfchisq"
+}else{
+    method="other"
+}
 
 pred.score <- read.delim(pred.score.file, as.is=TRUE)
-rownames(pred.score) <- paste(pred.score[,1], pred.score[,2], sep="-")
+names(pred.score) <- c("prot1", "prot2", "pred.score")
+pred.score <- subset(pred.score, prot1 != prot2)
+rownames(pred.score) <- paste(pred.score$prot1, pred.score$prot2, sep="-")
 
 true.intxns.tbl <- read.table(val.set.file, as.is=TRUE)
 true.intxns <- paste(true.intxns.tbl[,1], true.intxns.tbl[,2], sep="-")
-true.intxns.tbl <- true.intxns.tbl[which(true.intxns %in% rownames(pred.score)),]
 true.intxns <- true.intxns[which(true.intxns %in% rownames(pred.score))]
 
-all.kinases <- unique(c(true.intxns.tbl[,1], true.intxns.tbl[,2]))
-possible.intxns <- as.vector(outer(all.kinases, all.kinases, paste, sep="-"))
-possible.false.intxns <- setdiff(possible.intxns, true.intxns)
+prot.groups.full <- read.table(prot.groups.file, as.is=TRUE)
+names(prot.groups.full) <- c("group", "protein")
+
+all.kinases <- unique(c(pred.score$prot1, pred.score$prot2))
+prot.groups <- subset(prot.groups.full, protein %in% all.kinases)
+possible.false.intxns <- gen.possible.false.intxns(all.kinases, prot.groups)
+## Remove true interactions from the set of possible false interactions
+possible.false.intxns <- setdiff(possible.false.intxns, true.intxns)
+## Keep only false interactions for which we have predictions
+possible.false.intxns <- intersect(possible.false.intxns, rownames(pred.score))
 
 pred.data <- NULL
 label.data <- NULL
@@ -27,10 +61,24 @@ n <- 100
 
 ## This procedure is sufficient for training-free predictions.
 for (i in 1:n){
-    false.intxns <- sample(possible.false.intxns, size=3*length(true.intxns))
+    false.intxns <- sample(possible.false.intxns, size=10*length(true.intxns))
     ## Put together the tables of predictions and TRUE/FALSE labels
     intxns <- c(true.intxns, false.intxns)
-    preds <- pred.score[intxns, 3]
+    preds <- pred.score[intxns, "pred.score"]
+    if (method == "cor"){
+        ## Strongly negative associations are as interesting to us as
+        ## strongly positive scores, but the actual direction doesn't
+        ## matter to us (repression is as interesting as activation,
+        ## but we don't ultimately care which one it is).  So, take
+        ## the absolute value of the score.  Normalise it too...not
+        ## really necessary I guess
+        preds <- abs(preds)/max(abs(preds))
+    }else if(method == "nfchisq"){
+        ## normalise
+        min.pred <- min(preds)
+        max.pred <- max(preds)
+        preds <- (preds-min.pred)/(max.pred-min.pred)
+    }
     labels <- c(rep(TRUE, length(true.intxns)), rep(FALSE, length(false.intxns)))
     if (is.null(pred.data)){
         pred.data <- preds
@@ -39,8 +87,11 @@ for (i in 1:n){
         pred.data <- cbind(pred.data, preds)
         label.data <- cbind(label.data, labels)
     }
+    if (i==1){
+        out.tbl <- cbind(intxns, pred.data, label.data)
+        write.table(out.tbl, "tmp/validation-test-set.tsv", quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
+    }
 }
-
 
 pred <- prediction(pred.data, label.data)
 
@@ -55,15 +106,17 @@ perf.roc <- performance(pred, measure="tpr", x.measure="fpr")
 perf.auc <- performance(pred, "auc")
 mean.auc <- mean(unlist(perf.auc@y.values))
 se.auc <- sd(unlist(perf.auc@y.values))/sqrt(n)
-message(paste("Mean AUC =", mean.auc))
-message(paste("S.E.M. =", se.auc))
+message(paste("Mean AUC =", format(mean.auc, digits=2)))
+message(paste("S.E.M. =", format(se.auc, digits=2)))
 message(paste("n =", n))
-plot(perf.roc, avg="vertical",
-     main=paste(data.basename, paste0("Mean AUC=", mean.auc),
-                paste0("S.E.M.=", se.auc), sep="\n"))
+plot(perf.roc, avg="vertical", spread.estimate="boxplot",
+     main=paste(data.basename,
+                paste0("Mean AUC=", format(mean.auc, digits=2)),
+                paste0("S.E.M.=", format(se.auc, digits=2)),
+                sep="\n"))
 
 ## Precision-recall curve
 perf.pr <- performance(pred, measure="prec", x.measure="rec")
-plot(perf.pr, avg="vertical", main=data.basename)
+plot(perf.pr, avg="vertical", spread.estimate="boxplot", main=data.basename)
 
 dev.off()
