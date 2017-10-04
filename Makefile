@@ -72,7 +72,7 @@ PREDICTOR = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor.t
 # Human amino acid frequencies
 AA_FREQS = $(DATADIR)/aa-freqs.tsv
 # PSSM files
-KIN_KIN_SCORES = $(OUTDIR)/kinase_kinase_scores.tsv
+KIN_KIN_SCORES = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-pssm.tsv
 KIN_KNOWN_PSITE_SCORES = $(OUTDIR)/known_kinase_psite-score
 KIN_SCORE_DIST = $(OUTDIR)/kinase_distributions.tsv
 # PhosphositePlus derived files
@@ -99,7 +99,7 @@ KEGG_PHOS_VALSET = $(DATADIR)/validation-set-kegg-phos.tsv
 
 # Validation
 ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
-PSSM_VAL_IMG = $(IMGDIR)/kinase_kinase_scores-val.pdf
+PSSM_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-pssm-val.pdf
 PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor-val.pdf
 VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(PREDICTOR_VAL_IMG)
 
@@ -312,8 +312,9 @@ $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 # Calculate kinase-substrate PSSM scores
 $(KIN_KIN_SCORES) \
 $(KIN_KNOWN_PSITE_SCORES) \
-$(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) $(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)
-	$(PYTHON2) $(PSSM_SCRIPT)
+$(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) \
+					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES) $(KINACT_DATA)
+	$(PYTHON2) $(PSSM_SCRIPT) $(KINACT_DATA)
 
 ###################
 ## Merged predictor

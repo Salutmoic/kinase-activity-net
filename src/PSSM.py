@@ -1,8 +1,10 @@
 import numpy as np
 import random
 from os import listdir
-from os.path import isfile, join, walk
+from os.path import isfile, join, walk, basename, splitext
 from math import log
+import sys
+import itertools
 
 
 def read_data():
@@ -152,16 +154,21 @@ def score_kin_pairs(ks,pmms,netdir):
     # it returns a dictionary with kinasa A and kinase B and list of scores for each phosphosite found
     # on B
 
-    #f is some imaginary network
-    f =  open(netdir)
+    prots = set()
+    with open(netdir) as h:
+        for line in h:
+            prot, _, _ = line.split()
+            prots.add(prot)
+    pairs = itertools.product(prots, repeat=2)
+    from pprint import pprint
+
     psites = kin_phosphosites(ks)
     
     scores = {}
-    for line in f:
-        line = line.split("\t")
-        A = line[0]
-        B= line[1][0:(len(line[1])-1)]
-
+    for pair in pairs:
+        A, B = pair
+        if A == B:
+            continue
         sites = psites[B]
         for i in sites:
             sc = score(i,pmms[A],ks[A])
@@ -206,7 +213,8 @@ def score_network(filename):
     v.close()
     
     scores = score_kin_pairs(ks,pmm,filename)
-    v = open("out/kinase_kinase_scores.tsv","w")
+    out_file = "out/" + splitext(basename(filename))[0] + "-pssm.tsv"
+    v = open(out_file, "w")
     for i in scores:
         
         m_score = max(scores[i])
@@ -237,19 +245,8 @@ def known_scores(pmms,ks):
     return    
    
 
-filename = "data/network_kinase-activity-max-rows-imp.tsv.txt"    
-score_network(filename)
-
-
-    
-
-        
-
-
-
-
-
-
-
-
-    
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        sys.exit("USAGE: <script> DATA_FILE")
+    filename = sys.argv[1]
+    score_network(filename)
