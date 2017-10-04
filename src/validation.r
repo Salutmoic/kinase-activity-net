@@ -55,11 +55,11 @@ if (grepl("final-predictor", pred.score.file)){
     assoc.method <- paste0(assoc.method, " (merged)")
     method <- "predictor"
 }
-if (grepl("balanced")){
+if (grepl("balanced", pred.score.file)){
     table.method <- "balanced table"
-}else if (grepl("max-rows")){
+}else if (grepl("max-rows", pred.score.file)){
     table.method <- "max kinases"
-}else if (grepl("max-cols")){
+}else if (grepl("max-cols", pred.score.file)){
     table.method <- "max conditions"
 }
 
