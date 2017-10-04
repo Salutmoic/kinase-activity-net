@@ -181,6 +181,10 @@ clean-validation:
 .PHONY: clean-results
 clean-results: clean-assoc clean-final-predictor clean-validation
 
+.PHONY: clean-logs
+clean-logs:
+	-rm -v log/*
+
 .PHONY: clean
 clean: clean-data clean-results
 
@@ -190,6 +194,9 @@ clean: clean-data clean-results
 
 ##############
 ## Directories
+
+$(DATADIR):
+	mkdir -p $(DATADIR)
 
 $(OUTDIR):
 	mkdir -p $(OUTDIR)

@@ -267,7 +267,7 @@ if (strategy=="max-rows-max-cols"){
 }else if (strategy=="max-rows"){
     max.table <- make.max.row.table(kin.act.filt, na.threshold, 20)
 }else if (strategy=="max-cols"){
-    max.col.table <- make.max.col.table(kin.act.filt, na.threshold, 20)
+    max.table <- make.max.col.table(kin.act.filt, na.threshold, 20)
 }
 max.table.filt <- filter.by.entropy(max.table, entropy.filter.stren, entropy.bins)
 print.table.info(max.table.filt)
