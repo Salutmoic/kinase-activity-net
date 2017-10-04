@@ -10,28 +10,23 @@ import itertools
 def read_data():
     #Reads kinase-substrate table where substrate and kinase are found in 
     f = open("data/reduced_kinase_table.tsv","r")
-
-    
-
     columns = f.readline()
-
     columns =columns.split("\t")
     tside = columns.index("SITE_...7_AA")
     ktable = {}
     for line in f:
-        
         line = line.split("\t")
         if line[0] in ktable:
             ktable[line[0]].append(line[tside])
         else:
             ktable[line[0]] = [line[tside]]
-       
     return tside,ktable
 
 def amino_acids():
     #returns a dictionary containing a list of the common 20 amino acids 
-    aminos = {"G":0,"A":1,"V":2,"L":3,"I":4,"P":5,"F":6,"Y":7,"W":8,"S":9,"T":10,"C":11,"M":12,"N":13,"Q":14,"K":15,"R":16,"H":17,"D":18,"E":19}
-
+    aminos = {"G":0, "A":1, "V":2, "L":3, "I":4, "P":5, "F":6, "Y":7, "W":8,
+              "S":9, "T":10, "C":11, "M":12, "N":13, "Q":14, "K":15, "R":16,
+              "H":17, "D":18, "E":19}
     return aminos
 
 
@@ -45,8 +40,8 @@ def read_aa_freqs():
 
 
 def pmms(ks):
-    # returns a dictionary where keys are kinases and values are pmms matrices made from the known substrates
-    # for each kinase
+    # returns a dictionary where keys are kinases and values are pmms
+    # matrices made from the known substrates for each kinase
     
     aminos = amino_acids()
     pmms = {}
@@ -76,23 +71,19 @@ def pmms(ks):
     return pmms
 
 
-
 def subseqs():
     #This function extracts peptides surrounding phospho sites found in the phosphosite plus
     # human_kinase_table
     f = open("data/human_kinase_table.tsv","r")
     
     columns = f.readline()
-
     columns =columns.split("\t")
     seqind = columns.index("SITE_...7_AA")
     seqs = []
     
     for line in f:
-        
         line = line.split("\t")
         seqs.append(line[seqind])
-
 
     return seqs
 
@@ -113,18 +104,15 @@ def score(seq,pmms,ks):
 def dist(seqs,pmms,ks):
     #creates distribution of pmms scores
     #scores are calculated by scoring a random phosphosite relative to to kinase i
-    dist = {}
 
+    dist = {}
     for i in pmms:
         d = []
         for j in range(0,1000):
-
             rand =  random.randint(0,(len(seqs)-1))
             seq = seqs[rand]
-
             d.append(score(seq,pmms[i],ks[i]))
         dist[i] = d
-
     return dist
         
 def kin_phosphosites(ks):
@@ -139,14 +127,12 @@ def kin_phosphosites(ks):
     seqind = columns.index("SITE_...7_AA")
     
     for line in f:
-        
         line = line.split("\t")
         if line[0] in ks.keys():
             if line[0] not in psites:
                 psites[line[0]] = [line[seqind]]
             else:
                 psites[line[0]].append(line[seqind])
-
     return psites
 
 def score_kin_pairs(ks,pmms,netdir):
@@ -174,7 +160,6 @@ def score_kin_pairs(ks,pmms,netdir):
             sc = score(i,pmms[A],ks[A])
             if (A,B) in scores.keys():
                 scores[(A,B)].append(sc)
-               
             else:
                 scores[(A,B)] = [sc]
     return scores
@@ -188,7 +173,6 @@ def assess_edges(scores,dist):
         m = max(scores[i])
         z = (m-np.mean(dist[i[0]]))/np.std(dist[i[0]])
         zscores[i] = z
-
     return zscores
 
 def score_network(filename):
@@ -200,7 +184,6 @@ def score_network(filename):
     seqs = subseqs()
 
     d = dist(seqs,pmm,ks)
-    
 
     out_file_base = splitext(basename(filename))[0]
     dist_out_file = "out/" + out_file_base + "-pssm-dists.tsv"
@@ -221,14 +204,11 @@ def score_network(filename):
         
         m_score = max(scores[i])
         v.write(str(i[0])+"\t"+str(i[1])+ "\t"+ str(m_score)+"\n")
-
     v.close()
 
     
     
 def known_scores(pmms,ks):
-
-    
     v = open("out/known_kinase_psite-score","w")
     f = open("data/human_kinase_table","r")
     columns = f.readline()
