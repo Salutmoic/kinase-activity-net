@@ -162,6 +162,9 @@ data: $(KINACT_DATA) $(IMP_KINACT_DATA)
 .PHONY: validation
 validation: $(VAL_IMGS)
 
+.PHONY: merge-validation
+merge-validation: $(IMGDIR)/validation.pdf
+
 .PHONY: clean-data
 clean-data:
 	-rm -v $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KIN_ACT_DATA) $(IMP_EGF_KIN_ACT_DATA)
