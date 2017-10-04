@@ -198,25 +198,25 @@ filter.low.activity <- function(full.tbl){
     return(filtered.tbl)
 }
 
-filter.by.entropy <- function(full.tbl, entropy.threshold, num.bins){
+filter.by.entropy <- function(full.tbl, entropy.filter.stren, num.bins){
     tbl.min <- min(full.tbl, na.rm=TRUE)
     tbl.max <- max(full.tbl, na.rm=TRUE)
-    good.cols <- which(apply(full.tbl, 2,
-                             function(col){
-                                 entropy(discretize(na.omit(col),
-                                                    numBins=num.bins,
-                                                    r=range(tbl.min, tbl.max))) > entropy.threshold
-                             }))
+    col.entropy <- apply(full.tbl, 2,
+                          function(col){
+                              entropy(discretize(na.omit(col),
+                                                 numBins=num.bins,
+                                                 r=range(tbl.min, tbl.max)))})
+    good.cols <- which(col.entropy > entropy.filter.stren*max(col.entropy, na.rm=TRUE))
     if (length(good.cols) < ncol(full.tbl)){
         message(paste("Filtering out", ncol(full.tbl)-length(good.cols), "columns due to low entropy"))
     }
     filtered.tbl <- subset(full.tbl, select=good.cols)
-    good.rows <- rownames(filtered.tbl)[which(apply(filtered.tbl, 1,
-                                                    function(row){
-                                                        entropy(discretize(na.omit(row),
-                                                                           numBins=num.bins,
-                                                                           r=range(tbl.min, tbl.max))) > entropy.threshold
-                                                    }))]
+    row.entropy <- apply(filtered.tbl, 1,
+                         function(row){
+                             entropy(discretize(na.omit(row),
+                                                numBins=num.bins,
+                                                r=range(tbl.min, tbl.max)))})
+    good.rows <- which(row.entropy > entropy.filter.stren*max(row.entropy, na.rm=TRUE))
     if (length(good.rows) < nrow(full.tbl)){
         message(paste("Filtering out", nrow(full.tbl)-length(good.rows), "rows due to low entropy"))
     }
@@ -237,7 +237,7 @@ write.activity.table <- function(tbl, file.name){
     write.table(tbl.df, file.name, sep="\t", quote=FALSE, row.names=FALSE, col.names=FALSE)
 }
 
-impute.on.table <- function(tbl, filter.entropy=TRUE){
+impute.on.table <- function(tbl){
     tbl.imp <- data.frame(kNN(tbl, imp_var=FALSE))
     rownames(tbl.imp) <- rownames(tbl)
     colnames(tbl.imp) <- colnames(tbl)
@@ -250,8 +250,8 @@ print.table.info <- function(tbl){
 }
 
 na.threshold <- 1/3
-entropy.threshold <- 1.0
-entropy.bins <- 30
+entropy.filter.stren <- 0.5
+entropy.bins <- 10
 
 kin.act.filt <- filter.low.activity(kin.act)
 
@@ -269,7 +269,7 @@ if (strategy=="max-rows-max-cols"){
 }else if (strategy=="max-cols"){
     max.col.table <- make.max.col.table(kin.act.filt, na.threshold, 20)
 }
-max.table.filt <- filter.by.entropy(max.table, entropy.threshold, entropy.bins)
+max.table.filt <- filter.by.entropy(max.table, entropy.filter.stren, entropy.bins)
 print.table.info(max.table.filt)
 write.activity.table(max.table.filt, paste0("data/kinase-activity-", strategy, ".tsv"))
 max.table.imp <- impute.on.table(max.table.filt)
