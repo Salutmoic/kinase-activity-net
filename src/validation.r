@@ -55,6 +55,13 @@ if (grepl("final-predictor", pred.score.file)){
     assoc.method <- paste0(assoc.method, " (merged)")
     method <- "predictor"
 }
+if (grepl("balanced")){
+    table.method <- "balanced table"
+}else if (grepl("max-rows")){
+    table.method <- "max kinases"
+}else if (grepl("max-cols")){
+    table.method <- "max conditions"
+}
 
 pred.score <- read.delim(pred.score.file, as.is=TRUE)
 names(pred.score) <- c("prot1", "prot2", "pred.score")
@@ -134,12 +141,14 @@ message(paste("S.E.M. =", format(se.auc, digits=2)))
 message(paste("n =", n))
 plot(perf.roc, avg="vertical", spread.estimate="boxplot",
      main=paste(assoc.method,
+                table.method,
                 paste0("Mean AUC=", format(mean.auc, digits=2)),
                 paste0("S.E.M.=", format(se.auc, digits=2)),
                 sep="\n"))
 
 ## Precision-recall curve
 perf.pr <- performance(pred, measure="prec", x.measure="rec")
-plot(perf.pr, avg="vertical", spread.estimate="boxplot", main=assoc.method)
+plot(perf.pr, avg="vertical", spread.estimate="boxplot",
+     main=paste(assoc.method, table.method, sep="\n")
 
 dev.off()
