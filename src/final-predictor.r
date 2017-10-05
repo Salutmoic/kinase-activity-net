@@ -36,11 +36,9 @@ nfchisq.prior <- function(nfchisq.vals, is.reg, pscore){
     return (prior)
 }
 
-is.reg.prior <- function(){
+is.reg.prior <- function(kin.sub, reg.sites){
     ## Calculate uniform prior probability of a regulatory relationship
-    kinases <- read.table("~/nfs-home/data/annotation/human-kinome.txt", as.is=TRUE)
-    kin.sub <- read.delim("~/nfs-home/data/proteomes/PTMs/phosphosite-plus/Kinase_Substrate_Dataset-2016-04.txt", as.is=TRUE)
-    reg.sites <- read.delim("~/nfs-home/data/proteomes/PTMs/phosphosite-plus/Regulatory_sites-2016-02-27.tsv", as.is=TRUE)
+    kinases <- read.table("data/external/human-kinome.txt", as.is=TRUE)
     kin.sub.hsap <- subset(kin.sub, KIN_ORGANISM=="human" & SUB_ORGANISM=="human" & SUB_GENE!="" & SUB_GENE %in% kinases$V1,
                            select=c("GENE", "SUB_GENE", "SUB_MOD_RSD"))
     reg.sites.hsap <- subset(reg.sites, ORGANISM=="human" & GENE %in% kinases$V1 & endsWith(MOD_RSD, "-p"),
@@ -66,18 +64,23 @@ is.reg.prior <- function(){
 }
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 5){
-    stop("USAGE: <script> ASSOC_TYPE ASSOC_FILE PHOS_SCORE_FILE PHOS_BACK_FILE OUT_FILE")
+if (length(argv) != 7){
+    stop("USAGE: <script> ASSOC_TYPE ASSOC_FILE PHOS_SCORE_FILE PHOS_BACK_FILE KIN_SUB_FILE REG_SITES_FILE OUT_FILE")
 }
 
 assoc.type <- argv[1]
 assoc.file <- argv[2]
 phos.score.file <- argv[3]
 phos.back.file <- argv[4]
-out.file <- argv[5]
+kin.sub.file <- argv[5]
+reg.sites.file <- argv[6]
+out.file <- argv[7]
 
 assoc.tbl <- read.delim(assoc.file, as.is=TRUE)
 names(assoc.tbl) <- c("kin1", "kin2", "assoc")
+
+kin.sub <- read.delim(kin.sub.file, as.is=TRUE)
+reg.sites <- read.delim(reg.sites.file, as.is=TRUE)
 
 phos.score.tbl <- read.table(phos.score.file, as.is=TRUE)
 names(phos.score.tbl) <- c("kin1", "kin2", "phos.score")
@@ -105,7 +108,7 @@ if (assoc.type %in% c("pcor", "pcor-filter", "scor", "scor-filter")){
                                                dat.tbl$phos.score)
 }
 
-p.reg <- is.reg.prior()
+p.reg <- is.reg.prior(kin.sub, reg.sites)
 
 ## A bit of a cheat here.  We want the probability of seeing the PSSM
 ## score for A->B given that A regulates B (or that A doesn't regulate

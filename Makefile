@@ -343,9 +343,9 @@ $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) \
 
 # Calculate a merged/posterior probability given all evidence.
 $(PREDICTOR): $(KINACT_ASSOC) $(FINAL_PREDICTOR_SCRIPT) \
-			  $(KIN_KIN_SCORES) $(KIN_SCORE_DIST)
+			  $(KIN_KIN_SCORES) $(KIN_SCORE_DIST) $(KIN_SUBSTR_TABLE) $(REG_SITES)
 	$(RSCRIPT) $(FINAL_PREDICTOR_SCRIPT) $(ASSOC_METHOD) $< $(KIN_KIN_SCORES) \
-		$(KIN_SCORE_DIST) $@
+		$(KIN_SCORE_DIST) $(KIN_SUBSTR_TABLE) $(REG_SITES) $@
 
 #############
 ## Validation
