@@ -32,13 +32,8 @@ kin.act <- kin.act[,-which(colnames(kin.act) %in% cptac.conds)]
 
 kin.overlap <- read.delim("data/kinase_substrate_overlap.tsv", as.is=TRUE)
 
-kin.subs.a <- kin.overlap[,c("kinase1", "no.substrates")]
-kin.subs.b <- kin.overlap[,c("kinase2", "no.substrates.1")]
-colnames(kin.subs.b) <- colnames(kin.subs.a)
-kin.subs <- unique(rbind(kin.subs.a, kin.subs.b))
-good.kins <- kin.subs$kinase1[which(kin.subs$no.substrates>10)]
-
-kin.overlap.sub <- subset(kin.overlap, kinase1 %in% good.kins & kinase2 %in% good.kins)
+kin.overlap.sub <- subset(kin.overlap, no.substrates1 > 10 & no.substrates2 > 10)
+good.kins <- unique(c(kin.overlap.sub$kinase1, kin.overlap.sub$kinase2))
 redundant.kins <- unique(unlist(apply(kin.overlap.sub, 1,
                                       function(row){
                                           kin1 <- row[1]
@@ -55,7 +50,7 @@ redundant.kins <- unique(unlist(apply(kin.overlap.sub, 1,
                                           }
                                       })))
 
-kin.act <- kin.act[which(rownames(kin.act) %in% good.kins & (!rownames(kin.act) %in% redundant.kins)),]
+kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
 
 percent.na <- function(x) return(length(which(is.na(x)))/length(x))
 

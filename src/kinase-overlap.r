@@ -8,10 +8,8 @@ kinases = rownames(kin.act)
 
 overlap = c()
 
-v= 0
-
 ## see the overlap between each and every kinase pair
-for(i in 1:length(kinases)){
+for(i in 1:(length(kinases)-1)){
     m =nrow(overlap)
 
     for(j in (i+1):length(kinases)){
@@ -36,7 +34,6 @@ for(i in 1:length(kinases)){
                 as.character(inter), as.character(inter/(min(length(subs2),length(subs1)))))
         overlap = rbind(overlap, row)
 
-        v = v+1
         ## print(c(i,j))
     }
 
@@ -44,9 +41,9 @@ for(i in 1:length(kinases)){
         m = 0
     }
 
-    if(nrow(overlap) != m + (length(kinases)-i)){
-        break
-    }
+    ## if(nrow(overlap) != m + (length(kinases)-i)){
+    ##     break
+    ## }
 
 }
 
