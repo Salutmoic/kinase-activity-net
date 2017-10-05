@@ -32,27 +32,54 @@ kin.act <- kin.act[,-which(colnames(kin.act) %in% cptac.conds)]
 
 kin.overlap <- read.delim("data/kinase_substrate_overlap.tsv", as.is=TRUE)
 
+percent.na <- function(x) return(length(which(is.na(x)))/length(x))
+
 kin.overlap.sub <- subset(kin.overlap, no.substrates1 > 10 & no.substrates2 > 10)
 good.kins <- unique(c(kin.overlap.sub$kinase1, kin.overlap.sub$kinase2))
-redundant.kins <- unique(unlist(apply(kin.overlap.sub, 1,
-                                      function(row){
-                                          kin1 <- row[1]
-                                          no.subs1 <- row[2]
-                                          kin2 <- row[3]
-                                          no.subs2 <- row[4]
-                                          prop.shared <- row[6]
-                                          if (prop.shared > 0.5){
-                                              if (no.subs1 >= no.subs2){
-                                                  return (kin2)
-                                              }else{
-                                                  return (kin1)
-                                              }
-                                          }
-                                      })))
+
+choose.redundant.kin <- function(row){
+    kin1 <- row[1]
+    no.subs1 <- row[2]
+    kin2 <- row[3]
+    no.subs2 <- row[4]
+    prop.shared <- row[6]
+    ## Calculate the difference in amount of missing values between
+    ## the two kinases' activity predictions
+    kin1.perc.na <- percent.na(kin.act[kin1,])
+    kin2.perc.na <- percent.na(kin.act[kin2,])
+    perc.na.diff <- abs(kin1.perc.na-kin2.perc.na)
+    if (prop.shared > 0.5){
+        ## For small differences in missingness, the kinase with fewer
+        ## substrates is redundant
+        if (perc.na.diff < 0.1){
+            if (no.subs1 == no.subs2){
+                ## (unless the #substrates is equal, in which case,
+                ## choose by %NA again)
+                if (kin1.perc.na > kin2.perc.na)
+                    return (kin1)
+                else
+                    return (kin2)
+            }
+            if (no.subs1 > no.subs2){
+                return (kin2)
+            }else{
+                return (kin1)
+            }
+        }else{
+            ## otherwise, the kinase with more missing data is
+            ## redundant
+            if (kin1.perc.na > kin2.perc.na){
+                return (kin1)
+            }else{
+                return (kin2)
+            }
+        }
+    }
+}
+
+redundant.kins <- unique(unlist(apply(kin.overlap.sub, 1, choose.redundant.kin)))
 
 kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
-
-percent.na <- function(x) return(length(which(is.na(x)))/length(x))
 
 make.balanced.table <- function(full.tbl, na.threshold){
     ## Sort the columns by number of missing columns.  Then take one
