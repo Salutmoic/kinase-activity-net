@@ -40,10 +40,10 @@ kin.overlap.sub <- kin.overlap.sub[order(kin.overlap.sub$proportion.of.substrate
 
 choose.redundant.kin <- function(row){
     kin1 <- row[1]
-    no.subs1 <- row[2]
+    no.subs1 <- as.integer(row[2])
     kin2 <- row[3]
-    no.subs2 <- row[4]
-    prop.shared <- row[6]
+    no.subs2 <- as.integer(row[4])
+    prop.shared <- as.double(row[6])
     ## Calculate the difference in amount of missing values between
     ## the two kinases' activity predictions
     kin1.perc.na <- percent.na(kin.act[kin1,])
@@ -84,6 +84,8 @@ for (i in 1:nrow(kin.overlap.sub)){
     if (row[1] %in% redundant.kins || row[2] %in% redundant.kins)
         next
     redundant.kin <- choose.redundant.kin(row)
+    if (!is.null(redundant.kin) && redundant.kin=="AKT1")
+        print(row)
     redundant.kins <- c(redundant.kins, redundant.kin)
 }
 
