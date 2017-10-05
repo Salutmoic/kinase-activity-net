@@ -41,6 +41,15 @@ if (grepl("pcor", pred.score.file)){
 }else if (grepl("nfchisq", pred.score.file)){
     assoc.method <- "FunChiSq"
     method <- "nfchisq"
+}else if (grepl("fnn_mut_info", pred.score.file)){
+    assoc.method <- "FNN Mutual Information"
+    method <- "mutinfo"
+}else if (grepl("mut_info", pred.score.file)){
+    assoc.method <- "Mutual Information"
+    method <- "mutinfo"
+}else if (grepl("partcor", pred.score.file)){
+    assoc.method <- "Partial Correlation"
+    method <- "cor"
 }else if (grepl("pssm", pred.score.file)){
     assoc.method <- "PSSM Score"
 }
