@@ -57,6 +57,6 @@ colnames(overlap) = c("kinase1", "no.substrates1", "kinase2", "no.substrates2",
 ## overlap.sub = overlap[which(as.numeric(overlap[,6]) !=0), ]
 ## overlap.sub = overlap.sub[which(as.numeric(overlap.sub[,2])  > 10 & as.numeric(overlap.sub[,4]) > 10), ]
 
-overlap.sub = overlap.sub[order(as.numeric(overlap.sub[,6]),decreasing = TRUE),]
-write.table(overlap.sub, "data/kinase_substrate_overlap.tsv", sep = "\t",
+## overlap.sub = overlap.sub[order(as.numeric(overlap.sub[,6]),decreasing = TRUE),]
+write.table(overlap, "data/kinase_substrate_overlap.tsv", sep = "\t",
             quote=FALSE, row.names=FALSE, col.names=TRUE)
