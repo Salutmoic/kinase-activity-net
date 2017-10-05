@@ -36,9 +36,9 @@ if (length(argv) != 3){
     stop("USAGE: <script> DATA_FILE OUT_FILE METHOD")
 }
 
-data.file <- argv[1]
-out.file <- argv[2]
-method <- argv[3]
+data.file <- argv[2]
+out.file <- argv[3]
+method <- argv[1]
 
 
 kin.act.tbl <- read.table(data.file, as.is=TRUE)
