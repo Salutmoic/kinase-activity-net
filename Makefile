@@ -81,6 +81,7 @@ HUMAN_KINASE_TABLE = $(DATADIR)/human_kinase_table.tsv
 PHOSPHOSITES = $(DATADIR)/phosphosites_reduced.tsv
 HUMAN_REG_SITES = $(DATADIR)/human_reg_sites.tsv
 REG_SITES = $(DATADIR)/reg_sites.tsv
+KIN_SUB_OVERLAP = $(DATADIR)/kinase_substrate_overlap.tsv
 # Kegg-derived files
 KEGG_ACT = $(DATADIR)/kegg-act-rels.tsv
 KEGG_PHOS_ACT = $(DATADIR)/kegg-phos-act-rels.tsv
@@ -134,6 +135,7 @@ ASSOC_SCRIPT = $(SRCDIR)/assoc_methods.r
 PSSM_SCRIPT = $(SRCDIR)/PSSM.py
 AA_FREQS_SCRIPT = $(SRCDIR)/aa-freqs.py
 FILTER_PSITE_PLUS_SCRIPT = $(SRCDIR)/filter-psite-plus-tbl.r
+KIN_SUB_OVERLAP_SCRIPT = $(SRCDIR)/kinase-overlap.r
 PSITE_PLUS_VAL_SCRIPT = $(SRCDIR)/make-psiteplus-valset.r
 FILTER_KEGG_RELS_SCRIPT = $(SRCDIR)/filter-kegg-tbl.r
 KEGG_PATH_REF_SCRIPT = $(SRCDIR)/gen-kegg-pathway-ref.py
@@ -216,7 +218,8 @@ $(IMGDIR):
 
 # Kinase activity tables
 $(KINACT_DATA) \
-$(IMP_KINACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(GSEA_DATA) $(KIN_COND_PAIRS)
+$(IMP_KINACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(GSEA_DATA) $(KIN_COND_PAIRS) \
+					$(KIN_SUB_OVERLAP)
 	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT) $(TABLE_STRATEGY)
 
 # Discretized kinase activity
@@ -229,12 +232,12 @@ $(HUMAN_KINASE_TABLE): $(FULL_KIN_SUBSTR_TABLE)
 
 # Filter the human kinase-substrates to just those for which we have
 # kinase activities
-$(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT)
+$(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(GSEA_DATA)
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $< $@
 
 # Filter the PhosphoSitePlus site list to just those on kinases for
 # which we have kinase activities
-$(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT)
+$(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(GSEA_DATA)
 	sed '1,3d' $< >$@.tmp
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
 	rm $@.tmp
@@ -245,8 +248,12 @@ $(HUMAN_REG_SITES): $(FULL_REG_SITES_TABLE)
 
 # Further filter to just include reg sites on kinases for which we
 # have kinase activities
-$(REG_SITES): $(HUMAN_REG_SITES) $(FILTER_PSITE_PLUS_SCRIPT)
+$(REG_SITES): $(HUMAN_REG_SITES) $(FILTER_PSITE_PLUS_SCRIPT) $(GSEA_DATA)
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $< $@
+
+# Kinase-substrate overlap
+$(KIN_SUB_OVERLAP): $(HUMAN_KINASE_TABLE) $(GSEA_DATA) $(KIN_SUB_OVERLAP_SCRIPT)
+	$(RSCRIPT) $(KIN_SUB_OVERLAP_SCRIPT)
 
 # Combine PhosphositePlus kinase-substrate and regulatory sites tables
 # to generate a set of true-positive relationships
@@ -281,7 +288,8 @@ $(KEGG_PATH_REFERENCE): $(KEGG_RELATIONSHIPS) $(UNIPROT_ID_MAPPING)
 	$(PYTHON) $(KEGG_PATH_REF_SCRIPT) | sort | uniq >$@
 
 # Kegg-based validation sets
-$(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv $(UNIPROT_ID_MAPPING) $(KEGG_VAL_SCRIPT)
+$(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv \
+			$(UNIPROT_ID_MAPPING) $(KEGG_VAL_SCRIPT) $(GSEA_DATA)
 	$(RSCRIPT) $(KEGG_VAL_SCRIPT) $(wordlist 1,2,$^) $@
 
 # Calculate human proteome amino-acid frequencies
@@ -346,4 +354,5 @@ $(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(PROTEIN_GROUPING) $(IMGDIR) $(
 	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^)
 
 $(IMGDIR)/validation.pdf:
+
 	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$@ $(IMGDIR)/*-val.pdf
