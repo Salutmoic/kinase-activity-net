@@ -36,6 +36,7 @@ percent.na <- function(x) return(length(which(is.na(x)))/length(x))
 
 kin.overlap.sub <- subset(kin.overlap, no.substrates1 > 10 & no.substrates2 > 10)
 good.kins <- unique(c(kin.overlap.sub$kinase1, kin.overlap.sub$kinase2))
+kin.overlap.sub <- kin.overlap.sub[order(kin.overlap.sub$proportion.of.substrates.shared, decreasing=TRUE),]
 
 choose.redundant.kin <- function(row){
     kin1 <- row[1]
@@ -77,7 +78,14 @@ choose.redundant.kin <- function(row){
     }
 }
 
-redundant.kins <- unique(unlist(apply(kin.overlap.sub, 1, choose.redundant.kin)))
+redundant.kins <- c()
+for (i in 1:nrow(kin.overlap.sub)){
+    row <- unlist(kin.overlap.sub[i,])
+    if (row[1] %in% redundant.kins || row[2] %in% redundant.kins)
+        next
+    redundant.kin <- choose.redundant.kin(row)
+    redundant.kins <- c(redundant.kins, redundant.kin)
+}
 
 kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
 
