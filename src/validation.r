@@ -77,6 +77,15 @@ names(pred.score) <- c("prot1", "prot2", "pred.score")
 pred.score <- subset(pred.score, prot1 != prot2)
 rownames(pred.score) <- paste(pred.score$prot1, pred.score$prot2, sep="-")
 
+if (method == "cor" || method == "nfchisq"){
+    min.pred <- min(pred.score$pred.score)
+    max.pred <- max(pred.score$pred.score)
+    pred.score$pred.score <- (pred.score$pred.score-min.pred)/(max.pred-min.pred)
+}else if (method == "mutinfo"){
+    pred.score$pred.score <- pred.score$pred.score/max(pred.score$pred.score)
+}
+
+
 true.intxns.tbl <- read.table(val.set.file, as.is=TRUE)
 possible.true.intxns <- paste(true.intxns.tbl[,1], true.intxns.tbl[,2], sep="-")
 possible.true.intxns <- possible.true.intxns[which(possible.true.intxns %in% rownames(pred.score))]
@@ -108,22 +117,6 @@ for (i in 1:n){
     ## Put together the tables of predictions and TRUE/FALSE labels
     intxns <- c(true.intxns, false.intxns)
     preds <- pred.score[intxns, "pred.score"]
-    if (method == "cor"){
-        ## Strongly negative associations are as interesting to us as
-        ## strongly positive scores, but the actual direction doesn't
-        ## matter to us (repression is as interesting as activation,
-        ## but we don't ultimately care which one it is).  So, take
-        ## the absolute value of the score.  Normalise it too...not
-        ## really necessary I guess
-        preds <- abs(preds)/max(abs(preds))
-    }else if(method == "nfchisq"){
-        ## normalise...again, probably not necessary
-        min.pred <- min(preds)
-        max.pred <- max(preds)
-        preds <- (preds-min.pred)/(max.pred-min.pred)
-    }else if (method == "mutinfo"){
-        preds <- preds/max(preds)
-    }
     labels <- c(rep(TRUE, length(true.intxns)), rep(FALSE, length(false.intxns)))
     if (is.null(pred.data)){
         pred.data <- preds
