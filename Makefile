@@ -18,7 +18,7 @@ BINDIR = /nfs/research2/beltrao/software-rh7/bin
 
 TABLE_STRATEGIES = max-rows max-cols balanced
 TABLE_STRATEGY ?= balanced
-ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info fnn_mut_info partcor
+ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info fnn_mut_info partcor all
 ASSOC_METHOD ?= scor
 ASSOCNET_FILTER_METHOD ?= deconvolution
 ASSOCNET_FILTER_SCALE_METHOD ?= abs
@@ -311,6 +311,9 @@ $(OUTDIR)/%-scor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
 $(OUTDIR)/%-nfchisq.tsv: $(DATADIR)/%-discr.tsv $(NFCHISQ_SCRIPT) $(OUTDIR)
 	$(RSCRIPT) $(NFCHISQ_SCRIPT) $< $@
 # Here I create three different correlation tables with the same script assoc_methods.r
+# Funchisq, partcor and FNN_mutinfo
+$(OUTDIR)/%-partcor.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
+	$(RSCRIPT) $(ASSOC_SCRIPT) all $< $@	
 
 # Partial correlation
 $(OUTDIR)/%-partcor.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
