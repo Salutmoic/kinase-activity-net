@@ -30,35 +30,21 @@ def get_really_all_parents(term_rec):
     return all_parents
 
 
-def get_associations(assoc):
-    GO_term = {}
+def print_locations(assoc, cytoplasm, plasma_membrane, nucleus):
     for prot in assoc:
-        terms = assoc[prot]
-        for term in terms:
-            if term in GO_term:
-                GO_term[term].append(prot)
-            else:
-                GO_term[term] = [prot]
-    return GO_term
-
-
-def print_locations(GO_term, cytoplasm, plasma_membrane, nucleus):
-    for term in cytoplasm:
-        if term not in GO_term:
-            continue
-        for prot_id in GO_term[term]:
-            print("GO:0005737\t" + prot_id)
-    for term in plasma_membrane:
-        if term not in GO_term:
-            continue
-        for prot_id in GO_term[term]:
-            print("GO:0005886\t" + prot_id)
-    for term in nucleus:
-        if term not in GO_term:
-            continue
-        for prot_id in GO_term[term]:
-            print("GO:0005634\t" + prot_id)
-
+        in_cyto = False
+        in_memb = False
+        in_nucl = False
+        for term in assoc[prot]:
+            in_cyto = in_cyto or term in cytoplasm
+            in_memb = in_memb or term in plasma_membrane
+            in_nucl = in_nucl or term in nucleus
+        if in_cyto:
+            print("GO:0005737\t" + prot)
+        if in_memb:
+            print("GO:0005886\t" + prot)
+        if in_nucl:
+            print("GO:0005634\t" + prot)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -66,9 +52,9 @@ if __name__ == "__main__":
     assoc_file = sys.argv[1]
     obo_file = sys.argv[2]
     obo_dag = GODag(obo_file=obo_file, optional_attrs=["relationship"])
-    cytoplasm = set()
-    plasma_membrane = set()
-    nucleus = set()
+    cytoplasm = set(["GO:0005737"])
+    plasma_membrane = set(["GO:0005886"])
+    nucleus = set(["GO:0005634"])
     for term in obo_dag:
         term_rec = obo_dag[term]
         parents = get_really_all_parents(term_rec)
@@ -79,5 +65,4 @@ if __name__ == "__main__":
         if "GO:0005634" in parents:
             nucleus.add(term)
     assoc = read_associations(assoc_file)
-    GO_term = get_associations(assoc)
-    print_locations(GO_term, cytoplasm, plasma_membrane, nucleus)
+    print_locations(assoc, cytoplasm, plasma_membrane, nucleus)

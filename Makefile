@@ -297,7 +297,7 @@ $(UNIPROT_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING)
 
 # GO associations (formatted for GOATOOLS)
 $(GO_ASSOC): $(FULL_GO_ASSOC_TABLE) $(UNIPROT_ID_MAPPING) $(REFORMAT_GO_ASSOC_SCRIPT)
-	sed '/^!/d' $< | cut -f2,5 | awk -f $(REFORMAT_GO_ASSOC_SCRIPT) | sort -k1 >$@.tmp
+	sed '/^!/d' $< | cut -f2,5 | sort | uniq | awk -f $(REFORMAT_GO_ASSOC_SCRIPT) | sort -k1 >$@.tmp
 	join -t'	' $(UNIPROT_ID_MAPPING) $@.tmp | cut -f2,3 >$@
 	rm $@.tmp
 
