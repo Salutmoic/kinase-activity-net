@@ -78,8 +78,8 @@ pred.score <- subset(pred.score, prot1 != prot2)
 rownames(pred.score) <- paste(pred.score$prot1, pred.score$prot2, sep="-")
 
 true.intxns.tbl <- read.table(val.set.file, as.is=TRUE)
-true.intxns <- paste(true.intxns.tbl[,1], true.intxns.tbl[,2], sep="-")
-true.intxns <- true.intxns[which(true.intxns %in% rownames(pred.score))]
+possible.true.intxns <- paste(true.intxns.tbl[,1], true.intxns.tbl[,2], sep="-")
+possible.true.intxns <- possible.true.intxns[which(possible.true.intxns %in% rownames(pred.score))]
 
 prot.groups.full <- read.table(prot.groups.file, as.is=TRUE)
 names(prot.groups.full) <- c("group", "protein")
@@ -88,27 +88,23 @@ all.kinases <- unique(c(pred.score$prot1, pred.score$prot2))
 prot.groups <- subset(prot.groups.full, protein %in% all.kinases)
 possible.false.intxns <- gen.possible.false.intxns(all.kinases, prot.groups)
 ## Remove true interactions from the set of possible false interactions
-possible.false.intxns <- setdiff(possible.false.intxns, true.intxns)
+possible.false.intxns <- setdiff(possible.false.intxns, possible.true.intxns)
 ## Keep only false interactions for which we have predictions
 possible.false.intxns <- intersect(possible.false.intxns, rownames(pred.score))
 
 pred.data <- NULL
 label.data <- NULL
 
-print(c(length(possible.false.intxns), length(true.intxns)))
+print(c(length(possible.false.intxns), length(possible.true.intxns)))
 
 n <- 100
-if (length(possible.false.intxns) > length(true.intxns)){
-    neg.scale <- min(max(1, floor(length(possible.false.intxns)/length(true.intxns))-1), 3)
-    print(c(neg.scale))
-    sample.size <- neg.scale*length(true.intxns)
-}else{
-    sample.size <- length(possible.false.intxns)
-}
+
+sample.size <- 0.5*min(length(possible.false.intxns), length(possible.true.intxns))
 
 ## This procedure is sufficient for training-free predictions.
 for (i in 1:n){
     false.intxns <- sample(possible.false.intxns, size=sample.size)
+    true.intxns <- sample(possible.true.intxns, size=sample.size)
     ## Put together the tables of predictions and TRUE/FALSE labels
     intxns <- c(true.intxns, false.intxns)
     preds <- pred.score[intxns, "pred.score"]
@@ -148,7 +144,7 @@ data.basename <- strsplit(basename(pred.score.file), split="\\.")[[1]][1]
 out.img <- paste0("img/", data.basename, "-val.pdf")
 
 pdf(out.img)
-par(cex=1.25)
+par(cex=1.25, cex.main=0.8)
 
 ## ROC curve w/ AUC info
 perf.roc <- performance(pred, measure="tpr", x.measure="fpr")
@@ -159,11 +155,13 @@ message(assoc.method)
 message(paste("Mean AUC =", format(mean.auc, digits=2)))
 message(paste("S.E.M. =", format(se.auc, digits=2)))
 message(paste("n =", n))
+message(paste("sample size =", sample.size))
 plot(perf.roc, avg="vertical", spread.estimate="boxplot",
      main=paste(assoc.method,
                 table.method,
                 paste0("Mean AUC=", format(mean.auc, digits=2)),
                 paste0("S.E.M.=", format(se.auc, digits=2)),
+                paste0("Sample size=", sample.size),
                 sep="\n"))
 ## Precision-recall curve
 ## perf.pr <- performance(pred, measure="prec", x.measure="rec")
