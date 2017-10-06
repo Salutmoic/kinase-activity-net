@@ -58,6 +58,8 @@ GO_OBO_VERSION = 2017-10-04
 GO_OBO = $(EXT_DATADIR)/go-basic-$(GO_OBO_VERSION).obo
 HUMAN_GO_VERSION = 2017-09-26
 FULL_GO_ASSOC_TABLE = $(EXT_DATADIR)/goa_human-$(HUMAN_GO_VERSION).gaf
+STRING_VERSION = 10.5
+HUMAN_STRING_RAW = $(EXT_DATADIR)/9606.protein.links.v$(STRING_VERSION).txt
 
 ######################
 ## Generated data sets
@@ -97,6 +99,10 @@ UNIPROT_ID_MAPPING = $(DATADIR)/uniprot-id-map.tsv
 # GO-derived files
 GO_ASSOC = $(DATADIR)/go-assoc.tsv
 GO_CELL_LOCATION = $(DATADIR)/go-cell-location.tsv
+# STRING (in the output directory for convenience of using it as a
+# predictor)
+STRING_ID_MAPPING = $(DATADIR)/string-id-map.tsv
+HUMAN_STRING = $(OUTDIR)/$(TABLE_STRATEGY)-string.tsv
 # Protein groupings
 COMBINED_GROUPING = $(DATADIR)/protein-groups.tsv
 # Validation sets
@@ -152,6 +158,7 @@ KEGG_PATH_REF_SCRIPT = $(SRCDIR)/gen-kegg-pathway-ref.py
 KEGG_VAL_SCRIPT = $(SRCDIR)/make-kegg-valset.r
 REFORMAT_GO_ASSOC_SCRIPT = $(SRCDIR)/reformat-go-assoc.awk
 GO_CELL_LOC_SCRIPT = $(SRCDIR)/get-go-cell-component.py
+FORMAT_STRING_SCRIPT = $(SRCDIR)/format-string.py
 VAL_SCRIPT = $(SRCDIR)/validation.r
 
 # Don't delete intermediate files
@@ -293,7 +300,7 @@ $(KEGG_PHOS): $(KEGG_RELATIONSHIPS)
 
 # Create the Uniprot ID map
 $(UNIPROT_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING)
-	awk 'BEGIN{OFS="\t"}{if ($$2=="Gene_Name"){print $$1, $$3}}' $< | sort -k1 >$@
+	awk 'BEGIN{OFS="\t"}{if ($$2=="Gene_Name"){print $$1, $$3}}' $< | sort >$@
 
 # GO associations (formatted for GOATOOLS)
 $(GO_ASSOC): $(FULL_GO_ASSOC_TABLE) $(UNIPROT_ID_MAPPING) $(REFORMAT_GO_ASSOC_SCRIPT)
@@ -307,6 +314,16 @@ $(GO_ASSOC): $(FULL_GO_ASSOC_TABLE) $(UNIPROT_ID_MAPPING) $(REFORMAT_GO_ASSOC_SC
 # GO:0005886 = Plasma Membrane
 $(GO_CELL_LOCATION): $(GO_ASSOC) $(GO_OBO) $(GO_CELL_LOC_SCRIPT)
 	$(PYTHON) $(GO_CELL_LOC_SCRIPT) $(GO_ASSOC) $(GO_OBO) | sed '1,2d' | sort | uniq >$@
+
+# STRING
+# Create the STRING ID map
+$(STRING_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
+	awk 'BEGIN{OFS="\t"}{if ($$2=="STRING" && $$1 !~ /.-[0-9]/){print $$1, $$3}}' $< | sort -d -k1 >$@.tmp
+	join -t'	' $@.tmp $(UNIPROT_ID_MAPPING) | cut -f2,3 >$@
+	rm $@.tmp
+
+$(HUMAN_STRING): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) $(FORMAT_STRING_SCRIPT)
+	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(wordlist 1,3,$^) | sort >$@
 
 # Kegg pathway reference
 $(KEGG_PATH_REFERENCE): $(KEGG_RELATIONSHIPS) $(UNIPROT_ID_MAPPING)
