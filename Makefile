@@ -102,7 +102,7 @@ GO_CELL_LOCATION = $(DATADIR)/go-cell-location.tsv
 # STRING (in the output directory for convenience of using it as a
 # predictor)
 STRING_ID_MAPPING = $(DATADIR)/string-id-map.tsv
-HUMAN_STRING = $(OUTDIR)/$(TABLE_STRATEGY)-string.tsv
+HUMAN_STRING = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string.tsv
 # Protein groupings
 COMBINED_GROUPING = $(DATADIR)/protein-groups.tsv
 # Validation sets
@@ -117,8 +117,9 @@ KEGG_PHOS_VALSET = $(DATADIR)/validation-set-kegg-phos.tsv
 # Validation
 ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
 PSSM_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-pssm-val.pdf
+STRING_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-val.pdf
 PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor-val.pdf
-VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) # $(PREDICTOR_VAL_IMG)
+VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(STRING_VAL_IMG) # $(PREDICTOR_VAL_IMG)
 
 ##################
 ## Program Options
@@ -323,7 +324,7 @@ $(STRING_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
 	rm $@.tmp
 
 $(HUMAN_STRING): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) $(FORMAT_STRING_SCRIPT)
-	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(wordlist 1,3,$^) | sort >$@
+	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(wordlist 1,3,$^) >$@
 
 # Kegg pathway reference
 $(KEGG_PATH_REFERENCE): $(KEGG_RELATIONSHIPS) $(UNIPROT_ID_MAPPING)

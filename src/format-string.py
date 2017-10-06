@@ -1,4 +1,5 @@
 import sys
+from itertools import product
 
 
 def read_id_map(id_map_h):
@@ -12,13 +13,12 @@ def read_id_map(id_map_h):
 def read_kinact_tbl(h):
     kinases = set()
     for line in h:
-        prot1, prot2, score = line.strip().split()
-        kinases.add(prot1)
-        kinases.add(prot2)
+        prot, cond, score = line.strip().split()
+        kinases.add(prot)
     return kinases
 
 
-def reformat_string(string_h, string_id_map, kinases):
+def reformat_string(string_h, string_id_map, kinases, kinact_intxns):
     intxns = dict()
     for line in string_h:
         ensp1, ensp2, score = line.strip().split()
@@ -34,10 +34,16 @@ def reformat_string(string_h, string_id_map, kinases):
         else:
             if score_mod > intxns[(prot1, prot2)]:
                 intxns[(prot1, prot2)] = score_mod
+    print("\t".join(["node1", "node2", "score"]))
     for intxn in intxns:
         prot1, prot2 = intxn
         score_mod = intxns[intxn]
         print("\t".join([prot1, prot2, str(score_mod)]))
+    for kinact_intxn in kinact_intxns:
+        if kinact_intxn in intxns:
+            continue
+        prot1, prot2 = kinact_intxn
+        print("\t".join([prot1, prot2, str(0.0)]))
 
 
 if __name__ == "__main__":
@@ -50,5 +56,6 @@ if __name__ == "__main__":
         string_id_map = read_id_map(string_h)
     with open(kinact_file) as h:
         kinases = read_kinact_tbl(h)
+    kinact_intxns = product(kinases, repeat=2)
     with open(string_file) as string_h:
-        reformat_string(string_h, string_id_map, kinases)
+        reformat_string(string_h, string_id_map, kinases, kinact_intxns)
