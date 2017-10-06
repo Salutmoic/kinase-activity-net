@@ -31,7 +31,7 @@ VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
 # A list of protein annotations used to group proteins so that during
 # validation we don't randomly select two kinases that are known to be
 # functionally related (e.g. in the same pathway) for a true negative.
-PROTEIN_GROUPING = $(KEGG_PATH_REFERENCE)
+PROTEIN_GROUPING = $(COMBINED_GROUPING) # $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
 
 #####################
 ## External data sets
@@ -53,6 +53,11 @@ FULL_PHOS_SITES_TABLE = $(EXT_DATADIR)/Phosphorylation_site_dataset_$(PHOSPHOSIT
 KEGG_RELATIONSHIPS = $(wildcard $(KEGGDIR)/*.ppip)
 # Uniprot data
 FULL_UNIPROT_ID_MAPPING = $(EXT_DATADIR)/HUMAN_9606_idmapping.dat
+# Gene Ontology
+GO_OBO_VERSION = 2017-10-04
+GO_OBO = $(EXT_DATADIR)/go-basic-$(GO_OBO_VERSION).obo
+HUMAN_GO_VERSION = 2017-09-26
+FULL_GO_ASSOC_TABLE = $(EXT_DATADIR)/goa_human-$(HUMAN_GO_VERSION).gaf
 
 ######################
 ## Generated data sets
@@ -89,6 +94,11 @@ KEGG_PHOS = $(DATADIR)/kegg-phos-rels.tsv
 KEGG_PATH_REFERENCE = $(DATADIR)/kegg-path-ref.tsv
 # Uniprot-derived files
 UNIPROT_ID_MAPPING = $(DATADIR)/uniprot-id-map.tsv
+# GO-derived files
+GO_ASSOC = $(DATADIR)/go-assoc.tsv
+GO_CELL_LOCATION = $(DATADIR)/go-cell-location.tsv
+# Protein groupings
+COMBINED_GROUPING = $(DATADIR)/protein-groups.tsv
 # Validation sets
 PSITE_PLUS_VALSET = $(DATADIR)/validation-set-psiteplus.tsv
 KEGG_ACT_VALSET = $(DATADIR)/validation-set-kegg-act.tsv
@@ -102,7 +112,7 @@ KEGG_PHOS_VALSET = $(DATADIR)/validation-set-kegg-phos.tsv
 ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
 PSSM_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-pssm-val.pdf
 PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor-val.pdf
-VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(PREDICTOR_VAL_IMG)
+VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) # $(PREDICTOR_VAL_IMG)
 
 ##################
 ## Program Options
@@ -140,6 +150,8 @@ PSITE_PLUS_VAL_SCRIPT = $(SRCDIR)/make-psiteplus-valset.r
 FILTER_KEGG_RELS_SCRIPT = $(SRCDIR)/filter-kegg-tbl.r
 KEGG_PATH_REF_SCRIPT = $(SRCDIR)/gen-kegg-pathway-ref.py
 KEGG_VAL_SCRIPT = $(SRCDIR)/make-kegg-valset.r
+REFORMAT_GO_ASSOC_SCRIPT = $(SRCDIR)/reformat-go-assoc.awk
+GO_CELL_LOC_SCRIPT = $(SRCDIR)/get-go-cell-component.py
 VAL_SCRIPT = $(SRCDIR)/validation.r
 
 # Don't delete intermediate files
@@ -281,11 +293,28 @@ $(KEGG_PHOS): $(KEGG_RELATIONSHIPS)
 
 # Create the Uniprot ID map
 $(UNIPROT_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING)
-	awk 'BEGIN{OFS="\t"}{if ($$2=="Gene_Name"){print $$1, $$3}}' $< >$@
+	awk 'BEGIN{OFS="\t"}{if ($$2=="Gene_Name"){print $$1, $$3}}' $< | sort -k1 >$@
+
+# GO associations (formatted for GOATOOLS)
+$(GO_ASSOC): $(FULL_GO_ASSOC_TABLE) $(UNIPROT_ID_MAPPING) $(REFORMAT_GO_ASSOC_SCRIPT)
+	sed '/^!/d' $< | cut -f2,5 | awk -f $(REFORMAT_GO_ASSOC_SCRIPT) | sort -k1 >$@.tmp
+	join -t'	' $(UNIPROT_ID_MAPPING) $@.tmp | cut -f2,3 >$@
+	rm $@.tmp
+
+# Parse protein cellular locations
+# GO:0005634 = Nucleus
+# GO:0005737 = Cytoplasm
+# GO:0005886 = Plasma Membrane
+$(GO_CELL_LOCATION): $(GO_ASSOC) $(GO_OBO) $(GO_CELL_LOC_SCRIPT)
+	$(PYTHON) $(GO_CELL_LOC_SCRIPT) $(GO_ASSOC) $(GO_OBO) | sed '1,2d' | sort | uniq >$@
 
 # Kegg pathway reference
 $(KEGG_PATH_REFERENCE): $(KEGG_RELATIONSHIPS) $(UNIPROT_ID_MAPPING)
 	$(PYTHON) $(KEGG_PATH_REF_SCRIPT) | sort | uniq >$@
+
+# Combined protein group set
+$(COMBINED_GROUPING): $(GO_CELL_LOCATION) $(KEGG_PATH_REFERENCE)
+	cat $^ >$@
 
 # Kegg-based validation sets
 $(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv \

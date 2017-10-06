@@ -95,11 +95,20 @@ possible.false.intxns <- intersect(possible.false.intxns, rownames(pred.score))
 pred.data <- NULL
 label.data <- NULL
 
+print(c(length(possible.false.intxns), length(true.intxns)))
+
 n <- 100
+if (length(possible.false.intxns) > length(true.intxns)){
+    neg.scale <- min(max(1, floor(length(possible.false.intxns)/length(true.intxns))-1), 3)
+    print(c(neg.scale))
+    sample.size <- neg.scale*length(true.intxns)
+}else{
+    sample.size <- length(possible.false.intxns)
+}
 
 ## This procedure is sufficient for training-free predictions.
 for (i in 1:n){
-    false.intxns <- sample(possible.false.intxns, size=10*length(true.intxns))
+    false.intxns <- sample(possible.false.intxns, size=sample.size)
     ## Put together the tables of predictions and TRUE/FALSE labels
     intxns <- c(true.intxns, false.intxns)
     preds <- pred.score[intxns, "pred.score"]
@@ -116,6 +125,8 @@ for (i in 1:n){
         min.pred <- min(preds)
         max.pred <- max(preds)
         preds <- (preds-min.pred)/(max.pred-min.pred)
+    }else if (method == "mutinfo"){
+        preds <- preds/max(preds)
     }
     labels <- c(rep(TRUE, length(true.intxns)), rep(FALSE, length(false.intxns)))
     if (is.null(pred.data)){
@@ -155,8 +166,8 @@ plot(perf.roc, avg="vertical", spread.estimate="boxplot",
                 paste0("S.E.M.=", format(se.auc, digits=2)),
                 sep="\n"))
 ## Precision-recall curve
-perf.pr <- performance(pred, measure="prec", x.measure="rec")
-plot(perf.pr, avg="vertical", spread.estimate="boxplot",
-     main=paste(assoc.method, table.method, sep="\n"))
+## perf.pr <- performance(pred, measure="prec", x.measure="rec")
+## plot(perf.pr, avg="vertical", spread.estimate="boxplot",
+##      main=paste(assoc.method, table.method, sep="\n"))
 
 dev.off()
