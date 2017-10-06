@@ -84,8 +84,6 @@ for (i in 1:nrow(kin.overlap.sub)){
     if (row[1] %in% redundant.kins || row[2] %in% redundant.kins)
         next
     redundant.kin <- choose.redundant.kin(row)
-    if (!is.null(redundant.kin) && redundant.kin=="AKT1")
-        print(row)
     redundant.kins <- c(redundant.kins, redundant.kin)
 }
 
