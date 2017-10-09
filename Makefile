@@ -20,10 +20,12 @@ TABLE_STRATEGIES = max-rows max-cols balanced
 TABLE_STRATEGY ?= balanced
 ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info fnn_mut_info partcor all
 ASSOC_METHOD ?= scor
-ASSOCNET_FILTER_METHOD ?= deconvolution
-ASSOCNET_FILTER_SCALE_METHOD ?= abs
 DISCR_METHOD ?= trunc 	# mclust.whole mclust.by.row manual trunc
+ASSOCNET_FILTER_METHOD ?= deconvolution
+ASSOCNET_FILTER_SCALE_METHOD ?= standard
+# Network density post-deconvolution
 DECONVOLUTION_A ?= 1.0
+# Eigenvalue Scaling parameter
 DECONVOLUTION_B ?= 0.99
 
 KEGG_VALSET ?= $(KEGG_ACT_VALSET)
@@ -125,8 +127,10 @@ VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(STRING_VAL_IMG) # $(PREDICTOR_VAL_
 ## Program Options
 
 ASSOCNET_PARAMS = --unbiased-correlation --p-method=none
-ASSOCNET_FILTER_PARAMS = --method=$(ASSOCNET_FILTER_METHOD) --scale-method=$(ASSOCNET_FILTER_SCALE_METHOD) --header-in
-ifeq ($(NET_FILTER_METHOD),deconvolution)
+ASSOCNET_FILTER_PARAMS = --method=$(ASSOCNET_FILTER_METHOD) \
+						--scale-method=$(ASSOCNET_FILTER_SCALE_METHOD) \
+						--header-in --observed-only --scale-first
+ifeq ($(ASSOCNET_FILTER_METHOD),deconvolution)
 ASSOCNET_FILTER_PARAMS += --deconvolution-a=$(DECONVOLUTION_A)	\
 						  --deconvolution-b=$(DECONVOLUTION_B)
 endif
@@ -134,12 +138,13 @@ endif
 ###########
 ## Programs
 
+SHELL = /bin/bash
 PYTHON3 ?= $(BINDIR)/python3
 PYTHON2 ?= $(BINDIR)/python2
 PYTHON ?= $(PYTHON3)
 RSCRIPT ?= $(BINDIR)/Rscript
 ASSOCNET ?= $(BINDIR)/assocnet $(ASSOCNET_PARAMS)
-ASSOCNET_FILTER ?= $(BINDIR)/assocnet-filter $(NET_FILTER_PARAMS)
+ASSOCNET_FILTER ?= $(BINDIR)/assocnet-filter $(ASSOCNET_FILTER_PARAMS)
 
 ##########
 ## Scripts
@@ -324,7 +329,9 @@ $(STRING_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
 	rm $@.tmp
 
 $(HUMAN_STRING): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) $(FORMAT_STRING_SCRIPT)
-	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(wordlist 1,3,$^) >$@
+	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(wordlist 1,3,$^) >$@.tmp
+	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k1) >$@
+	rm $@.tmp
 
 # Kegg pathway reference
 $(KEGG_PATH_REFERENCE): $(KEGG_RELATIONSHIPS) $(UNIPROT_ID_MAPPING)
