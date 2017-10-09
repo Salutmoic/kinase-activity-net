@@ -77,7 +77,7 @@ names(pred.score) <- c("prot1", "prot2", "pred.score")
 pred.score <- subset(pred.score, prot1 != prot2)
 rownames(pred.score) <- paste(pred.score$prot1, pred.score$prot2, sep="-")
 
-if (method == "cor" || method == "nfchisq"){
+if (method == "cor"){ # || method == "nfchisq"){
     min.pred <- min(pred.score$pred.score)
     max.pred <- max(pred.score$pred.score)
     pred.score$pred.score <- (pred.score$pred.score-min.pred)/(max.pred-min.pred)
@@ -101,6 +101,11 @@ possible.false.intxns <- setdiff(possible.false.intxns, possible.true.intxns)
 ## Keep only false interactions for which we have predictions
 possible.false.intxns <- intersect(possible.false.intxns, rownames(pred.score))
 
+rev.true.intxns <- paste(true.intxns.tbl[,2], true.intxns.tbl[,1], sep="-")
+rev.true.intxns <- rev.true.intxns[which(rev.true.intxns %in% rownames(pred.score))]
+rev.true.intxns <- setdiff(rev.true.intxns, possible.true.intxns)
+## possible.false.intxns <- union(possible.false.intxns, rev.true.intxns)
+
 pred.data <- NULL
 label.data <- NULL
 
@@ -108,11 +113,15 @@ print(c(length(possible.false.intxns), length(possible.true.intxns)))
 
 n <- 100
 
-sample.size <- 0.5*min(length(possible.false.intxns), length(possible.true.intxns))
+## sample.size <- 0.5*min(length(possible.false.intxns), length(possible.true.intxns))
+sample.size <- 0.5*min(length(possible.false.intxns)+0.5*length(rev.true.intxns), length(possible.true.intxns))
 
 ## This procedure is sufficient for training-free predictions.
 for (i in 1:n){
-    false.intxns <- sample(possible.false.intxns, size=sample.size)
+    ## false.intxns <- sample(possible.false.intxns, size=sample.size)
+    false.intxns <- sample(union(possible.false.intxns,
+                                 sample(rev.true.intxns, size=as.integer(0.5*length(rev.true.intxns)))),
+                                 size=sample.size)
     true.intxns <- sample(possible.true.intxns, size=sample.size)
     ## Put together the tables of predictions and TRUE/FALSE labels
     intxns <- c(true.intxns, false.intxns)
