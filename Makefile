@@ -366,7 +366,7 @@ $(OUTDIR)/%-nfchisq.tsv: $(DATADIR)/%-discr.tsv $(NFCHISQ_SCRIPT) $(OUTDIR)
 	$(RSCRIPT) $(NFCHISQ_SCRIPT) $< $@
 # Here I create three different correlation tables with the same script assoc_methods.r
 # Funchisq, partcor and FNN_mutinfo
-$(OUTDIR)/%-partcor.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
+$(OUTDIR)/%-all.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
 	$(RSCRIPT) $(ASSOC_SCRIPT) $< $@ all
 
 # Partial correlation
