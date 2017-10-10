@@ -18,7 +18,7 @@ average.over.methods <- function(tbls){
             for(tbl in tbls){
                 tbl[ is.na(tbl) ] <- NA
 
-                v = v +median(as.numeric(tbl[i,j]),as.numeric(tbl[j,i]),na.rm = T)
+                v = v +mean(as.numeric(tbl[i,j]),as.numeric(tbl[j,i]),na.rm = T)
             }
             v = v/3
 
