@@ -52,6 +52,8 @@ if (grepl("pcor", pred.score.file)){
     method <- "cor"
 }else if (grepl("pssm", pred.score.file)){
     assoc.method <- "PSSM Score"
+}else if (grepl("string", pred.score.file)){
+    assoc.method <- "STRING Score"
 }
 ## The next two append info to the plot title and override for
 ## normalisation purposes the method used, in order of increasing
