@@ -24,7 +24,7 @@ DISCR_METHOD ?= trunc 	# mclust.whole mclust.by.row manual trunc
 ASSOCNET_FILTER_METHOD ?= deconvolution
 ASSOCNET_FILTER_SCALE_METHOD ?= standard
 # Network density post-deconvolution
-DECONVOLUTION_A ?= 1.0
+DECONVOLUTION_A ?= 0.5
 # Eigenvalue Scaling parameter
 DECONVOLUTION_B ?= 0.99
 
@@ -129,7 +129,7 @@ VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(STRING_VAL_IMG) # $(PREDICTOR_VAL_
 ASSOCNET_PARAMS = --unbiased-correlation --p-method=none
 ASSOCNET_FILTER_PARAMS = --method=$(ASSOCNET_FILTER_METHOD) \
 						--scale-method=$(ASSOCNET_FILTER_SCALE_METHOD) \
-						--header-in --observed-only --scale-first
+						--header-in --observed-only
 ifeq ($(ASSOCNET_FILTER_METHOD),deconvolution)
 ASSOCNET_FILTER_PARAMS += --deconvolution-a=$(DECONVOLUTION_A)	\
 						  --deconvolution-b=$(DECONVOLUTION_B)
