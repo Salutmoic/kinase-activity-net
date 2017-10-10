@@ -13,5 +13,9 @@ for s in $TABLE_STRATEGIES; do
              TABLE_STRATEGY=$s ASSOC_METHOD=$m
     done
     bsub -o ${LOGDIR}/validation-${s}-pssm.out -e ${LOGDIR}/validation-${s}-pssm.err \
-         make img/kinact-${s}-pssm-val.pdf TABLE_STRATEGY=$s ASSOC_METHOD=$m
+         make img/kinact-${s}-pssm-val.pdf TABLE_STRATEGY=$s
+    bsub -o ${LOGDIR}/validation-${s}-string.out -e ${LOGDIR}/validation-${s}-string.err \
+         make img/kinact-${s}-string-val.pdf TABLE_STRATEGY=$s
+    bsub -o ${LOGDIR}/validation-${s}-string-filter.out -e ${LOGDIR}/validation-${s}-string-filter.err \
+         make img/kinact-${s}-string-filter-val.pdf TABLE_STRATEGY=$s
 done
