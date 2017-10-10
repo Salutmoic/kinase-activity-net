@@ -367,19 +367,19 @@ $(OUTDIR)/%-nfchisq.tsv: $(DATADIR)/%-discr.tsv $(NFCHISQ_SCRIPT) $(OUTDIR)
 # Here I create three different correlation tables with the same script assoc_methods.r
 # Funchisq, partcor and FNN_mutinfo
 $(OUTDIR)/%-partcor.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
-	$(RSCRIPT) $(ASSOC_SCRIPT) all $< $@	
+	$(RSCRIPT) $(ASSOC_SCRIPT) $< $@ all
 
 # Partial correlation
 $(OUTDIR)/%-partcor.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
-	$(RSCRIPT) $(ASSOC_SCRIPT) partcor $< $@	
+	$(RSCRIPT) $(ASSOC_SCRIPT) $< $@ partcor
 
 # Mutual information
 $(OUTDIR)/%-mut_info.tsv: $(DATADIR)/%-discr.tsv $(ASSOC_SCRIPT) $(OUTDIR)
-	$(RSCRIPT) $(ASSOC_SCRIPT) mut_info $< $@
+	$(RSCRIPT) $(ASSOC_SCRIPT) $< $@ mut_info
 
 # Fast-nearest-neighbors (FNN) mutual information
 $(OUTDIR)/%-fnn_mut_info.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
-	$(RSCRIPT) $(ASSOC_SCRIPT) fnn_mut_info $< $@
+	$(RSCRIPT) $(ASSOC_SCRIPT) $< $@ fnn_mut_info
 
 # Filter out indirect associations
 $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
