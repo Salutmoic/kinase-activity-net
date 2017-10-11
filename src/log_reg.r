@@ -1,4 +1,3 @@
-
 #Use logistic regression to test and predict kinase pairs
 
 
@@ -46,8 +45,9 @@ model.assecc <-function(train.valid,train){
   model = train(train)
   predition = predict(model,train.valid[,4:6], type = response)
   residuals = predict(model,train.valid[,4:6], type = "deviance")
-  return(confusionMatrix(prediction,train.valid[,3]))
+  return(chisq.test(table(prediction,train.val[,3])))
 }
+
 
 test.res = test(test,train)
 write.table(test.res,"logistic_regression.tsv",quote = F, sep = "\t")
