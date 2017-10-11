@@ -22,7 +22,8 @@ ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info fnn_mut_info 
 ASSOC_METHOD ?= scor
 DISCR_METHOD ?= trunc 	# mclust.whole mclust.by.row manual trunc
 ASSOCNET_FILTER_METHOD ?= deconvolution
-ASSOCNET_FILTER_SCALE_METHOD ?= standard
+ASSOCNET_FILTER_PRESCALE_METHOD ?= standard
+ASSOCNET_FILTER_POSTSCALE_METHOD ?= standard
 # Network density post-deconvolution
 DECONVOLUTION_A ?= 0.5
 # Eigenvalue Scaling parameter
@@ -128,7 +129,8 @@ VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(STRING_VAL_IMG) # $(PREDICTOR_VAL_
 
 ASSOCNET_PARAMS = --unbiased-correlation --p-method=none
 ASSOCNET_FILTER_PARAMS = --method=$(ASSOCNET_FILTER_METHOD) \
-						--scale-method=$(ASSOCNET_FILTER_SCALE_METHOD) \
+						--pre-scale-method=$(ASSOCNET_FILTER_PRESCALE_METHOD) \
+						--post-scale-method=$(ASSOCNET_FILTER_POSTSCALE_METHOD) \
 						--header-in --observed-only
 ifeq ($(ASSOCNET_FILTER_METHOD),deconvolution)
 ASSOCNET_FILTER_PARAMS += --deconvolution-a=$(DECONVOLUTION_A)	\
