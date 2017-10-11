@@ -7,23 +7,27 @@ import sys
 import itertools
 
 
-def read_data():
+def read_kin_sub_data():
     #Reads kinase-substrate table where substrate and kinase are found in 
-    f = open("data/reduced_kinase_table.tsv","r")
-    columns = f.readline()
-    columns =columns.split("\t")
-    tside = columns.index("SITE_...7_AA")
+
     ktable = {}
-    for line in f:
-        line = line.split("\t")
-        if line[0] in ktable:
-            ktable[line[0]].append(line[tside])
-        else:
-            ktable[line[0]] = [line[tside]]
-    return tside,ktable
+    with open("data/reduced_kinase_table.tsv","r") as f:
+        columns = f.readline().split("\t")
+        seq_col = columns.index("SITE_...7_AA")
+        for line in f:
+            line = line.split("\t")
+            kinase = line[0]
+            motif_seq = line[seq_col].upper()
+            if kinase in ktable:
+                ktable[kinase].append(motif_seq)
+            else:
+                ktable[kinase] = [motif_seq]
+    return ktable
+
 
 def amino_acids():
     #returns a dictionary containing a list of the common 20 amino acids 
+
     aminos = {"G":0, "A":1, "V":2, "L":3, "I":4, "P":5, "F":6, "Y":7, "W":8,
               "S":9, "T":10, "C":11, "M":12, "N":13, "Q":14, "K":15, "R":16,
               "H":17, "D":18, "E":19}
@@ -31,7 +35,7 @@ def amino_acids():
 
 
 def read_aa_freqs():
-    aa_freqs = dict()
+    aa_freqs = {}
     with open("data/aa-freqs.tsv", "r") as h:
         for line in h:
             aa, freq = line.strip().split()
@@ -39,197 +43,179 @@ def read_aa_freqs():
     return aa_freqs
 
 
-def pmms(ks):
+def calc_pssms(ktable):
     # returns a dictionary where keys are kinases and values are pmms
     # matrices made from the known substrates for each kinase
-    
+
     aminos = amino_acids()
-    pmms = {}
-
+    pssms = {}
     aa_freqs = read_aa_freqs()
-    kinases = ks.keys()
-
-    for i in kinases:
-        seqs = ks[i]
+    for kinase in ktable:
+        motif_seqs = ktable[kinase]
         cmat = np.zeros((15,20))
-        for j in seqs:
-            j = j.upper()
-            for k in range(0,len(j)):
-                if j[k] in aminos:
-                    cmat[k][aminos[j[k]]] = cmat[k][aminos[j[k]]] + 1.0
-            
+        for seq in motif_seqs:
+            seq = seq.upper()
+            for i, aa in enumerate(seq):
+                if aa not in aminos:
+                    continue
+                cmat[i][aminos[aa]] = cmat[i][aminos[aa]] + 1.0
         pc = 0.1
-        cmat = cmat + pc #(float(1)/(len(seqs)+2))*len(seqs)
-        cmat = cmat/(len(seqs)+pc*20.0)
-
-        for k in range(15):
+        cmat = cmat + pc
+        cmat = cmat/(len(motif_seqs)+pc*20.0)
+        for i in range(15):
             for aa in aa_freqs:
-                cmat[k][aminos[aa]] = log(cmat[k][aminos[aa]]/aa_freqs[aa])/log(2.0)
-        
-        pmms[i] = cmat
-
-    return pmms
+                cmat[i][aminos[aa]] = log(cmat[i][aminos[aa]]/aa_freqs[aa])/log(2.0)
+        pssms[kinase] = cmat
+    return pssms
 
 
-def subseqs():
-    #This function extracts peptides surrounding phospho sites found in the phosphosite plus
-    # human_kinase_table
-    f = open("data/human_kinase_table.tsv","r")
-    
-    columns = f.readline()
-    columns =columns.split("\t")
-    seqind = columns.index("SITE_...7_AA")
-    seqs = []
-    
-    for line in f:
-        line = line.split("\t")
-        seqs.append(line[seqind])
+def get_all_motif_seqs():
+    # This function extracts peptides surrounding phospho sites found
+    # in the phosphosite plus human_kinase_table
 
-    return seqs
+    with open("data/human_kinase_table.tsv","r") as f:
+        columns = f.readline()
+        columns =columns.split("\t")
+        seqind = columns.index("SITE_...7_AA")
+        motif_seqs = []
+        for line in f:
+            line_spl = line.split("\t")
+            motif_seqs.append(line_spl[seqind].upper())
+    return motif_seqs
 
 
-def score(seq,pmms,ks):
+def score_motif_seq(motif_seq, pssms):
     #scores peptites with pssm
+
     aminos = amino_acids()
     score = 1
-    for i in range(0,len(seq)):
-        if seq[i] != "_":
-            score = score + pmms[i][aminos[seq[i].upper()]]
+    for i, aa in enumerate(motif_seq):
+        if aa != "_":
+            score = score + pssms[i][aminos[aa]]
         else:
-            score = score + np.min(pmms[i]) #(float(1)/(len(ks)+2))
-
+            score = score + np.min(pssms[i])
     return score
         
         
-def dist(seqs,pmms,ks):
-    #creates distribution of pmms scores
+def calc_dist(motif_seqs, pssms):
+    #creates distribution of pssm scores
     #scores are calculated by scoring a random phosphosite relative to to kinase i
 
     dist = {}
-    for i in pmms:
+    for kinase in pssms:
         d = []
-        for j in range(0,1000):
-            rand =  random.randint(0,(len(seqs)-1))
-            seq = seqs[rand]
-            d.append(score(seq,pmms[i],ks[i]))
-        dist[i] = d
+        for j in range(1000):
+            motif_seq = random.choice(motif_seqs)
+            d.append(score_motif_seq(motif_seq, pssms[kinase]))
+        dist[kinase] = d
     return dist
         
-def kin_phosphosites(ks):
+
+def kin_phosphosites(ktable):
     #returns dictionary with every known phosphosite found on each kinase in the
     #Ochoa et al. dataset
     
-    f =  open("data/phosphosites_reduced.tsv")
     psites = {}
-    columns = f.readline()
-
-    columns =columns.split("\t")
-    seqind = columns.index("SITE_...7_AA")
-    
-    for line in f:
-        line = line.split("\t")
-        if line[0] in ks.keys():
-            if line[0] not in psites:
-                psites[line[0]] = [line[seqind]]
+    with open("data/phosphosites_reduced.tsv") as f:
+        columns = f.readline()
+        columns =columns.split("\t")
+        seqind = columns.index("SITE_...7_AA")
+        for line in f:
+            line_spl = line.split("\t")
+            protein = line_spl[0]
+            motif_seq = line_spl[seqind].upper()
+            if protein not in ktable:
+                continue
+            if protein not in psites:
+                psites[protein] = [motif_seq]
             else:
-                psites[line[0]].append(line[seqind])
+                psites[protein].append(motif_seq)
     return psites
 
-def score_kin_pairs(ks,pmms,netdir):
+
+def score_kin_pairs(ktable, pssms, kin_act_file):
     # loads a netwoek of kinase-> kinase interactions and scores them with the pssm
     # it returns a dictionary with kinasa A and kinase B and list of scores for each phosphosite found
     # on B
 
     prots = set()
-    with open(netdir) as h:
+    with open(kin_act_file) as h:
         for line in h:
             prot, _, _ = line.split()
             prots.add(prot)
+    # Just get interaction pairs for kinases that are in our kinase activity table
     pairs = itertools.product(prots, repeat=2)
-    from pprint import pprint
-
-    psites = kin_phosphosites(ks)
-    
+    psites = kin_phosphosites(ktable)
     scores = {}
     for pair in pairs:
         A, B = pair
         if A == B:
             continue
-        sites = psites[B]
-        for i in sites:
-            sc = score(i,pmms[A],ks[A])
-            if (A,B) in scores.keys():
-                scores[(A,B)].append(sc)
+        motif_seqs = psites[B]
+        for motif_seq in motif_seqs:
+            score = score_motif_seq(motif_seq, pssms[A])
+            if (A,B) in scores:
+                scores[(A,B)].append(score)
             else:
-                scores[(A,B)] = [sc]
+                scores[(A,B)] = [score]
     return scores
 
-def assess_edges(scores,dist):
+
+def assess_edges(scores, dist):
     #Finds the highest scoreing phosphosite for ech A,B pair and compares it to the
     #distribution generated for B (A-> B) from the dist() function
     zscores = {}
 
-    for i in scores.keys():
-        m = max(scores[i])
-        z = (m-np.mean(dist[i[0]]))/np.std(dist[i[0]])
-        zscores[i] = z
+    for pair in scores:
+        max_score = max(scores[pair])
+        A, B = pair
+        z = (max_score-np.mean(dist[A]))/np.std(dist[A])
+        zscores[pair] = z
     return zscores
 
-def score_network(filename):
+
+def score_network(kin_act_file):
     #This takes network files and scores all edges according to pssm
 
-    t,ks = read_data()
-    pmm = pmms(ks)
-
-    seqs = subseqs()
-
-    d = dist(seqs,pmm,ks)
-
-    out_file_base = splitext(basename(filename))[0]
+    ktable = read_kin_sub_data()
+    pssms = calc_pssms(ktable)
+    motif_seqs = get_all_motif_seqs()
+    dist = calc_dist(motif_seqs, pssms)
+    out_file_base = splitext(basename(kin_act_file))[0]
     dist_out_file = "out/" + out_file_base + "-pssm-dists.tsv"
-    v = open(dist_out_file, "w")
-    for i in d:
-
-        line = i + "\t"
-        for j in d[i]:
-            line = line + str(j) + "\t"
-
-        v.write(line + "\n")     
-    v.close()
-    
-    scores = score_kin_pairs(ks,pmm,filename)
+    with open(dist_out_file, "w") as v:
+        for kinase in dist:
+            line = [kinase]
+            for j in dist[kinase]:
+                line.append(str(j))
+            v.write("\t".join(line) + "\n")     
+    scores = score_kin_pairs(ktable, pssms, kin_act_file)
     out_file = "out/" + out_file_base + "-pssm.tsv"
-    v = open(out_file, "w")
-    v.write("\t".join(["node1", "node2", "score"])+"\n")
-    for i in scores:
-        
-        m_score = max(scores[i])
-        v.write(str(i[0])+"\t"+str(i[1])+ "\t"+ str(m_score)+"\n")
-    v.close()
-
+    with open(out_file, "w") as v:
+        v.write("\t".join(["node1", "node2", "score"])+"\n")
+        for pair in scores:
+            max_score = max(scores[pair])
+            v.write("\t".join([pair[0], pair[1], str(max_score)])+"\n")
     
     
-def known_scores(pmms,ks):
+def known_scores(pssms, ktable):
     v = open("out/known_kinase_psite-score","w")
-    f = open("data/human_kinase_table","r")
-    columns = f.readline()
-    columns =columns.split("\t")
-    seqind = columns.index("SITE_...7_AA")
-
-    for line in f:
-        line = line.split("\t")
-        kinase = line[0] 
-        psite = line[seqind]
-        sc = score(psite,pmms[kinase],ks[kinase])
-        v.write(kinase+"\t"+psite+"\t"+str(sc)+ "\n")
-
+    with open("data/human_kinase_table","r") as f:
+        columns = f.readline()
+        columns =columns.split("\t")
+        seqind = columns.index("SITE_...7_AA")
+        for line in f:
+            line_spl = line.split("\t")
+            kinase = line_spl[0] 
+            motif_seq = line_spl[seqind]
+            score = score_motif_seq(motif_seq, pssms[kinase], ktable[kinase])
+            v.write("\t".join([kinase, motif_seq, str(score)])+"\n")
     v.close()
-    f.close()
     return    
-   
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit("USAGE: <script> DATA_FILE")
-    filename = sys.argv[1]
-    score_network(filename)
+    kin_act_file = sys.argv[1]
+    score_network(kin_act_file)
