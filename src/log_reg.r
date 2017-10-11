@@ -1,4 +1,3 @@
-
 #Use logistic regression to test and predict kinase pairs
 
 
@@ -18,7 +17,7 @@ test <- argv[2]
 
 train <- function(train){
 
-  model = glm(train[,3]~train[,4]+train[,5]+train[,6]) 
+  model = glm(train[,3]~train[,4]+train[,5]+train[,6],family = binomial()) 
 
   
   return(model)  
