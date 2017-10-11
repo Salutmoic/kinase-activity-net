@@ -23,7 +23,7 @@ ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info	\
 ASSOC_METHOD ?= scor
 DISCR_METHOD ?= trunc 	# mclust.whole mclust.by.row manual trunc
 ASSOCNET_FILTER_METHOD ?= deconvolution
-ASSOCNET_FILTER_PRESCALE_METHOD ?= standard
+ASSOCNET_FILTER_PRESCALE_METHOD ?= none
 ASSOCNET_FILTER_POSTSCALE_METHOD ?= standard
 # Network density post-deconvolution
 DECONVOLUTION_A ?= 0.5
@@ -63,7 +63,7 @@ GO_OBO = $(EXT_DATADIR)/go-basic-$(GO_OBO_VERSION).obo
 HUMAN_GO_VERSION = 2017-09-26
 FULL_GO_ASSOC_TABLE = $(EXT_DATADIR)/goa_human-$(HUMAN_GO_VERSION).gaf
 STRING_VERSION = 10.5
-HUMAN_STRING_RAW = $(EXT_DATADIR)/9606.protein.links.v$(STRING_VERSION).txt
+HUMAN_STRING_RAW = $(EXT_DATADIR)/9606.protein.links.detailed.v$(STRING_VERSION).txt
 
 ######################
 ## Generated data sets
@@ -106,7 +106,8 @@ GO_CELL_LOCATION = $(DATADIR)/go-cell-location.tsv
 # STRING (in the output directory for convenience of using it as a
 # predictor)
 STRING_ID_MAPPING = $(DATADIR)/string-id-map.tsv
-HUMAN_STRING = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string.tsv
+HUMAN_STRING_COEXP = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-coexp.tsv
+HUMAN_STRING_EXPER = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-exper.tsv
 # Protein groupings
 COMBINED_GROUPING = $(DATADIR)/protein-groups.tsv
 # Validation sets
@@ -121,9 +122,11 @@ KEGG_PHOS_VALSET = $(DATADIR)/validation-set-kegg-phos.tsv
 # Validation
 ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
 PSSM_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-pssm-val.pdf
-STRING_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-val.pdf
+STRING_COEXP_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp-val.pdf
+STRING_EXPER_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-exper-val.pdf
 PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor-val.pdf
-VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(STRING_VAL_IMG) # $(PREDICTOR_VAL_IMG)
+VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(STRING_COEXP_VAL_IMG)	\
+	$(STRING_EXPER_VAL_IMG) # $(PREDICTOR_VAL_IMG)
 
 ##################
 ## Program Options
@@ -333,8 +336,15 @@ $(STRING_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
 	join -t'	' $@.tmp $(UNIPROT_ID_MAPPING) | cut -f2,3 >$@
 	rm $@.tmp
 
-$(HUMAN_STRING): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) $(FORMAT_STRING_SCRIPT)
-	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(wordlist 1,3,$^) >$@.tmp
+# STRING coexpression
+$(HUMAN_STRING_COEXP): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) $(FORMAT_STRING_SCRIPT)
+	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(wordlist 1,3,$^) 6 >$@.tmp
+	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k1) >$@
+	rm $@.tmp
+
+# STRING experimental
+$(HUMAN_STRING_EXPER): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) $(FORMAT_STRING_SCRIPT)
+	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(wordlist 1,3,$^) 7 >$@.tmp
 	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k1) >$@
 	rm $@.tmp
 

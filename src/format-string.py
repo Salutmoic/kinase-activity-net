@@ -18,10 +18,13 @@ def read_kinact_tbl(h):
     return kinases
 
 
-def reformat_string(string_h, string_id_map, kinases, kinact_intxns):
+def reformat_string(string_h, string_id_map, kinases, kinact_intxns, score_col):
     intxns = dict()
     for line in string_h:
-        ensp1, ensp2, score = line.strip().split()
+        line_spl = line.strip().split()
+        ensp1 = line_spl[0]
+        ensp2 = line_spl[1]
+        score = line_spl[score_col]
         if ensp1 not in string_id_map or ensp2 not in string_id_map:
             continue
         prot1 = string_id_map[ensp1]
@@ -47,15 +50,16 @@ def reformat_string(string_h, string_id_map, kinases, kinact_intxns):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 4:
-        sys.exit("USAGE: <script> STRING STRING_ID_MAP KINACT_DATA")
+    if len(sys.argv) != 5:
+        sys.exit("USAGE: <script> STRING STRING_ID_MAP KINACT_DATA COLUMN")
     string_file = sys.argv[1]
     string_id_map_file = sys.argv[2]
     kinact_file = sys.argv[3]
+    score_col = int(sys.argv[4]) - 1
     with open(string_id_map_file) as string_h:
         string_id_map = read_id_map(string_h)
     with open(kinact_file) as h:
         kinases = read_kinact_tbl(h)
     kinact_intxns = product(kinases, repeat=2)
     with open(string_file) as string_h:
-        reformat_string(string_h, string_id_map, kinases, kinact_intxns)
+        reformat_string(string_h, string_id_map, kinases, kinact_intxns, score_col)

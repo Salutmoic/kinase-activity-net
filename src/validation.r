@@ -38,6 +38,9 @@ if (grepl("pcor", pred.score.file)){
 }else if (grepl("scor", pred.score.file)){
     assoc.method <- "Spearman's Correlation"
     method <- "cor"
+}else if (grepl("paircor", pred.score.file)){
+    assoc.method <- "Pairwise Spearman's Correlation"
+    method <- "cor"
 }else if (grepl("nfchisq", pred.score.file)){
     assoc.method <- "FunChiSq"
     method <- "nfchisq"
@@ -55,8 +58,10 @@ if (grepl("pcor", pred.score.file)){
     method <- "meansq"
 }else if (grepl("pssm", pred.score.file)){
     assoc.method <- "PSSM Score"
-}else if (grepl("string", pred.score.file)){
-    assoc.method <- "STRING Score"
+}else if (grepl("string-coexp", pred.score.file)){
+    assoc.method <- "STRING Coexpression Score"
+}else if (grepl("string-exper", pred.score.file)){
+    assoc.method <- "STRING Experimental Score"
 }
 ## The next two append info to the plot title and override for
 ## normalisation purposes the method used, in order of increasing
@@ -118,15 +123,15 @@ print(c(length(possible.false.intxns), length(possible.true.intxns)))
 
 n <- 100
 
-sample.size <- 0.5*min(length(possible.false.intxns), length(possible.true.intxns))
-## sample.size <- 0.5*min(length(possible.false.intxns)+0.5*length(rev.true.intxns), length(possible.true.intxns))
+## sample.size <- 0.5*min(length(possible.false.intxns), length(possible.true.intxns))
+sample.size <- 0.5*min(length(possible.false.intxns)+0.5*length(rev.true.intxns), length(possible.true.intxns))
 
 ## This procedure is sufficient for training-free predictions.
 for (i in 1:n){
-    false.intxns <- sample(possible.false.intxns, size=sample.size)
-    ## false.intxns <- sample(union(possible.false.intxns,
-    ##                              sample(rev.true.intxns, size=as.integer(0.5*length(rev.true.intxns)))),
-    ##                              size=sample.size)
+    ## false.intxns <- sample(possible.false.intxns, size=sample.size)
+    false.intxns <- sample(union(possible.false.intxns,
+                                 sample(rev.true.intxns, size=as.integer(0.75*length(rev.true.intxns)))),
+                                 size=sample.size)
     true.intxns <- sample(possible.true.intxns, size=sample.size)
     ## Put together the tables of predictions and TRUE/FALSE labels
     intxns <- c(true.intxns, false.intxns)
