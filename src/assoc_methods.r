@@ -114,7 +114,7 @@ if(method == "nfchisq"){
 
 }
 
-if(method == "pcor"){
+if(method == "partcor"){
     res.tbl = pcor(t(kin.act.m),method = "s")$estimate
 
 }
