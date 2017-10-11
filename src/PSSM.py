@@ -200,7 +200,7 @@ def score_network(filename):
     scores = score_kin_pairs(ks,pmm,filename)
     out_file = "out/" + out_file_base + "-pssm.tsv"
     v = open(out_file, "w")
-    v.write("\t".join(["node1", "node2", "score"]))
+    v.write("\t".join(["node1", "node2", "score"])+"\n")
     for i in scores:
         
         m_score = max(scores[i])
