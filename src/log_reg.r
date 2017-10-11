@@ -28,7 +28,7 @@ test <- function(test,train){
   
   model = train(train)
 
-  predition = predict(model,test[,3:5], type = response)
+  predition = predict(model,test[,3:5], type = "response")
   residuals = predict(model,test[,3:5], type = "deviance")
 
   test = cbind(test,prediction,residuals)
