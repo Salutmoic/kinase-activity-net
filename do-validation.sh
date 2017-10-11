@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TABLE_STRATEGIES="max-rows max-cols balanced"
-ASSOC_METHODS="pcor pcor-filter scor scor-filter nfchisq mut_info mut_info-filter fnn_mut_info fnn_mut_info-filter partcor all"
+ASSOC_METHODS="pcor pcor-filter scor scor-filter nfchisq mut_info mut_info-filter fnn_mut_info fnn_mut_info-filter partcor all paircor fvalue"
 LOGDIR=log
 
 mkdir -p $LOGDIR

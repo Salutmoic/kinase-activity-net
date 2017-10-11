@@ -18,7 +18,8 @@ BINDIR = /nfs/research2/beltrao/software-rh7/bin
 
 TABLE_STRATEGIES = max-rows max-cols balanced
 TABLE_STRATEGY ?= balanced
-ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info fnn_mut_info partcor all
+ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info	\
+	fnn_mut_info partcor all fvalue paircor
 ASSOC_METHOD ?= scor
 DISCR_METHOD ?= trunc 	# mclust.whole mclust.by.row manual trunc
 ASSOCNET_FILTER_METHOD ?= deconvolution
@@ -156,6 +157,8 @@ FINAL_PREDICTOR_SCRIPT = $(SRCDIR)/final-predictor.r
 DISCRETIZE_SCRIPT = $(SRCDIR)/discretize.r
 NFCHISQ_SCRIPT = $(SRCDIR)/nfchisq.r
 ASSOC_SCRIPT = $(SRCDIR)/assoc_methods.r
+LM_PRED_SCRIPT = $(SRCDIR)/lm-pred.r
+PAIR_COR_SCRIPT = $(SRCDIR)/pairwise-cor.r
 PSSM_SCRIPT = $(SRCDIR)/PSSM.py
 AA_FREQS_SCRIPT = $(SRCDIR)/aa-freqs.py
 FILTER_PSITE_PLUS_SCRIPT = $(SRCDIR)/filter-psite-plus-tbl.r
@@ -382,6 +385,14 @@ $(OUTDIR)/%-mut_info.tsv: $(DATADIR)/%-discr.tsv $(ASSOC_SCRIPT) $(OUTDIR)
 # Fast-nearest-neighbors (FNN) mutual information
 $(OUTDIR)/%-fnn_mut_info.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
 	$(RSCRIPT) $(ASSOC_SCRIPT) $< $@ fnn_mut_info
+
+# Linear model based predictions (poor man's MRA)
+$(OUTDIR)/%-fvalue.tsv: $(DATADIR)/%-imp.tsv $(LM_PRED_SCRIPT) $(KIN_INVIVO_CONDS) $(OUTDIR)
+	$(RSCRIPT) $(LM_PRED_SCRIPT) $< $@
+
+# Pairwise correlations, taking into account perturbations
+$(OUTDIR)/%-fvalue.tsv: $(DATADIR)/%-imp.tsv $(PAIR_COR_SCRIPT) $(KIN_INVIVO_CONDS) $(OUTDIR)
+	$(RSCRIPT) $(PAIR_COR_SCRIPT) $< $@
 
 # Filter out indirect associations
 $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
