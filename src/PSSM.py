@@ -52,6 +52,12 @@ def calc_pssms(ktable):
     aa_freqs = read_aa_freqs()
     for kinase in ktable:
         motif_seqs = ktable[kinase]
+        if len(motif_seqs) < 10:
+            # This is also being caught in the kinase-activity data
+            # preprocessing, but just in case we want to be more
+            # stringent, it's implemented here
+            pssms[kinase] = None
+            continue
         cmat = np.zeros((15,20))
         for seq in motif_seqs:
             seq = seq.upper()
@@ -84,16 +90,16 @@ def get_all_motif_seqs():
     return motif_seqs
 
 
-def score_motif_seq(motif_seq, pssms):
+def score_motif_seq(motif_seq, pssm):
     #scores peptites with pssm
 
     aminos = amino_acids()
     score = 1
     for i, aa in enumerate(motif_seq):
         if aa != "_":
-            score = score + pssms[i][aminos[aa]]
+            score = score + pssm[i][aminos[aa]]
         else:
-            score = score + np.min(pssms[i])
+            score = score + np.min(pssm[i])
     return score
         
         
@@ -103,6 +109,8 @@ def calc_dist(motif_seqs, pssms):
 
     dist = {}
     for kinase in pssms:
+        if pssms[kinase] is None:
+            continue
         d = []
         for j in range(1000):
             motif_seq = random.choice(motif_seqs)
@@ -151,6 +159,10 @@ def score_kin_pairs(ktable, pssms, kin_act_file):
         A, B = pair
         if A == B:
             continue
+        if pssms[A] is None:
+            print("No PSSM for {0}".format(A))
+            scores[(A,B)] = []
+            continue
         motif_seqs = psites[B]
         for motif_seq in motif_seqs:
             score = score_motif_seq(motif_seq, pssms[A])
@@ -167,6 +179,9 @@ def assess_edges(scores, dist):
     zscores = {}
 
     for pair in scores:
+        if not scores[pair]:
+            zscores[pair] = None
+            continue
         max_score = max(scores[pair])
         A, B = pair
         z = (max_score-np.mean(dist[A]))/np.std(dist[A])
@@ -194,6 +209,9 @@ def score_network(kin_act_file):
     with open(out_file, "w") as v:
         v.write("\t".join(["node1", "node2", "score"])+"\n")
         for pair in scores:
+            if not scores[pair]:
+                v.write("\t".join([pair[0], pair[1], "NA"])+"\n")
+                continue
             max_score = max(scores[pair])
             v.write("\t".join([pair[0], pair[1], str(max_score)])+"\n")
     
@@ -208,7 +226,7 @@ def known_scores(pssms, ktable):
             line_spl = line.split("\t")
             kinase = line_spl[0] 
             motif_seq = line_spl[seqind]
-            score = score_motif_seq(motif_seq, pssms[kinase], ktable[kinase])
+            score = score_motif_seq(motif_seq, pssms[kinase])
             v.write("\t".join([kinase, motif_seq, str(score)])+"\n")
     v.close()
     return    
