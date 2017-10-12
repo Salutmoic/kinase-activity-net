@@ -12,6 +12,9 @@ cond.anno <- pData(esetNR)
 phospho.anno <- fData(esetNR)
 phospho.vals <- exprs(esetNR)
 
+## phospho.vals has more conditions than kin.act
+phospho.vals <- phospho.vals[,colnames(kin.act)]
+
 ## Please note also we added the breast cancer CPTAC data from two different
 ## sources: The CPTAC database as well as from the supplementary material of
 ## the paper (which got published later). I would recommend you to use the
@@ -29,6 +32,34 @@ phospho.vals <- phospho.vals[, -which(colnames(phospho.vals) %in% cptac.conds)]
 cptac.start <- which(colnames(phospho.vals)=="1604_290")
 cptac.end <- which(colnames(phospho.vals)=="1711_290")
 kin.act <- kin.act[,-which(colnames(kin.act) %in% cptac.conds)]
+
+kin.sub.tbl <- read.delim("data/human_kinase_table.tsv", as.is=TRUE, sep="\t")
+kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
+
+filter.act.preds <- function(kin.act){
+    for (kinase in rownames(kin.act)){
+        kin.subs <- subset(kin.sub.tbl, GENE==kinase)
+        kin.subs.ensp <- merge(phospho.anno, kin.subs,
+                               by.x=c("gene_name", "positions"),
+                               by.y=c("SUB_GENE", "SUB_MOD_RSD"))
+        ensp.sites <- paste(kin.subs.ensp$ensp, kin.subs.ensp$positions, "P", sep="_")
+        ensp.sites <- intersect(rownames(phospho.vals), ensp.sites)
+        if (length(ensp.sites) == 0){
+            next
+        }
+        if (length(ensp.sites) == 1){
+            kin.act[kinase, 1:ncol(kin.act)] <- NA
+            next
+        }
+        sites.detected <- apply(phospho.vals[ensp.sites,], 2, function(cond) length(which(!is.na(cond))))
+        bad.conds <- colnames(kin.act)[which(sites.detected<2)]
+        kin.act[kinase, bad.conds] <- NA
+        if (length(bad.conds) > 0){
+            message(paste(length(bad.conds), "conditions omitted for", kinase, "due to lack of evidence."))
+        }
+    }
+    return(kin.act)
+}
 
 kin.overlap <- read.delim("data/kinase_substrate_overlap.tsv", as.is=TRUE)
 
@@ -89,6 +120,12 @@ for (i in 1:nrow(kin.overlap.sub)){
 
 kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
 
+kin.act <- filter.act.preds(kin.act)
+empty.rows <- rownames(kin.act)[which(apply(kin.act, 1, function(row) length(which(is.na(row)))==length(row)))]
+kin.act <- kin.act[setdiff(rownames(kin.act), empty.rows),]
+empty.cols <- colnames(kin.act)[which(apply(kin.act, 2, function(col) length(which(is.na(col)))==length(col)))]
+kin.act <- kin.act[,setdiff(colnames(kin.act), empty.cols)]
+
 make.balanced.table <- function(full.tbl, na.threshold){
     ## Sort the columns by number of missing columns.  Then take one
     ## column at a time until one row has >threshold missing data.  At
@@ -104,6 +141,8 @@ make.balanced.table <- function(full.tbl, na.threshold){
             bad.cols <- c(bad.cols, colnames(sorted.tbl)[i])
         }
     }
+    if (length(bad.cols) == ncol(sorted.tbl))
+        stop(paste("No good columns at an NA threshold of", na.threshold))
     good.cols <- setdiff(colnames(sorted.tbl), bad.cols)
     good.sorted.tbl <- subset(sorted.tbl, select=good.cols)
 
