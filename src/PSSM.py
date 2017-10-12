@@ -14,14 +14,23 @@ def read_kin_sub_data():
     with open("data/reduced_kinase_table.tsv","r") as f:
         columns = f.readline().split("\t")
         seq_col = columns.index("SITE_...7_AA")
+        sub_col = columns.index("SUB_GENE")
+        dom_col = columns.index("DOMAIN")
         for line in f:
-            line = line.split("\t")
-            kinase = line[0]
-            motif_seq = line[seq_col].upper()
-            if kinase in ktable:
-                ktable[kinase].append(motif_seq)
-            else:
-                ktable[kinase] = [motif_seq]
+            line_spl = line.split("\t")
+            kinase = line_spl[0]
+            if kinase not in ktable:
+                ktable[kinase] = []
+            motif_seq = line_spl[seq_col].upper()
+            substrate = line_spl[sub_col]
+            domain = line_spl[dom_col]
+            # Really we want to omit autophosphorylation sites that
+            # fall in the kinases' activation loops, but finding the
+            # activation loops requires a bit of work so this is just
+            # a quick cheat for now:
+            if substrate == kinase and domain in ["Pkinase", "Pkinase_Tyr"]:
+                continue
+            ktable[kinase].append(motif_seq)
     return ktable
 
 
