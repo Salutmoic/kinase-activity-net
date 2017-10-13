@@ -6,9 +6,11 @@ gen.possible.false.intxns <- function(all.kinases, prot.groups){
         for (k2 in all.kinases){
             if (k1 == k2)
                 next
-            k1.groups <- subset(prot.groups, protein == k1)$group
-            k2.groups <- subset(prot.groups, protein == k2)$group
-            if (length(intersect(k1.groups, k2.groups)) == 0)
+            if (!(k1 %in% prot.groups$protein) || !(k2 %in% prot.groups$protein))
+                next
+            k1.groups <- unique(subset(prot.groups, protein == k1)$group)
+            k2.groups <- unique(subset(prot.groups, protein == k2)$group)
+            if (length(k1.groups)>0 && length(k2.groups)>0 && length(intersect(k1.groups, k2.groups)) == 0)
                 possible.false.intxns <- c(possible.false.intxns, paste(k1, k2, sep="-"))
         }
     }
@@ -98,7 +100,7 @@ if (method %in% c("cor", "nfchisq")){
 
 true.intxns.tbl <- read.table(val.set.file, as.is=TRUE)
 possible.true.intxns <- paste(true.intxns.tbl[,1], true.intxns.tbl[,2], sep="-")
-possible.true.intxns <- possible.true.intxns[which(possible.true.intxns %in% rownames(pred.score))]
+possible.true.intxns <- intersect(possible.true.intxns, rownames(pred.score))
 
 prot.groups.full <- read.table(prot.groups.file, as.is=TRUE)
 names(prot.groups.full) <- c("group", "protein")
@@ -112,25 +114,25 @@ possible.false.intxns <- setdiff(possible.false.intxns, possible.true.intxns)
 possible.false.intxns <- intersect(possible.false.intxns, rownames(pred.score))
 
 rev.true.intxns <- paste(true.intxns.tbl[,2], true.intxns.tbl[,1], sep="-")
-rev.true.intxns <- rev.true.intxns[which(rev.true.intxns %in% rownames(pred.score))]
+rev.true.intxns <- intersect(rev.true.intxns, rownames(pred.score))
 rev.true.intxns <- setdiff(rev.true.intxns, possible.true.intxns)
-## possible.false.intxns <- union(possible.false.intxns, rev.true.intxns)
+rev.true.intxns <- setdiff(rev.true.intxns, possible.false.intxns)
 
 pred.data <- NULL
 label.data <- NULL
 
-print(c(length(possible.false.intxns), length(possible.true.intxns)))
+print(c(length(possible.false.intxns), length(possible.true.intxns), length(rev.true.intxns)))
 
 n <- 100
 
 ## sample.size <- 0.5*min(length(possible.false.intxns), length(possible.true.intxns))
-sample.size <- 0.5*min(length(possible.false.intxns)+0.5*length(rev.true.intxns), length(possible.true.intxns))
+sample.size <- round(0.5*min(length(possible.false.intxns)+0.5*length(rev.true.intxns), length(possible.true.intxns)))
 
 ## This procedure is sufficient for training-free predictions.
 for (i in 1:n){
     ## false.intxns <- sample(possible.false.intxns, size=sample.size)
     false.intxns <- sample(union(possible.false.intxns,
-                                 sample(rev.true.intxns, size=as.integer(0.75*length(rev.true.intxns)))),
+                                 sample(rev.true.intxns, size=as.integer(0.5*length(rev.true.intxns)))),
                                  size=sample.size)
     true.intxns <- sample(possible.true.intxns, size=sample.size)
     ## Put together the tables of predictions and TRUE/FALSE labels
