@@ -27,8 +27,15 @@ def get_path_members(path_rel_handle, path_name, id_map):
 
 
 def parse_kegg_paths(id_map):
+    sig_path_file = "data/external/kegg-signaling-pathways.tsv"
+    sig_paths = set()
+    with open(sig_path_file) as h:
+        for line in h:
+            pathway, _ = line.split("\t")
+            sig_paths.add(pathway)
     kegg_rel_path = "data/external/kegg-relationships/"
-    path_files = os.listdir(kegg_rel_path)
+    # path_files = os.listdir(kegg_rel_path)
+    path_files = [pathway+".ppip" for pathway in sig_paths]
     path_prots = set()
     for f in path_files:
         path_name = os.path.splitext(f)[0]
