@@ -35,7 +35,7 @@ VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
 # A list of protein annotations used to group proteins so that during
 # validation we don't randomly select two kinases that are known to be
 # functionally related (e.g. in the same pathway) for a true negative.
-PROTEIN_GROUPING = $(COMBINED_GROUPING) # $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
+PROTEIN_GROUPING =  $(COMBINED_GROUPING) # $(COMBINED_GROUPING) $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
 
 #####################
 ## External data sets
@@ -349,7 +349,7 @@ $(HUMAN_STRING_EXPER): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) $
 	rm $@.tmp
 
 # Kegg pathway reference
-$(KEGG_PATH_REFERENCE): $(KEGG_RELATIONSHIPS) $(UNIPROT_ID_MAPPING)
+$(KEGG_PATH_REFERENCE): $(KEGG_RELATIONSHIPS) $(UNIPROT_ID_MAPPING) $(KEGG_PATH_REF_SCRIPT)
 	$(PYTHON) $(KEGG_PATH_REF_SCRIPT) | sort | uniq >$@
 
 # Combined protein group set
