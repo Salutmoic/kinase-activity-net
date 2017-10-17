@@ -22,7 +22,7 @@ filter.act.preds <- function(kin.act){
         }
         sites.detected <- apply(phospho.vals[ensp.sites,], 2,
                                 function(cond) length(which(!is.na(cond))))
-        bad.conds <- setdiff(colnames(phospho.vals)[which(sites.detected<1)],
+        bad.conds <- setdiff(colnames(phospho.vals)[which(sites.detected<4)],
                              colnames(kin.act)[which(is.na(kin.act[kinase,]))])
         kin.act[kinase, bad.conds] <- NA
         if (length(bad.conds) > 0){
@@ -226,7 +226,7 @@ filter.low.activity <- function(full.tbl){
     }
     good.rows <- setdiff(rownames(full.tbl, bad.rows))
     if (length(good.rows) < nrow(full.tbl)){
-        message(paste("Filtering out", nrow(full.tbl)-length(good.rows), "rows due to low entropy"))
+        message(paste("Filtering out", nrow(full.tbl)-length(good.rows), "rows due to low activity"))
     }
     filtered.tbl <- full.tbl[good.rows,]
     return(filtered.tbl)
