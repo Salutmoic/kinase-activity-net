@@ -1,6 +1,6 @@
 ## phos stores kinase activiteis acorss conditions (Ochoa et al. 2016)
-load("data/external/log.wGSEA.kinase_condition.clean.Rdata")
-kin.act <- log.wGSEA.kinase_condition.clean
+load("data/log.wKSEA.kinase_condition.clean.Rdata")
+kin.act <- log.wKSEA.kinase_condition.clean
 
 ksub = read.delim("data/human_kinase_table.tsv", as.is=TRUE)
 

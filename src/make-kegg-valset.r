@@ -1,4 +1,4 @@
-load("data/external/log.wGSEA.kinase_condition.clean.Rdata")
+load("data/log.wKSEA.kinase_condition.clean.Rdata")
 
 argv <- commandArgs(TRUE)
 if (length(argv) != 3){
@@ -25,7 +25,7 @@ names(merged.dat2) <- c("uniprot2", "uniprot1", "prot1", "prot2")
 
 kin.sub.pairs <- unique(subset(merged.dat2, select=c("prot1", "prot2")))
 
-kin.act <- log.wGSEA.kinase_condition.clean
+kin.act <- log.wKSEA.kinase_condition.clean
 kin.sub.filt <- subset(kin.sub.pairs, prot1 %in% rownames(kin.act) &
                                       prot2 %in% rownames(kin.act))
 

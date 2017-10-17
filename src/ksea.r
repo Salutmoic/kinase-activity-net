@@ -21,13 +21,40 @@ get.kinase.sites <- function(kin.sub.tbl, phospho.anno){
     return(kinase.sites)
 }
 
-cond.run.ksea <- function(phospho.data, kinase.sites){
-    phospho.data <- na.omit(phospho.data)
-    phospho.data <- phospho.data[order(phospho.data, decreasing=TRUE)]
-    kinases.ksea <- ksea_batchKinases(names(phospho.data), phospho.data,
-                                      kinase.sites, trial=1000)
-    return(-log10(as.vector(kinases.ksea)))
+cond.run.ksea <- function(phospho.data, kinase.sites, num.trials){
+    phospho.data <- na.omit(phospho.data[,1])
+    phospho.data <- sort(phospho.data, decreasing=TRUE)
+    ensp.sites <- names(phospho.data)
+    kinases.ksea <- ksea_batchKinases(ensp.sites, phospho.data,
+                                      kinase.sites, trial=num.trials)
+    for (kinase in names(kinase.sites)){
+        if (length(which(ensp.sites %in% kinase.sites[[kinase]]))==0)
+            next
+        kinase.subs <- phospho.data[which(names(phospho.data) %in% kinase.sites[[kinase]])]
+        median.fc <- median(kinase.subs)
+        fc.sign <- sign(median.fc)
+        ksea.i <- which(grepl(paste0("^", kinase, "\\."), names(kinases.ksea)))
+        if (length(ksea.i)==0)
+            next
+        names(kinases.ksea)[ksea.i] <- kinase
+        if (is.na(kinases.ksea[ksea.i])){
+            next
+        }
+        if (kinases.ksea[ksea.i] == 0){
+            kinases.ksea[ksea.i] <- 1/num.trials
+        }
+        kinases.ksea[ksea.i] <- -log10(kinases.ksea[ksea.i])*fc.sign
+    }
+    return(kinases.ksea)
 }
+
+argv <- commandArgs(TRUE)
+if (length(argv) != 2){
+    stop("USAGE: <script> COND_NUM NUM_TRIALS")
+}
+## This is a bit of wierdness to accommodate LSF job arrays
+cond.num <- as.integer(sub("^\\\\", "", argv[1]))
+num.trials <- as.integer(argv[2])
 
 ## Setup multicore forking for mclapply based in bsub available cores
 hosts <- Sys.getenv("LSB_MCPU_HOSTS")
@@ -51,6 +78,10 @@ cptac.range <- 1604:1711
 cptac.conds <- paste(as.character(cptac.range), "290", sep="_")
 phospho.vals <- phospho.vals[, -which(colnames(phospho.vals) %in% cptac.conds)]
 
+if (cond.num > ncol(phospho.vals)){
+    stop(paste("Invalid condition number.  Max # =", ncol(phospho.vals)))
+}
+
 ## Load kinase-substrate relationships
 kin.sub.tbl <- read.delim("data/human_kinase_table.tsv", as.is=TRUE, sep="\t")
 kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
@@ -61,10 +92,17 @@ kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
 ## effect this has for us.
 kin.sub.tbl <- subset(kin.sub.tbl, GENE != SUB_GENE)
 
+## Get all the sites annotated as substrates for each kinase.
 kinase.sites <- get.kinase.sites(kin.sub.tbl, phospho.anno)
-kin.act <- as.data.frame(cbind(apply(phospho.vals, 2, cond.run.ksea,
-                                     kinase.sites)))
-rownames(kin.act) <- names(kinase.sites)
-colnames(kin.act) <- colnames(phospho.vals)
 
-save(kin.act, "data/log.wGSEA.kinase_condition.clean.Rdata")
+## Estimate kinase activities for this condition.
+kin.act <- cond.run.ksea(subset(phospho.vals, select=colnames(phospho.vals)[cond.num]),
+                         kinase.sites, num.trials)
+
+## Reformat as a narrow table
+kin.act.tbl <- data.frame(kinase=names(kin.act),
+                          cond=rep(colnames(phospho.vals)[cond.num], length(kin.act)),
+                          kin.act=kin.act)
+write.table(kin.act.tbl,
+            paste0("tmp/ksea/cond-", cond.num, ".tsv"),
+            sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)

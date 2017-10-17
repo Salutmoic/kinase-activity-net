@@ -92,22 +92,21 @@ make.balanced.table <- function(full.tbl, na.threshold){
     ## rows have <threshold missing data.
     num.rows <- nrow(full.tbl)
     num.cols <- ncol(full.tbl)
-    rem.row <- TRUE
     while (num.rows > 1 && num.cols > 1){
-        if (rem.row){
+        max.row.na <- max(apply(full.tbl, 1, percent.na))
+        max.col.na <- max(apply(full.tbl, 2, percent.na))
+        if (max.row.na > max.col.na){
             max.na <- which.max(apply(full.tbl, 1, percent.na))
             worst.row <- rownames(full.tbl)[max.na]
             new.rows <- setdiff(rownames(full.tbl), worst.row)
             full.tbl <- full.tbl[new.rows,]
             num.rows <- num.rows - 1
-            rem.row <- FALSE
         }else{
             max.na <- which.max(apply(full.tbl, 2, percent.na))
             worst.col <- colnames(full.tbl)[max.na]
             new.cols <- setdiff(colnames(full.tbl), worst.col)
             full.tbl <- full.tbl[,new.cols]
             num.cols <- num.cols - 1
-            rem.row <- TRUE
         }
         if (all(apply(full.tbl, 1, function(row) percent.na(row) < na.threshold)) &&
             all(apply(full.tbl, 2, function(col) percent.na(col) < na.threshold))){
@@ -293,8 +292,8 @@ strategy <- argv[1]
 
 ## Load data
 load("data/external/esetNR.Rdata")
-load("data/external/log.wGSEA.kinase_condition.clean.Rdata")
-kin.act <- log.wGSEA.kinase_condition.clean
+load("data/log.wKSEA.kinase_condition.clean.Rdata")
+kin.act <- log.wKSEA.kinase_condition.clean
 cond.anno <- pData(esetNR)
 phospho.anno <- fData(esetNR)
 phospho.vals <- exprs(esetNR)
@@ -318,9 +317,6 @@ cptac.range <- 1604:1711
 cptac.conds <- paste(as.character(cptac.range), "290", sep="_")
 phospho.vals <- phospho.vals[, -which(colnames(phospho.vals) %in% cptac.conds)]
 
-## TODO: remove
-kin.act <- kin.act[,-which(colnames(kin.act) %in% cptac.conds)]
-
 ## TODO: remove?
 ## Only choose kinases that have at least 10 substrates
 kin.overlap.sub <- subset(kin.overlap, no.substrates1 > 10 & no.substrates2 > 10)
@@ -330,11 +326,13 @@ good.kins <- unique(c(kin.overlap.sub$kinase1, kin.overlap.sub$kinase2))
 kin.overlap.sub <- kin.overlap.sub[order(kin.overlap.sub$proportion.of.substrates.shared,
                                          decreasing=TRUE),]
 redundant.kins <- get.redundant.kins(kin.overlap.sub)
-kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
 
+kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
+dim(kin.act)
 ## Filter out kinase activity predictions that were not based on
 ## enough sites
 kin.act <- filter.act.preds(kin.act)
+
 empty.rows <- rownames(kin.act)[which(apply(kin.act, 1,
                                             function(row){
                                                 percent.na(row)==1.0

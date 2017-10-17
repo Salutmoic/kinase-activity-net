@@ -11,11 +11,14 @@ EXT_DATADIR = $(DATADIR)/external
 KEGGDIR = $(EXT_DATADIR)/kegg-relationships
 OUTDIR = out
 IMGDIR = img
+TMPDIR = tmp
+KSEA_TMPDIR = $(TMPDIR)/ksea
 BINDIR = /nfs/research2/beltrao/software-rh7/bin
 
 #############
 ## Parameters
 
+KSEA_NUM_CONDS = 668
 TABLE_STRATEGIES = max-rows max-cols balanced
 TABLE_STRATEGY ?= balanced
 ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info	\
@@ -40,8 +43,6 @@ PROTEIN_GROUPING =  $(COMBINED_GROUPING) # $(COMBINED_GROUPING) $(KEGG_PATH_REFE
 #####################
 ## External data sets
 
-# Kinase activity predictions
-GSEA_DATA = $(EXT_DATADIR)/log.wGSEA.kinase_condition.clean.Rdata
 # Ext phosphosite data
 PSITE_DATA = $(EXT_DATADIR)/esetNR.Rdata
 # specifies kinases perturbed in each condition
@@ -68,6 +69,9 @@ HUMAN_STRING_RAW = $(EXT_DATADIR)/9606.protein.links.detailed.v$(STRING_VERSION)
 ######################
 ## Generated data sets
 
+# Kinase activity predictions
+KSEA_TMP_DATA = $(foreach COND_NUM,$(shell seq 1 $(KSEA_NUM_CONDS)),$(KSEA_TMPDIR)/cond-$(COND_NUM).tsv)
+KSEA_DATA = $(DATADIR)/log.wKSEA.kinase_condition.clean.Rdata
 # Initial kinase-activity tables, trying to
 # maximize #rows, #cols or both.  Raw and imputed datasets
 KINACT_DATA = $(DATADIR)/kinact-$(TABLE_STRATEGY).tsv
@@ -155,6 +159,7 @@ ASSOCNET_FILTER ?= $(BINDIR)/assocnet-filter $(ASSOCNET_FILTER_PARAMS)
 ##########
 ## Scripts
 
+KSEA_POST_SCRIPT = $(SRCDIR)/ksea-post.r
 GEN_KINACT_TBL_SCRIPT = $(SRCDIR)/gen-activity-table.r
 FINAL_PREDICTOR_SCRIPT = $(SRCDIR)/final-predictor.r
 DISCRETIZE_SCRIPT = $(SRCDIR)/discretize.r
@@ -192,7 +197,7 @@ assoc-results: $(KINACT_ASSOC)
 pssm: $(KIN_KIN_SCORES) $(KIN_KNOWN_PSITE_SCORES) $(KIN_SCORE_DIST)
 
 .PHONY: data
-data: $(KINACT_DATA) $(IMP_KINACT_DATA)
+data: $(KSEA_DATA) $(KINACT_DATA) $(IMP_KINACT_DATA)
 
 .PHONY: validation
 validation: $(VAL_IMGS)
@@ -249,9 +254,17 @@ $(IMGDIR):
 ########################
 ## Processed data tables
 
+# KSEA results
+# The KSEA temporary files are created outside of this Makefile using
+# the do-ksea.sh script
+$(KSEA_DATA): $(KSEA_TMP_DATA)
+	cat $^ >$@.tmp
+	$(RSCRIPT) $(KSEA_POST_SCRIPT) $@.tmp
+	rm $@.tmp
+
 # Kinase activity tables
 $(KINACT_DATA) \
-$(IMP_KINACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(GSEA_DATA) $(KIN_COND_PAIRS) \
+$(IMP_KINACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(KSEA_DATA) $(KIN_COND_PAIRS) \
 					$(KIN_SUB_OVERLAP)
 	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT) $(TABLE_STRATEGY)
 
@@ -265,12 +278,12 @@ $(HUMAN_KINASE_TABLE): $(FULL_KIN_SUBSTR_TABLE)
 
 # Filter the human kinase-substrates to just those for which we have
 # kinase activities
-$(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(GSEA_DATA)
+$(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KSEA_DATA)
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $< $@
 
 # Filter the PhosphoSitePlus site list to just those on kinases for
 # which we have kinase activities
-$(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(GSEA_DATA)
+$(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KSEA_DATA)
 	sed '1,3d' $< >$@.tmp
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
 	rm $@.tmp
@@ -281,11 +294,11 @@ $(HUMAN_REG_SITES): $(FULL_REG_SITES_TABLE)
 
 # Further filter to just include reg sites on kinases for which we
 # have kinase activities
-$(REG_SITES): $(HUMAN_REG_SITES) $(FILTER_PSITE_PLUS_SCRIPT) $(GSEA_DATA)
+$(REG_SITES): $(HUMAN_REG_SITES) $(FILTER_PSITE_PLUS_SCRIPT) $(KSEA_DATA)
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $< $@
 
 # Kinase-substrate overlap
-$(KIN_SUB_OVERLAP): $(HUMAN_KINASE_TABLE) $(GSEA_DATA) $(KIN_SUB_OVERLAP_SCRIPT)
+$(KIN_SUB_OVERLAP): $(HUMAN_KINASE_TABLE) $(KSEA_DATA) $(KIN_SUB_OVERLAP_SCRIPT)
 	$(RSCRIPT) $(KIN_SUB_OVERLAP_SCRIPT)
 
 # Combine PhosphositePlus kinase-substrate and regulatory sites tables
@@ -358,7 +371,7 @@ $(COMBINED_GROUPING): $(GO_CELL_LOCATION) $(KEGG_PATH_REFERENCE)
 
 # Kegg-based validation sets
 $(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv \
-			$(UNIPROT_ID_MAPPING) $(KEGG_VAL_SCRIPT) $(GSEA_DATA)
+			$(UNIPROT_ID_MAPPING) $(KEGG_VAL_SCRIPT) $(KSEA_DATA)
 	$(RSCRIPT) $(KEGG_VAL_SCRIPT) $(wordlist 1,2,$^) $@
 
 # Calculate human proteome amino-acid frequencies
