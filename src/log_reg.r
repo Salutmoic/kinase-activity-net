@@ -41,12 +41,6 @@ test <- function(test,train){
 
 #test performance of the model on the train.valid data frame
 
-model.assecc <-function(train.valid,train){
-  model = train(train)
-  predition = predict(model,train.valid[,4:6], type = response)
-  residuals = predict(model,train.valid[,4:6], type = "deviance")
-  return(chisq.test(table(prediction,train.val[,3])))
-}
 
 
 test.res = test(test,train)
