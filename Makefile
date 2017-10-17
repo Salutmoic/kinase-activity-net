@@ -48,7 +48,7 @@ PSITE_DATA = $(EXT_DATADIR)/esetNR.Rdata
 # specifies kinases perturbed in each condition
 KIN_COND_PAIRS = $(EXT_DATADIR)/kinase-condition-pairs.tsv
 # tries to calculate which kinases are perturbed in each condition
-KIN_INVIVO_CONDS = $(EXT_DATADIR)/kinase_invivoconditions.tsv 
+KIN_INVIVO_CONDS = $(EXT_DATADIR)/kinase_invivoconditions.csv 
 # PhosphositePlus data
 PHOSPHOSITE_PLUS_VERSION = 2017-09-08
 FULL_KIN_SUBSTR_TABLE = $(EXT_DATADIR)/Kinase_Substrate_Dataset_$(PHOSPHOSITE_PLUS_VERSION)
@@ -414,7 +414,7 @@ $(OUTDIR)/%-fvalue.tsv: $(DATADIR)/%-imp.tsv $(LM_PRED_SCRIPT) $(KIN_INVIVO_COND
 	$(RSCRIPT) $(LM_PRED_SCRIPT) $< $@
 
 # Pairwise correlations, taking into account perturbations
-$(OUTDIR)/%-fvalue.tsv: $(DATADIR)/%-imp.tsv $(PAIR_COR_SCRIPT) $(KIN_INVIVO_CONDS) $(OUTDIR)
+$(OUTDIR)/%-paircor.tsv: $(DATADIR)/%-imp.tsv $(PAIR_COR_SCRIPT) $(KIN_INVIVO_CONDS) $(OUTDIR)
 	$(RSCRIPT) $(PAIR_COR_SCRIPT) $< $@
 
 # Filter out indirect associations
