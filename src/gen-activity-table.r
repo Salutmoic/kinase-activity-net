@@ -4,7 +4,7 @@ suppressMessages(library(entropy))
 ## library(FNN)
 suppressMessages(library(Biobase))
 
-filter.act.preds <- function(kin.act){
+filter.act.preds <- function(kin.act, phospho.anno, phospho.vals, min.sites){
     for (kinase in rownames(kin.act)){
         kin.subs <- subset(kin.sub.tbl, GENE==kinase)
         kin.subs.ensp <- merge(phospho.anno, kin.subs,
@@ -22,13 +22,13 @@ filter.act.preds <- function(kin.act){
         }
         sites.detected <- apply(phospho.vals[ensp.sites,], 2,
                                 function(cond) length(which(!is.na(cond))))
-        bad.conds <- setdiff(colnames(phospho.vals)[which(sites.detected<4)],
+        bad.conds <- setdiff(colnames(phospho.vals)[which(sites.detected<min.sites)],
                              colnames(kin.act)[which(is.na(kin.act[kinase,]))])
         kin.act[kinase, bad.conds] <- NA
-        if (length(bad.conds) > 0){
-            message(paste(length(bad.conds), "conditions omitted for", kinase,
-                          "due to lack of evidence."))
-        }
+        ## if (length(bad.conds) > 0){
+        ##     message(paste(length(bad.conds), "conditions omitted for", kinase,
+        ##                   "due to lack of evidence."))
+        ## }
     }
     return(kin.act)
 }
@@ -108,8 +108,8 @@ make.balanced.table <- function(full.tbl, na.threshold){
             full.tbl <- full.tbl[,new.cols]
             num.cols <- num.cols - 1
         }
-        if (all(apply(full.tbl, 1, function(row) percent.na(row) < na.threshold)) &&
-            all(apply(full.tbl, 2, function(col) percent.na(col) < na.threshold))){
+        if (all(apply(full.tbl, 1, function(tbl.row) percent.na(tbl.row) < na.threshold)) &&
+            all(apply(full.tbl, 2, function(tbl.col) percent.na(tbl.col) < na.threshold))){
             return(full.tbl)
         }
     }
@@ -117,110 +117,68 @@ make.balanced.table <- function(full.tbl, na.threshold){
 }
 
 make.max.row.table <- function(full.tbl, na.threshold, min.cols){
-    ## Sort the columns by number of missing columns.  Then take one
-    ## column at a time until one row has >threshold missing data.  At
-    ## that point, stop, revert to previous iteration.
-    sorted.tbl <- full.tbl[,order(apply(full.tbl, 2,
-                                        function(col) {
-                                            length(which(!is.na(col)))
-                                        }),
-                                  decreasing=TRUE)]
-    bad.cols <- c()
-    for (i in 1:ncol(sorted.tbl)){
-        if (percent.na(sorted.tbl[,i]) > na.threshold){
-            bad.cols <- c(bad.cols, colnames(sorted.tbl)[i])
-        }
-    }
-    good.cols <- setdiff(colnames(sorted.tbl), bad.cols)
-    good.sorted.tbl <- subset(sorted.tbl, select=good.cols)
+    bad.cols <- colnames(full.tbl)[which(apply(full.tbl, 2,
+                                               function(tbl.col){
+                                                   percent.na(tbl.col) > na.threshold
+                                               }))]
+    good.cols <- setdiff(colnames(full.tbl), bad.cols)
+    sub.tbl <- subset(full.tbl, select=good.cols)
 
-    num.rows <- nrow(good.sorted.tbl)
-    while(num.rows > 1){
-        for (i in 1:ncol(good.sorted.tbl)){
-            if (i==1){
-                final.tbl <- as.data.frame(good.sorted.tbl[,i],
-                                           col.names=colnames(good.sorted.tbl)[i],
-                                           row.names=rownames(good.sorted.tbl))
-                colnames(final.tbl) <- colnames(good.sorted.tbl)[i]
-            }else{
-                tmp.tbl <- cbind(final.tbl, good.sorted.tbl[,i])
-                if (all(apply(tmp.tbl, 1,
-                              function(row){
-                                  percent.na(row) < na.threshold
-                              }))){
-                    cnames <- colnames(final.tbl)
-                    final.tbl <- cbind(final.tbl, good.sorted.tbl[,i])
-                    colnames(final.tbl) <- c(cnames, colnames(good.sorted.tbl)[i])
-                }else{
-                    next
-                }
+    while (nrow(sub.tbl) > 1){
+        tmp.tbl <- sub.tbl
+        fail <- FALSE
+        while (any(apply(tmp.tbl, 1, percent.na) > na.threshold)){
+            max.na.col <- which.max(apply(tmp.tbl, 2, percent.na))
+            good.cols <- setdiff(colnames(tmp.tbl), colnames(tmp.tbl)[max.na.col])
+            if (is.null(good.cols) || length(good.cols) == 0){
+                fail <- TRUE
+                break
             }
+            tmp.tbl <- subset(tmp.tbl, select=good.cols)
         }
-        if (ncol(final.tbl) >= min.cols){
-            return(final.tbl)
-        }
-        max.na <- which.max(apply(good.sorted.tbl[,1:min.cols], 1, percent.na))
-        worst.row <- rownames(good.sorted.tbl)[max.na]
-        new.rows <- setdiff(rownames(good.sorted.tbl), worst.row)
-        good.sorted.tbl <- good.sorted.tbl[new.rows,]
-        num.rows <- num.rows - 1
+        if (!fail && ncol(tmp.tbl) >= min.cols)
+            return(tmp.tbl)
+        max.na.row <- which.max(apply(sub.tbl, 1, percent.na))
+        good.rows <- setdiff(rownames(sub.tbl), rownames(sub.tbl)[max.na.row])
+        if (is.null(good.rows) || length(good.rows) == 0)
+            return (NULL)
+        sub.tbl <- sub.tbl[good.rows,]
     }
-    return(NULL)
+    return (NULL)
 }
 
 make.max.col.table <- function(full.tbl, na.threshold, min.rows){
-    ## Sort the columns by number of missing columns.  Then take one
-    ## column at a time until one row has >threshold missing data.  At
-    ## that point, stop, revert to previous iteration.
-    sorted.tbl <- full.tbl[order(apply(full.tbl, 1,
-                                        function(col) {
-                                            length(which(!is.na(col)))
-                                        }),
-                                 decreasing=TRUE),]
-    bad.rows <- c()
-    for (i in 1:nrow(sorted.tbl)){
-        if (percent.na(sorted.tbl[i,]) > na.threshold){
-            bad.rows <- c(bad.rows, rownames(sorted.tbl)[i])
-        }
-    }
-    good.rows <- setdiff(rownames(sorted.tbl), bad.rows)
-    good.sorted.tbl <- sorted.tbl[good.rows,]
+    bad.rows <- rownames(full.tbl)[which(apply(full.tbl, 1,
+                                               function(tbl.row){
+                                                   percent.na(tbl.row) > na.threshold
+                                               }))]
+    good.rows <- setdiff(rownames(full.tbl), bad.rows)
+    sub.tbl <- full.tbl[good.rows,]
 
-    num.cols <- ncol(good.sorted.tbl)
-    while(num.cols > 1){
-        for (i in 1:nrow(good.sorted.tbl)){
-            if (i==1){
-                final.tbl <- as.data.frame(t(good.sorted.tbl[i,]),
-                                           row.names=rownames(good.sorted.tbl)[i],
-                                           col.names=colnames(good.sorted.tbl))
-            }else{
-                tmp.tbl <- rbind(final.tbl, good.sorted.tbl[i,])
-                if (all(apply(tmp.tbl, 2,
-                              function(col){
-                                  percent.na(col) < na.threshold
-                              }))){
-                    rnames <- rownames(final.tbl)
-                    final.tbl <- rbind(final.tbl, good.sorted.tbl[i,])
-                    rownames(final.tbl) <- c(rnames, rownames(good.sorted.tbl)[i])
-                }else{
-                    next
-                }
+    while (ncol(sub.tbl) > 1){
+        tmp.tbl <- sub.tbl
+        fail <- FALSE
+        while (any(apply(tmp.tbl, 2, percent.na) > na.threshold)){
+            max.na.row <- which.max(apply(tmp.tbl, 1, percent.na))
+            good.rows <- setdiff(rownames(tmp.tbl), rownames(tmp.tbl)[max.na.row])
+            if (is.null(good.rows) || length(good.rows) == 0){
+                fail <- TRUE
+                break
             }
+            tmp.tbl <- tmp.tbl[good.rows,]
         }
-        if (nrow(final.tbl) >= min.rows){
-            return(final.tbl)
-        }
-        max.na <- which.max(apply(good.sorted.tbl[1:min.rows,], 2, percent.na))
-        worst.col <- colnames(good.sorted.tbl)[max.na]
-        new.cols <- setdiff(colnames(good.sorted.tbl), worst.col)
-        good.sorted.tbl <- good.sorted.tbl[,new.cols]
-        num.cols <- num.cols - 1
+        if (!fail && nrow(tmp.tbl) >= min.rows)
+            return(tmp.tbl)
+        max.na.col <- which.max(apply(sub.tbl, 2, percent.na))
+        good.cols <- setdiff(colnames(sub.tbl), colnames(sub.tbl)[max.na.col])
+        if (is.null(good.cols) || length(good.cols) == 0)
+            return (NULL)
+        sub.tbl <- subset(sub.tbl, select=good.cols)
     }
-    return(NULL)
-}
+    return (NULL)}
 
 filter.low.activity <- function(full.tbl){
-    bad.rows <- which(apply(full.tbl, 1, function(row) all(abs(row) < 1.0)))
+    bad.rows <- which(apply(full.tbl, 1, function(tbl.row) all(abs(tbl.row) < 1.0)))
     if (length(bad.rows) == 0){
         return(full.tbl)
     }
@@ -301,11 +259,6 @@ kin.sub.tbl <- read.delim("data/human_kinase_table.tsv", as.is=TRUE, sep="\t")
 kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
 kin.overlap <- read.delim("data/kinase_substrate_overlap.tsv", as.is=TRUE)
 
-## TODO: remove
-## phospho.vals has more conditions than kin.act, also let's make sure
-## the columns are in the same order anyway
-phospho.vals <- phospho.vals[,colnames(kin.act)]
-
 ## Please note also we added the breast cancer CPTAC data from two different
 ## sources: The CPTAC database as well as from the supplementary material of
 ## the paper (which got published later). I would recommend you to use the
@@ -319,7 +272,8 @@ phospho.vals <- phospho.vals[, -which(colnames(phospho.vals) %in% cptac.conds)]
 
 ## TODO: remove?
 ## Only choose kinases that have at least 10 substrates
-kin.overlap.sub <- subset(kin.overlap, no.substrates1 > 10 & no.substrates2 > 10)
+min.sites <- 3
+kin.overlap.sub <- subset(kin.overlap, no.substrates1 >= min.sites & no.substrates2 >= min.sites)
 good.kins <- unique(c(kin.overlap.sub$kinase1, kin.overlap.sub$kinase2))
 
 ## Remove redundant kinases
@@ -328,19 +282,19 @@ kin.overlap.sub <- kin.overlap.sub[order(kin.overlap.sub$proportion.of.substrate
 redundant.kins <- get.redundant.kins(kin.overlap.sub)
 
 kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
-dim(kin.act)
+
 ## Filter out kinase activity predictions that were not based on
 ## enough sites
-kin.act <- filter.act.preds(kin.act)
+kin.act <- filter.act.preds(kin.act, phospho.anno, phospho.vals, min.sites)
 
 empty.rows <- rownames(kin.act)[which(apply(kin.act, 1,
-                                            function(row){
-                                                percent.na(row)==1.0
+                                            function(tbl.row){
+                                                percent.na(tbl.row)==1.0
                                             }))]
 kin.act <- kin.act[setdiff(rownames(kin.act), empty.rows),]
 empty.cols <- colnames(kin.act)[which(apply(kin.act, 2,
-                                            function(col){
-                                                percent.na(row)==1.0
+                                            function(tbl.col){
+                                                percent.na(tbl.col)==1.0
                                             }))]
 kin.act <- kin.act[,setdiff(colnames(kin.act), empty.cols)]
 
@@ -349,14 +303,14 @@ kin.act.filt <- filter.low.activity(kin.act)
 
 ## General parameters
 na.threshold <- 1/3
-entropy.filter.stren <- 0.5
+entropy.filter.stren <- 0.1
 entropy.bins <- 10
 
 ## Build the optimized table according to the desired strategy
 if (strategy=="balanced"){
     max.table <- make.balanced.table(kin.act.filt, na.threshold)
 }else if (strategy=="max-rows"){
-    max.table <- make.max.row.table(kin.act.filt, na.threshold, 20)
+    max.table <- make.max.row.table(kin.act.filt, na.threshold, 50)
 }else if (strategy=="max-cols"){
     max.table <- make.max.col.table(kin.act.filt, na.threshold, 20)
 }
