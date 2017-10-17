@@ -64,6 +64,8 @@ if (grepl("pcor", pred.score.file)){
     assoc.method <- "STRING Coexpression Score"
 }else if (grepl("string-exper", pred.score.file)){
     assoc.method <- "STRING Experimental Score"
+}else if (grepl("all", pred.score.file)){
+    assoc.method <- "Mean Score"
 }
 ## The next two append info to the plot title and override for
 ## normalisation purposes the method used, in order of increasing
