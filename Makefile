@@ -12,15 +12,23 @@ KEGGDIR = $(EXT_DATADIR)/kegg-relationships
 OUTDIR = out
 IMGDIR = img
 TMPDIR = tmp
-KSEA_TMPDIR = $(TMPDIR)/ksea
+ifeq ($(KSEA_USE_AUTOPHOS),FALSE)
+	KSEA_TMPDIR = $(TMPDIR)/ksea
+else
+	KSEA_TMPDIR = $(TMPDIR)/ksea-autophos
+endif
 BINDIR = /nfs/research2/beltrao/software-rh7/bin
 
 #############
 ## Parameters
 
 KSEA_NUM_CONDS = 668
+KSEA_USE_AUTOPHOS = FALSE
 TABLE_STRATEGIES = max-rows max-cols balanced
 TABLE_STRATEGY ?= balanced
+KSEA_MIN_SITES ?= 1
+ENTROPY_FILTER ?= 0.1 			# Only keep rows/columns with at least 0.X*(max row/col entropy)
+NA_THRESHOLD ?= 0.3333
 ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info	\
 	fnn_mut_info partcor all fvalue paircor
 ASSOC_METHOD ?= scor
@@ -207,7 +215,7 @@ merge-validation: $(IMGDIR)/validation.pdf
 
 .PHONY: clean-data
 clean-data:
-	-rm -v $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KIN_ACT_DATA) $(IMP_EGF_KIN_ACT_DATA)
+	-rm -v $(KINACT_DATA) $(IMP_KINACT_DATA)
 
 .PHONY: clean-assoc
 clean-assoc:
@@ -266,7 +274,7 @@ $(KSEA_DATA): $(KSEA_TMP_DATA)
 $(KINACT_DATA) \
 $(IMP_KINACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(KSEA_DATA) $(KIN_COND_PAIRS) \
 					$(KIN_SUB_OVERLAP)
-	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT) $(TABLE_STRATEGY)
+	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT) $(TABLE_STRATEGY) $(KSEA_MIN_SITES) $(ENTROPY_FILTER) $(NA_THRESHOLD)
 
 # Discretized kinase activity
 $(DATADIR)/%-discr.tsv: $(DATADIR)/%-imp.tsv $(DISCRETIZE_SCRIPT)

@@ -74,6 +74,8 @@ choose.redundant.kin <- function(row){
 }
 
 get.redundant.kins <- function(kin.overlap){
+    kin.overlap <- kin.overlap[order(kin.overlap$proportion.of.substrates.shared,
+                                     decreasing=TRUE),]
     redundant.kins <- c()
     for (i in 1:nrow(kin.overlap)){
         row <- unlist(kin.overlap[i,])
@@ -85,14 +87,16 @@ get.redundant.kins <- function(kin.overlap){
     return(redundant.kins)
 }
 
-percent.na <- function(x) return(length(which(is.na(x)))/length(x))
+percent.na <- function(x){
+    if (is.null(x) || is.na(length(x)))
+        return(0.0)
+    return(length(which(is.na(x)))/length(x))
+}
 
 make.balanced.table <- function(full.tbl, na.threshold){
-    ## Alternate taking out one row and one column at a time until all
-    ## rows have <threshold missing data.
-    num.rows <- nrow(full.tbl)
-    num.cols <- ncol(full.tbl)
-    while (num.rows > 1 && num.cols > 1){
+    ## Iteratively remove the worst row or column until all rows and
+    ## cols have less than the threshold %NA.
+    while (nrow(full.tbl) > 1 && ncol(full.tbl) > 1){
         max.row.na <- max(apply(full.tbl, 1, percent.na))
         max.col.na <- max(apply(full.tbl, 2, percent.na))
         if (max.row.na > max.col.na){
@@ -100,13 +104,11 @@ make.balanced.table <- function(full.tbl, na.threshold){
             worst.row <- rownames(full.tbl)[max.na]
             new.rows <- setdiff(rownames(full.tbl), worst.row)
             full.tbl <- full.tbl[new.rows,]
-            num.rows <- num.rows - 1
         }else{
             max.na <- which.max(apply(full.tbl, 2, percent.na))
             worst.col <- colnames(full.tbl)[max.na]
             new.cols <- setdiff(colnames(full.tbl), worst.col)
-            full.tbl <- full.tbl[,new.cols]
-            num.cols <- num.cols - 1
+            full.tbl <- subset(full.tbl, select=new.cols)
         }
         if (all(apply(full.tbl, 1, function(tbl.row) percent.na(tbl.row) < na.threshold)) &&
             all(apply(full.tbl, 2, function(tbl.col) percent.na(tbl.col) < na.threshold))){
@@ -117,20 +119,23 @@ make.balanced.table <- function(full.tbl, na.threshold){
 }
 
 make.max.row.table <- function(full.tbl, na.threshold, min.cols){
+    ## 1) Get rid of all columns that have more than the threshold %NA
+    ## 2) Try removing more columns until all of the rows have less than the threshold
+    ## 3) If all the rows pass and we haven't removed too many columns, return the table
+    ## 4) Otherwise, remove the worst row and repeat from #2
     bad.cols <- colnames(full.tbl)[which(apply(full.tbl, 2,
                                                function(tbl.col){
                                                    percent.na(tbl.col) > na.threshold
                                                }))]
     good.cols <- setdiff(colnames(full.tbl), bad.cols)
     sub.tbl <- subset(full.tbl, select=good.cols)
-
     while (nrow(sub.tbl) > 1){
         tmp.tbl <- sub.tbl
         fail <- FALSE
-        while (any(apply(tmp.tbl, 1, percent.na) > na.threshold)){
+        while (any(apply(tmp.tbl, 1, function(tbl.row) percent.na(tbl.row) > na.threshold))){
             max.na.col <- which.max(apply(tmp.tbl, 2, percent.na))
             good.cols <- setdiff(colnames(tmp.tbl), colnames(tmp.tbl)[max.na.col])
-            if (is.null(good.cols) || length(good.cols) == 0){
+            if (is.null(good.cols) || length(good.cols) <= 1){
                 fail <- TRUE
                 break
             }
@@ -148,6 +153,10 @@ make.max.row.table <- function(full.tbl, na.threshold, min.cols){
 }
 
 make.max.col.table <- function(full.tbl, na.threshold, min.rows){
+    ## 1) Get rid of all rows that have more than the threshold %NA
+    ## 2) Try removing more rows until all of the columns have less than the threshold
+    ## 3) If all the columns pass and we haven't removed too many rows, return the table
+    ## 4) Otherwise, remove the worst column and repeat from #2
     bad.rows <- rownames(full.tbl)[which(apply(full.tbl, 1,
                                                function(tbl.row){
                                                    percent.na(tbl.row) > na.threshold
@@ -243,10 +252,16 @@ print.table.info <- function(tbl){
 }
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 1){
-    stop("USAGE: <script> STRATEGY")
+if (length(argv) != 4){
+    stop("USAGE: <script> STRATEGY MIN_SITES ENTROPY_FILTER NA_THRESHOLD")
 }
 strategy <- argv[1]
+min.sites <- as.integer(argv[2])
+entropy.filter.stren <- as.numeric(argv[3])
+na.threshold <- as.numeric(argv[4])
+
+## General parameters
+entropy.bins <- 10
 
 ## Load data
 load("data/external/esetNR.Rdata")
@@ -272,13 +287,11 @@ phospho.vals <- phospho.vals[, -which(colnames(phospho.vals) %in% cptac.conds)]
 
 ## TODO: remove?
 ## Only choose kinases that have at least 10 substrates
-min.sites <- 3
-kin.overlap.sub <- subset(kin.overlap, no.substrates1 >= min.sites & no.substrates2 >= min.sites)
+## kin.overlap.sub <- subset(kin.overlap, no.substrates1 >= min.sites & no.substrates2 >= min.sites)
+kin.overlap.sub <- kin.overlap
 good.kins <- unique(c(kin.overlap.sub$kinase1, kin.overlap.sub$kinase2))
 
 ## Remove redundant kinases
-kin.overlap.sub <- kin.overlap.sub[order(kin.overlap.sub$proportion.of.substrates.shared,
-                                         decreasing=TRUE),]
 redundant.kins <- get.redundant.kins(kin.overlap.sub)
 
 kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
@@ -287,24 +300,21 @@ kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
 ## enough sites
 kin.act <- filter.act.preds(kin.act, phospho.anno, phospho.vals, min.sites)
 
+## We look for "empty" rows here...not really empty, but anything
+## that's practically empty (>90% missing values).
 empty.rows <- rownames(kin.act)[which(apply(kin.act, 1,
                                             function(tbl.row){
-                                                percent.na(tbl.row)==1.0
+                                                percent.na(tbl.row)>0.9
                                             }))]
 kin.act <- kin.act[setdiff(rownames(kin.act), empty.rows),]
 empty.cols <- colnames(kin.act)[which(apply(kin.act, 2,
                                             function(tbl.col){
-                                                percent.na(tbl.col)==1.0
+                                                percent.na(tbl.col)>0.9
                                             }))]
 kin.act <- kin.act[,setdiff(colnames(kin.act), empty.cols)]
 
 ## Filter out kinases that have overall low activity predictions.
 kin.act.filt <- filter.low.activity(kin.act)
-
-## General parameters
-na.threshold <- 1/3
-entropy.filter.stren <- 0.1
-entropy.bins <- 10
 
 ## Build the optimized table according to the desired strategy
 if (strategy=="balanced"){
