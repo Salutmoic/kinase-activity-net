@@ -49,12 +49,19 @@ cond.run.ksea <- function(phospho.data, kinase.sites, num.trials){
 }
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 2){
-    stop("USAGE: <script> COND_NUM NUM_TRIALS")
+if (!(length(argv) %in% c(2, 3)){
+    stop("USAGE: <script> COND_NUM NUM_TRIALS USE_AUTOPHOS")
 }
 ## This is a bit of wierdness to accommodate LSF job arrays
 cond.num <- as.integer(sub("^\\\\", "", argv[1]))
 num.trials <- as.integer(argv[2])
+if (length(argv) == 3){
+    use.autophos <- as.logical(argv[3])
+    if (is.na(use.autophos))
+        use.autophos <- FALSE
+}else{
+    use.autophos <- FALSE
+}
 
 ## Setup multicore forking for mclapply based in bsub available cores
 hosts <- Sys.getenv("LSB_MCPU_HOSTS")
@@ -90,7 +97,9 @@ kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
 ## suspicion is that autophosphorylation tends to be nonspecific and
 ## thus will be a source of noise.  We can benchmark how much of an
 ## effect this has for us.
-kin.sub.tbl <- subset(kin.sub.tbl, GENE != SUB_GENE)
+if (!use.autophos){
+    kin.sub.tbl <- subset(kin.sub.tbl, GENE != SUB_GENE)
+}
 
 ## Get all the sites annotated as substrates for each kinase.
 kinase.sites <- get.kinase.sites(kin.sub.tbl, phospho.anno)
@@ -103,6 +112,13 @@ kin.act <- cond.run.ksea(subset(phospho.vals, select=colnames(phospho.vals)[cond
 kin.act.tbl <- data.frame(kinase=names(kin.act),
                           cond=rep(colnames(phospho.vals)[cond.num], length(kin.act)),
                           kin.act=kin.act)
+
+if (use.autophos){
+    out.dir <- "tmp/ksea-autophos/"
+}else{
+    out.dir <- "tmp/ksea/"
+}
+
 write.table(kin.act.tbl,
-            paste0("tmp/ksea/cond-", cond.num, ".tsv"),
+            paste0(out.dir, "cond-", cond.num, ".tsv"),
             sep="\t", quote=FALSE, col.names=FALSE, row.names=FALSE)
