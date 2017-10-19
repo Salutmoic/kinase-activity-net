@@ -49,7 +49,7 @@ cond.run.ksea <- function(phospho.data, kinase.sites, num.trials){
 }
 
 argv <- commandArgs(TRUE)
-if (!(length(argv) %in% c(2, 3)){
+if (!(length(argv) %in% c(2, 3))){
     stop("USAGE: <script> COND_NUM NUM_TRIALS USE_AUTOPHOS")
 }
 ## This is a bit of wierdness to accommodate LSF job arrays
