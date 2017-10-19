@@ -128,7 +128,7 @@ print(c(length(possible.false.intxns), length(possible.true.intxns), length(rev.
 n <- 100
 
 ## sample.size <- 0.5*min(length(possible.false.intxns), length(possible.true.intxns))
-sample.size <- round(0.5*min(length(possible.false.intxns)+0.5*length(rev.true.intxns), length(possible.true.intxns)))
+sample.size <- round(0.8*min(length(possible.false.intxns)+0.5*length(rev.true.intxns), length(possible.true.intxns)))
 
 ## This procedure is sufficient for training-free predictions.
 for (i in 1:n){
