@@ -243,6 +243,21 @@ clean: clean-data clean-results
 expand-var-%:
 	@echo $($*)
 
+.PHONY: info
+info:
+	@printf "\033[1mTable strategy:\033[0m\t"
+	@case "$(TABLE_STRATEGY)" in \
+		"max-rows" ) printf "max. kinases\n" ;; \
+		"max-cols" ) printf "max. conditions\n" ;; \
+		"balanced" ) printf "balanced\n" ;; \
+	esac
+	@printf "\033[1mTable dim.:\033[0m\t"
+	@printf "%s x %s\n" `sed '1d' $(KINACT_DATA) | cut -f1 | sort | uniq | wc -l` \
+		`sed '1d' $(KINACT_DATA) | cut -f2 | sort | uniq | wc -l`
+	@printf "\033[1m%% missing:\033[0m\t"
+	@awk 'BEGIN{na=0}{if ($$3=="NA"){na=na+1}}END{printf("%f\n", na/(NR-1))}' $(KINACT_DATA)
+
+
 #############
 ### Rules ###
 #############
