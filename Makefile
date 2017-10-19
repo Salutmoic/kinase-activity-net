@@ -23,10 +23,10 @@ BINDIR = /nfs/research2/beltrao/software-rh7/bin
 ## Parameters
 
 KSEA_NUM_CONDS = 668
-KSEA_USE_AUTOPHOS = FALSE
+KSEA_USE_AUTOPHOS ?= TRUE
 TABLE_STRATEGIES = max-rows max-cols balanced
-TABLE_STRATEGY ?= balanced
-KSEA_MIN_SITES ?= 1
+TABLE_STRATEGY ?= max-rows
+KSEA_MIN_SITES ?= 3
 ENTROPY_FILTER ?= 0.1 			# Only keep rows/columns with at least 0.X*(max row/col entropy)
 NA_THRESHOLD ?= 0.3333
 ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info	\
@@ -455,5 +455,4 @@ $(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(PROTEIN_GROUPING) $(IMGDIR) $(
 	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^)
 
 $(IMGDIR)/validation.pdf:
-
 	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$@ $(IMGDIR)/*-val.pdf
