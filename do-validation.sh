@@ -10,8 +10,7 @@ for s in $TABLE_STRATEGIES; do
     for m in $ASSOC_METHODS;  do
         make clean-validation TABLE_STRATEGY=$s ASSOC_METHOD=$m
         bsub -o ${LOGDIR}/validation-${s}-${m}.out -e ${LOGDIR}/validation-${s}-${m}.err \
-             make img/kinact-${s}-${m}-val.pdf \ # img/kinact-${s}-${m}-final-predictor-val.pdf \
-             TABLE_STRATEGY=$s ASSOC_METHOD=$m
+             make img/kinact-${s}-${m}-val.pdf TABLE_STRATEGY=$s ASSOC_METHOD=$m
     done
     bsub -o ${LOGDIR}/validation-${s}-pssm.out -e ${LOGDIR}/validation-${s}-pssm.err \
          make img/kinact-${s}-pssm-val.pdf TABLE_STRATEGY=$s
