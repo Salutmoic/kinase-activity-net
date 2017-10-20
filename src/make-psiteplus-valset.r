@@ -13,7 +13,7 @@ merged.dat <- merge(kin.sub, reg.sites,
                     by.x=c("SUB_GENE", "SUB_MOD_RSD"),
                     by.y=c("GENE", "MOD_RSD"))
 
-kin.sub.pairs <- unique(subset(merged.dat, select=c("GENE", "SUB_GENE")))
+kin.sub.pairs <- unique(subset(merged.dat, GENE != SUB_GENE, select=c("GENE", "SUB_GENE")))
 
 write.table(kin.sub.pairs, "data/validation-set-psiteplus.tsv",
             quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
