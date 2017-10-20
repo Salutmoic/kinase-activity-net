@@ -66,6 +66,8 @@ if (grepl("pcor", pred.score.file)){
     assoc.method <- "STRING Experimental Score"
 }else if (grepl("all", pred.score.file)){
     assoc.method <- "Mean Score"
+}else{
+    assoc.method <- pred.score.file
 }
 ## The next two append info to the plot title and override for
 ## normalisation purposes the method used, in order of increasing
@@ -84,6 +86,8 @@ if (grepl("balanced", pred.score.file)){
     table.method <- "max kinases"
 }else if (grepl("max-cols", pred.score.file)){
     table.method <- "max conditions"
+}else{
+    table.method <- ""
 }
 
 pred.score <- read.delim(pred.score.file, as.is=TRUE)

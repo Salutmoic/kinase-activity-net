@@ -73,6 +73,8 @@ HUMAN_GO_VERSION = 2017-09-26
 FULL_GO_ASSOC_TABLE = $(EXT_DATADIR)/goa_human-$(HUMAN_GO_VERSION).gaf
 STRING_VERSION = 10.5
 HUMAN_STRING_RAW = $(EXT_DATADIR)/9606.protein.links.detailed.v$(STRING_VERSION).txt
+# Kinase beads
+KINASE_BEADS_RAW = $(EXT_DATADIR)/kinase-beads-activities.tsv
 
 ######################
 ## Generated data sets
@@ -127,6 +129,8 @@ PSITE_PLUS_VALSET = $(DATADIR)/validation-set-psiteplus.tsv
 KEGG_ACT_VALSET = $(DATADIR)/validation-set-kegg-act.tsv
 KEGG_PHOS_ACT_VALSET = $(DATADIR)/validation-set-kegg-phos-act.tsv
 KEGG_PHOS_VALSET = $(DATADIR)/validation-set-kegg-phos.tsv
+# Kinase beads activities
+KINASE_BEADS = $(DATADIR)/kinase-beads-activities.tsv
 
 #########
 ## Images
@@ -400,6 +404,17 @@ $(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv \
 # Calculate human proteome amino-acid frequencies
 $(AA_FREQS): $(AA_FREQS_SCRIPT)
 	$(PYTHON) $(AA_FREQS_SCRIPT) >$@
+
+# Kinase beads activities https://doi.org/10.1101/158295
+$(KINASE_BEADS): $(KINASE_BEADS_RAW)
+	awk -F"\t" 'BEGIN{OFS="\t"}{for (i=1; i<=NF; i++){if ($$i==""){$$i="NA"}}; print}' $< \
+		| cut -f2,`seq 4 3 61 | tr '\n' ',' | sed 's/,$$//'` \
+		| sed '1{s/ log2 Fold-Change//g;s/ /./g;s/\(.*\)/\L\1/g}' >$@.tmp
+	$(RSCRIPT) src/melt.r $@.tmp $@.tmp2
+	rm $@.tmp
+	sort -k1 $@.tmp2 >$@
+	rm $@.tmp2
+	$(RSCRIPT) src/impute.r $@ $(DATADIR)/kinase-beads-activities-imp.tsv
 
 ###########################
 ## Association score tables
