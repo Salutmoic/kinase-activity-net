@@ -336,20 +336,20 @@ $(PSITE_PLUS_VALSET): $(KIN_SUBSTR_TABLE) $(REG_SITES)
 # Get all activation relationships from Kegg
 $(KEGG_ACT): $(KEGG_RELATIONSHIPS)
 	cat $^ | sed -E -n '/activation|inhibition|repression/p' | \
-		awk 'BEGIN{OFS="\t"}{print $$1, $$2}' | \
+		awk 'BEGIN{OFS="\t"}{if ($$1!=$$2){print $$1, $$2}}' | \
 		sort | uniq >$@
 
 # Get all activation relationships from Kegg
 $(KEGG_PHOS_ACT): $(KEGG_RELATIONSHIPS)
 	cat $^ | sed -E -n '/activation|inhibition|repression/p' | \
 		sed -n '/phosphorylation/p' | \
-		awk 'BEGIN{OFS="\t"}{print $$1, $$2}' | \
+		awk 'BEGIN{OFS="\t"}{if ($$1!=$$2){print $$1, $$2}}' | \
 		sort | uniq >$@
 
 # Get all phospho activation relationships from Kegg
 $(KEGG_PHOS): $(KEGG_RELATIONSHIPS)
 	cat $^ | sed -n '/phosphorylation/p' | \
-		awk 'BEGIN{OFS="\t"}{print $$1, $$2}' | \
+		awk 'BEGIN{OFS="\t"}{if ($$1!=$$2){print $$1, $$2}}' | \
 		sort | uniq >$@
 
 # Create the Uniprot ID map
