@@ -168,8 +168,13 @@ def score_kin_pairs(ktable, pssms, kin_act_file):
         A, B = pair
         if A == B:
             continue
+        if A not in pssms:
+            scores[(A,B)] = []
+            continue
         if pssms[A] is None:
-            print("No PSSM for {0}".format(A))
+            scores[(A,B)] = []
+            continue
+        if B not in psites:
             scores[(A,B)] = []
             continue
         motif_seqs = psites[B]
@@ -216,7 +221,7 @@ def score_network(kin_act_file):
     scores = score_kin_pairs(ktable, pssms, kin_act_file)
     out_file = "out/" + out_file_base + "-pssm.tsv"
     with open(out_file, "w") as v:
-        v.write("\t".join(["node1", "node2", "score"])+"\n")
+        v.write("\t".join(["node1", "node2", "pssm.score"])+"\n")
         for pair in scores:
             if not scores[pair]:
                 v.write("\t".join([pair[0], pair[1], "NA"])+"\n")
