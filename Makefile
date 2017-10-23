@@ -40,6 +40,7 @@ ASSOCNET_FILTER_POSTSCALE_METHOD ?= standard
 DECONVOLUTION_A ?= 0.5
 # Eigenvalue Scaling parameter
 DECONVOLUTION_B ?= 0.99
+PRED_METHOD = log_reg
 
 KEGG_VALSET ?= $(KEGG_ACT_VALSET)
 VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
@@ -131,6 +132,11 @@ KEGG_PHOS_ACT_VALSET = $(DATADIR)/validation-set-kegg-phos-act.tsv
 KEGG_PHOS_VALSET = $(DATADIR)/validation-set-kegg-phos.tsv
 # Kinase beads activities
 KINASE_BEADS = $(DATADIR)/kinase-beads-activities.tsv
+# Merged predictor data
+MERGED_PRED_SOURCES = $(KINACT_ASSOC) $(KIN_KIN_SCORES) $(HUMAN_STRING_COEXP)
+MERGED_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-merged.tsv
+# Final predictor
+FINAL_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(PRED_METHOD).tsv
 
 #########
 ## Images
@@ -160,7 +166,8 @@ endif
 ###########
 ## Programs
 
-SHELL = /bin/bash
+BASH = /bin/bash
+SHELL = $(BASH)
 PYTHON3 ?= $(BINDIR)/python3
 PYTHON2 ?= $(BINDIR)/python2
 PYTHON ?= $(PYTHON3)
@@ -191,6 +198,7 @@ REFORMAT_GO_ASSOC_SCRIPT = $(SRCDIR)/reformat-go-assoc.awk
 GO_CELL_LOC_SCRIPT = $(SRCDIR)/get-go-cell-component.py
 FORMAT_STRING_SCRIPT = $(SRCDIR)/format-string.py
 VAL_SCRIPT = $(SRCDIR)/validation.r
+MERGE_SCRIPT = $(SRCDIR)/merge.r
 
 # Don't delete intermediate files
 .SECONDARY:
@@ -472,11 +480,8 @@ $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) \
 ###################
 ## Merged predictor
 
-# Calculate a merged/posterior probability given all evidence.
-$(PREDICTOR): $(KINACT_ASSOC) $(FINAL_PREDICTOR_SCRIPT) \
-			  $(KIN_KIN_SCORES) $(KIN_SCORE_DIST) $(HUMAN_KINASE_TABLE) $(HUMAN_REG_SITES)
-	$(RSCRIPT) $(FINAL_PREDICTOR_SCRIPT) $(ASSOC_METHOD) $< $(KIN_KIN_SCORES) \
-		$(KIN_SCORE_DIST) $(HUMAN_KINASE_TABLE) $(HUMAN_REG_SITES) $@
+$(MERGED_PRED): $(MERGED_PRED_SOURCES) $(MERGE_SCRIPT)
+	$(RSCRIPT) $(MERGE_SCRIPT) $@ $(filter-out $(MERGE_SCRIPT),$^)
 
 #############
 ## Validation
