@@ -20,11 +20,17 @@ def read_kinact_tbl(h):
 
 def reformat_string(string_h, string_id_map, kinases, kinact_intxns, score_col):
     intxns = dict()
+    score_title = None
     for line in string_h:
         line_spl = line.strip().split()
         ensp1 = line_spl[0]
         ensp2 = line_spl[1]
         score = line_spl[score_col]
+        if not score_title:
+            # Basically, are we on the first line?  If so, grab the
+            # name of our score column
+            score_title = "string." + score
+            continue
         if ensp1 not in string_id_map or ensp2 not in string_id_map:
             continue
         prot1 = string_id_map[ensp1]
@@ -37,7 +43,7 @@ def reformat_string(string_h, string_id_map, kinases, kinact_intxns, score_col):
         else:
             if score_mod > intxns[(prot1, prot2)]:
                 intxns[(prot1, prot2)] = score_mod
-    print("\t".join(["node1", "node2", "score"]))
+    print("\t".join(["node1", "node2", score_title]))
     for intxn in intxns:
         prot1, prot2 = intxn
         score_mod = intxns[intxn]
