@@ -28,8 +28,8 @@ def read_kin_sub_data():
             # fall in the kinases' activation loops, but finding the
             # activation loops requires a bit of work so this is just
             # a quick cheat for now:
-            if substrate == kinase and domain in ["Pkinase", "Pkinase_Tyr"]:
-                continue
+            # if substrate == kinase and domain in ["Pkinase", "Pkinase_Tyr"]:
+            #     continue
             ktable[kinase].append(motif_seq)
     return ktable
 
@@ -228,13 +228,7 @@ def score_kin_pairs(ktable, pssms, kin_act_file):
         A, B = pair
         if A == B:
             continue
-        if A not in pssms:
-            scores[(A, B)] = []
-            continue
-        if pssms[A] is None:
-            scores[(A, B)] = []
-            continue
-        if B not in psites:
+        if A not in pssms or pssms[A] is None or B not in psites:
             scores[(A, B)] = []
             continue
         motif_seqs = psites[B]
