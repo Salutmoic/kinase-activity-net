@@ -216,6 +216,9 @@ MERGE_SCRIPT = $(SRCDIR)/merge.r
 .PHONY: final-predictor
 final-predictor: $(PREDICTOR)
 
+.PHONY: merge-predictors
+merge-predictors: $(MERGED_PRED)
+
 .PHONY: assoc-results
 assoc-results: $(KINACT_ASSOC) $(KINACT_ASSOC2)
 
