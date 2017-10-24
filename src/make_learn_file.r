@@ -21,5 +21,6 @@ if((paste(cor[,1],cor[,2]) == paste(ppsm[,1],pssm[,2])) &  (paste(cor[,1],cor[,2
 
 }
 
+write.table(out,out.file,sep = "\t",quote = F)
 
 
