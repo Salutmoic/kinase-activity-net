@@ -130,6 +130,7 @@ PSITE_PLUS_VALSET = $(DATADIR)/validation-set-psiteplus.tsv
 KEGG_ACT_VALSET = $(DATADIR)/validation-set-kegg-act.tsv
 KEGG_PHOS_ACT_VALSET = $(DATADIR)/validation-set-kegg-phos-act.tsv
 KEGG_PHOS_VALSET = $(DATADIR)/validation-set-kegg-phos.tsv
+NEG_VALSET = $(DATADIR)/validation-set-negative.tsv
 # Kinase beads activities
 KINASE_BEADS = $(DATADIR)/kinase-beads-activities.tsv
 # Merged predictor data
@@ -194,6 +195,7 @@ PSITE_PLUS_VAL_SCRIPT = $(SRCDIR)/make-psiteplus-valset.r
 FILTER_KEGG_RELS_SCRIPT = $(SRCDIR)/filter-kegg-tbl.r
 KEGG_PATH_REF_SCRIPT = $(SRCDIR)/gen-kegg-pathway-ref.py
 KEGG_VAL_SCRIPT = $(SRCDIR)/make-kegg-valset.r
+NEG_VAL_SCRIPT = $(SRCDIR)/make-negative-valset.r
 REFORMAT_GO_ASSOC_SCRIPT = $(SRCDIR)/reformat-go-assoc.awk
 GO_CELL_LOC_SCRIPT = $(SRCDIR)/get-go-cell-component.py
 FORMAT_STRING_SCRIPT = $(SRCDIR)/format-string.py
@@ -408,6 +410,10 @@ $(COMBINED_GROUPING): $(GO_CELL_LOCATION) $(KEGG_PATH_REFERENCE)
 $(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv \
 			$(UNIPROT_ID_MAPPING) $(KEGG_VAL_SCRIPT) $(KSEA_DATA)
 	$(RSCRIPT) $(KEGG_VAL_SCRIPT) $(wordlist 1,2,$^) $@
+
+# Negative validation set
+$(NEG_VALSET): $(NEG_VAL_SCRIPT) $(VAL_SET) $(PROTEIN_GROUPING)
+	$(RSCRIPT) $^ $@
 
 # Calculate human proteome amino-acid frequencies
 $(AA_FREQS): $(AA_FREQS_SCRIPT)
