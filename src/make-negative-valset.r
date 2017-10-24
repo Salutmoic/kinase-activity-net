@@ -16,21 +16,28 @@ gen.possible.false.intxns <- function(all.kinases, prot.groups){
 }
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 3){
-    stop("USAGE: <script> TRUE_POS PROT_GROUPS OUT_FILE")
+if (length(argv) != 4){
+    stop("USAGE: <script> DATA_FILE TRUE_POS PROT_GROUPS OUT_FILE")
 }
 
-true.pos.file <- argv[1]
-prot.groups.file <- argv[2]
-out.file <- argv[3]
+pred.score.file <- argv[1]
+true.pos.file <- argv[2]
+prot.groups.file <- argv[3]
+out.file <- argv[4]
+
+pred.score <- read.delim(pred.score.file, as.is=TRUE)
+names(pred.score) <- c("prot1", "prot2", "pred.score")
+pred.score <- subset(pred.score, prot1 != prot2)
+rownames(pred.score) <- paste(pred.score$prot1, pred.score$prot2, sep="-")
 
 true.intxns.tbl <- read.table(true.pos.file, as.is=TRUE)
 true.intxns <- paste(true.intxns.tbl[,1], true.intxns.tbl[,2], sep="-")
 
-prot.groups <- read.table(prot.groups.file, as.is=TRUE)
-names(prot.groups) <- c("group", "protein")
+prot.groups.full <- read.table(prot.groups.file, as.is=TRUE)
+names(prot.groups.full) <- c("group", "protein")
 
-all.kinases <- unique(c(true.intxns.tbl[,1], true.intxns.tbl[,2]))
+all.kinases <- unique(c(pred.score$prot1, pred.score$prot2))
+prot.groups <- subset(prot.groups.full, protein %in% all.kinases)
 possible.false.intxns <- gen.possible.false.intxns(all.kinases, prot.groups)
 ## Remove true interactions from the set of possible false interactions
 false.intxns <- setdiff(possible.false.intxns, true.intxns)

@@ -1,30 +1,13 @@
 suppressMessages(library(ROCR))
 
-gen.possible.false.intxns <- function(all.kinases, prot.groups){
-    possible.false.intxns <- c()
-    for (k1 in all.kinases){
-        for (k2 in all.kinases){
-            if (k1 == k2)
-                next
-            if (!(k1 %in% prot.groups$protein) || !(k2 %in% prot.groups$protein))
-                next
-            k1.groups <- unique(subset(prot.groups, protein == k1)$group)
-            k2.groups <- unique(subset(prot.groups, protein == k2)$group)
-            if (length(k1.groups)>0 && length(k2.groups)>0 && length(intersect(k1.groups, k2.groups)) == 0)
-                possible.false.intxns <- c(possible.false.intxns, paste(k1, k2, sep="-"))
-        }
-    }
-    return (possible.false.intxns)
-}
-
 argv <- commandArgs(TRUE)
 if (length(argv) != 3){
-    stop("USAGE: <script> DATA_FILE VAL_SET PROTEIN_GROUPING")
+    stop("USAGE: <script> DATA_FILE VAL_SET NEG_VAL_SET")
 }
 
 pred.score.file <- argv[1]
 val.set.file <- argv[2]
-prot.groups.file <- argv[3]
+neg.val.set.file <- argv[3]
 
 ## Get information from the prediction file name.  Build up a name of
 ## the prediction method for adding a title to plots, and figure out
@@ -108,17 +91,11 @@ true.intxns.tbl <- read.table(val.set.file, as.is=TRUE)
 possible.true.intxns <- paste(true.intxns.tbl[,1], true.intxns.tbl[,2], sep="-")
 possible.true.intxns <- intersect(possible.true.intxns, rownames(pred.score))
 
-prot.groups.full <- read.table(prot.groups.file, as.is=TRUE)
-names(prot.groups.full) <- c("group", "protein")
-
-all.kinases <- unique(c(pred.score$prot1, pred.score$prot2))
-prot.groups <- subset(prot.groups.full, protein %in% all.kinases)
-possible.false.intxns <- gen.possible.false.intxns(all.kinases, prot.groups)
-## Remove true interactions from the set of possible false interactions
-possible.false.intxns <- setdiff(possible.false.intxns, possible.true.intxns)
-## Keep only false interactions for which we have predictions
+false.intxns.tbl <- read.table(neg.val.set.file, as.is=TRUE)
+possible.false.intxns <- paste(false.intxns.tbl[,1], false.intxns.tbl[,2], sep="-")
 possible.false.intxns <- intersect(possible.false.intxns, rownames(pred.score))
 
+## Generate some reverse true interactions to be mixed in as negatives
 rev.true.intxns <- paste(true.intxns.tbl[,2], true.intxns.tbl[,1], sep="-")
 rev.true.intxns <- intersect(rev.true.intxns, rownames(pred.score))
 rev.true.intxns <- setdiff(rev.true.intxns, possible.true.intxns)

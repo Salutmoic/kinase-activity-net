@@ -412,7 +412,7 @@ $(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv \
 	$(RSCRIPT) $(KEGG_VAL_SCRIPT) $(wordlist 1,2,$^) $@
 
 # Negative validation set
-$(NEG_VALSET): $(NEG_VAL_SCRIPT) $(VAL_SET) $(PROTEIN_GROUPING)
+$(NEG_VALSET): $(NEG_VAL_SCRIPT) $(KINACT_ASSOC) $(VAL_SET) $(PROTEIN_GROUPING)
 	$(RSCRIPT) $^ $@
 
 # Calculate human proteome amino-acid frequencies
@@ -492,7 +492,7 @@ $(MERGED_PRED): $(MERGED_PRED_SOURCES) $(MERGE_SCRIPT)
 #############
 ## Validation
 
-$(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(PROTEIN_GROUPING) $(IMGDIR) $(VAL_SCRIPT)
+$(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(NEG_VALSET) $(IMGDIR) $(VAL_SCRIPT)
 	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^)
 
 $(IMGDIR)/validation.pdf:
