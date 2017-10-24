@@ -20,7 +20,7 @@ method <- "other"
 if (grepl("pcor2", pred.score.file)){
     assoc.method <- "Pearson's Correlation^2"
     method <- "cor"
-}if (grepl("pcor", pred.score.file)){
+}else if (grepl("pcor", pred.score.file)){
     assoc.method <- "Pearson's Correlation"
     method <- "cor"
 }else if (grepl("scor2", pred.score.file)){
