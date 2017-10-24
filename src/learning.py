@@ -24,7 +24,7 @@ def traindata(file1,file2):
 		y.append(1)
 		line = line.split("\t")
 		x.append([float(v) for v in line[2:]])
-		ppairs.append(line[0],line[1])
+		ppairs.append([line[0],line[1]])
 	return x,y,ppairs
 
 
@@ -110,8 +110,30 @@ def naive_bayes(data,f1,f2):
 
 	return test,ppairs,prediction,probability
 
-truePos = sys.argv[0]
-trueNeg = sys.argv[1]
-data = sys.argv[2]
 
-SuppVectMach(data,trueNeg,truePos)
+if __name__ == "__main__":
+ 
+
+	truePos = sys.argv[0]
+	trueNeg = sys.argv[1]
+	data = sys.argv[2]
+	method = sys.argv[3]
+	
+	if method == "NB":
+		model = naive_bayes(data,trueNeg,truePos)
+		
+	if method == "SVM":
+		model = SuppVectMach(data,trueNeg,truePos)
+		
+	if method == "kmeans":
+		model = nearestneighbour(data,trueNeg,truePos)
+		
+	ppairs model[1]
+	prediction = model[2]
+	probability = model[3]
+	output = open(sys.argv[4],"w")
+
+	for i in range(0,len(ppairs)):
+		output.write(str(ppairs[i][0]) + "\t"+ str(ppairs[i][1]) + "\t"+str(prediction[i]) +"\t" + str(max(probability[i])) + "\n" )
+
+
