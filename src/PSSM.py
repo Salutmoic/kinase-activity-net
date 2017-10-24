@@ -2,7 +2,7 @@ import numpy as np
 import random
 from os import listdir
 from os.path import isfile, join, walk, basename, splitext
-from math import log
+from math import log, ceil, sqrt
 import sys
 import itertools
 
@@ -37,9 +37,9 @@ def read_kin_sub_data():
 def amino_acids():
     #returns a dictionary containing a list of the common 20 amino acids 
 
-    aminos = {"G":0, "A":1, "V":2, "L":3, "I":4, "P":5, "F":6, "Y":7, "W":8,
-              "S":9, "T":10, "C":11, "M":12, "N":13, "Q":14, "K":15, "R":16,
-              "H":17, "D":18, "E":19}
+    aminos = {"G": 0, "A": 1, "V": 2, "L": 3, "I": 4, "P": 5, "F": 6, "Y": 7,
+              "W": 8, "S": 9, "T": 10, "C": 11, "M": 12, "N": 13, "Q": 14,
+              "K": 15, "R": 16, "H": 17, "D": 18, "E": 19}
     return aminos
 
 
@@ -52,6 +52,55 @@ def read_aa_freqs():
     return aa_freqs
 
 
+def weight_motif_seqs(motif_seqs):
+    # Weight motif sequences according to the position-based method of
+    # Henikoff & Henikoff J. Mol. Biol. 1994
+
+    aminos = amino_acids()
+    res_counts = np.zeros((20, 15))
+    res_pres = np.zeros((20, 15))
+    for seq in motif_seqs:
+        for i, aa in enumerate(seq):
+            if aa not in aminos:
+                continue
+            res_counts[aminos[aa]][i] = res_counts[aminos[aa]][i] + 1.0
+            res_pres[aminos[aa]][i] = 1.0
+    pos_res_counts = np.sum(res_pres, axis=0)
+    res_weights = np.zeros((20, 15))
+    for seq in motif_seqs:
+        for i, aa in enumerate(seq):
+            if aa not in aminos:
+                continue
+            res_weights[aminos[aa]][i] = 1.0/(pos_res_counts[i]*res_counts[aminos[aa]][i])
+    seq_weights = []
+    for seq in motif_seqs:
+        weight = 0.0
+        for i, aa in enumerate(seq):
+            if aa not in aminos:
+                continue
+            weight = weight + res_weights[aminos[aa]][i]
+        seq_weights.append(weight)
+    norm_seq_weights = [weight/sum(seq_weights) for weight in seq_weights]
+    return norm_seq_weights
+    
+
+def calc_num_pseudocounts(motif_seqs, m):
+    # Calculate the number of pseudocounts according to the
+    # position-based method of Henikoff & Henikoff CABIOS 1996
+
+    aminos = amino_acids()
+    res_counts = np.zeros((20, 15))
+    res_pres = np.zeros((20, 15))
+    for seq in motif_seqs:
+        for i, aa in enumerate(seq):
+            if aa not in aminos:
+                continue
+            res_pres[aminos[aa]][i] = 1.0
+    pos_res_counts = np.sum(res_pres, axis=0)
+    num_pc = m * pos_res_counts
+    return num_pc
+
+
 def calc_pssms(ktable):
     # returns a dictionary where keys are kinases and values are pmms
     # matrices made from the known substrates for each kinase
@@ -59,27 +108,38 @@ def calc_pssms(ktable):
     aminos = amino_acids()
     pssms = {}
     aa_freqs = read_aa_freqs()
+    min_seqs = 10
     for kinase in ktable:
         motif_seqs = ktable[kinase]
-        if len(motif_seqs) < 10:
-            # This is also being caught in the kinase-activity data
-            # preprocessing, but just in case we want to be more
-            # stringent, it's implemented here
+        if len(motif_seqs) < min_seqs:
             pssms[kinase] = None
             continue
-        cmat = np.zeros((15,20))
-        for seq in motif_seqs:
+        cmat = np.zeros((20, 15))
+        seq_weights = weight_motif_seqs(motif_seqs)
+        for n, seq in enumerate(motif_seqs):
             seq = seq.upper()
+            seq_weight = seq_weights[n]
             for i, aa in enumerate(seq):
                 if aa not in aminos:
                     continue
-                cmat[i][aminos[aa]] = cmat[i][aminos[aa]] + 1.0
-        pc = 0.1
-        cmat = cmat + pc
-        cmat = cmat/(len(motif_seqs)+pc*20.0)
+                cmat[aminos[aa]][i] = cmat[aminos[aa]][i] + seq_weight*len(motif_seqs)
+
+        # position-based pseudocounts 
+        num_nc= len(motif_seqs)
+        # The second argument, m, is a tunable parameter
+        num_pc = calc_num_pseudocounts(motif_seqs, 8)
         for i in range(15):
             for aa in aa_freqs:
-                cmat[i][aminos[aa]] = log(cmat[i][aminos[aa]]/aa_freqs[aa])/log(2.0)
+                # Use the background AA frequency to calculate
+                # pseudocounts (see Henikoff & Henikoff 1996, eq. 7)
+                pc = aa_freqs[aa] * num_pc[i]
+                # Weighted average of normal counts and pseudocounts
+                # (see Henikoff & Henikoff 1996, eq. 5)
+                cmat[aminos[aa]][i] = (cmat[aminos[aa]][i]+pc)/(num_nc+num_pc[i])
+
+        for i in range(15):
+            for aa in aa_freqs:
+                cmat[aminos[aa]][i] = log(cmat[aminos[aa]][i]/aa_freqs[aa])/log(2.0)
         pssms[kinase] = cmat
     return pssms
 
@@ -106,9 +166,9 @@ def score_motif_seq(motif_seq, pssm):
     score = 1
     for i, aa in enumerate(motif_seq):
         if aa != "_":
-            score = score + pssm[i][aminos[aa]]
+            score = score + pssm[aminos[aa]][i]
         else:
-            score = score + np.min(pssm[i])
+            score = score + np.min(pssm, axis=0)[i]
     return score
         
         
@@ -169,21 +229,21 @@ def score_kin_pairs(ktable, pssms, kin_act_file):
         if A == B:
             continue
         if A not in pssms:
-            scores[(A,B)] = []
+            scores[(A, B)] = []
             continue
         if pssms[A] is None:
-            scores[(A,B)] = []
+            scores[(A, B)] = []
             continue
         if B not in psites:
-            scores[(A,B)] = []
+            scores[(A, B)] = []
             continue
         motif_seqs = psites[B]
         for motif_seq in motif_seqs:
             score = score_motif_seq(motif_seq, pssms[A])
-            if (A,B) in scores:
-                scores[(A,B)].append(score)
+            if (A, B) in scores:
+                scores[(A, B)].append(score)
             else:
-                scores[(A,B)] = [score]
+                scores[(A, B)] = [score]
     return scores
 
 
