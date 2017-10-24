@@ -17,8 +17,14 @@ pred.name <- strsplit(basename(pred.score.file), split="\\.")[[1]][1]
 pred.name <- sub("kinact-", "", pred.name)
 assoc.method <- "[undefined]"
 method <- "other"
-if (grepl("pcor", pred.score.file)){
+if (grepl("pcor2", pred.score.file)){
+    assoc.method <- "Pearson's Correlation^2"
+    method <- "cor"
+}if (grepl("pcor", pred.score.file)){
     assoc.method <- "Pearson's Correlation"
+    method <- "cor"
+}else if (grepl("scor2", pred.score.file)){
+    assoc.method <- "Spearman's Correlation^2"
     method <- "cor"
 }else if (grepl("scor", pred.score.file)){
     assoc.method <- "Spearman's Correlation"

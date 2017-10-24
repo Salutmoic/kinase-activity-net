@@ -49,6 +49,8 @@ VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
 # functionally related (e.g. in the same pathway) for a true negative.
 PROTEIN_GROUPING =  $(COMBINED_GROUPING) # $(COMBINED_GROUPING) $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
 
+MERGED_PRED_SOURCES = $(KINACT_ASSOC) $(KINACT_ASSOC2) $(KIN_KIN_SCORES) $(HUMAN_STRING_COEXP)
+
 #####################
 ## External data sets
 
@@ -93,6 +95,7 @@ EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,DATADIR)/egf-kinact-$(T).ts
 IMP_EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,$(DATADIR)/egf-kinact-$(T)-imp.tsv)
 # Association table output
 KINACT_ASSOC = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD).tsv
+KINACT_ASSOC2 = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2.tsv
 # Final, merged predictor
 PREDICTOR = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor.tsv
 # Human amino acid frequencies
@@ -134,7 +137,6 @@ NEG_VALSET = $(DATADIR)/validation-set-negative.tsv
 # Kinase beads activities
 KINASE_BEADS = $(DATADIR)/kinase-beads-activities.tsv
 # Merged predictor data
-MERGED_PRED_SOURCES = $(KINACT_ASSOC) $(KIN_KIN_SCORES) $(HUMAN_STRING_COEXP)
 MERGED_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-merged.tsv
 # Final predictor
 FINAL_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(PRED_METHOD).tsv
@@ -144,12 +146,14 @@ FINAL_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(PRED_METHOD).tsv
 
 # Validation
 ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
+ASSOC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2-val.pdf
 PSSM_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-pssm-val.pdf
 STRING_COEXP_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp-val.pdf
 STRING_EXPER_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-exper-val.pdf
 PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor-val.pdf
-VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(STRING_COEXP_VAL_IMG)	\
-	$(STRING_EXPER_VAL_IMG) # $(PREDICTOR_VAL_IMG)
+VAL_IMGS = $(ASSOC_VAL_IMG) $(ASSOC2_VAL_IMG) $(PSSM_VAL_IMG)	\
+	$(STRING_COEXP_VAL_IMG) $(STRING_EXPER_VAL_IMG) #			\
+	$(PREDICTOR_VAL_IMG)
 
 ##################
 ## Program Options
@@ -213,7 +217,7 @@ MERGE_SCRIPT = $(SRCDIR)/merge.r
 final-predictor: $(PREDICTOR)
 
 .PHONY: assoc-results
-assoc-results: $(KINACT_ASSOC)
+assoc-results: $(KINACT_ASSOC) $(KINACT_ASSOC2)
 
 .PHONY: pssm
 pssm: $(KIN_KIN_SCORES) $(KIN_KNOWN_PSITE_SCORES) $(KIN_SCORE_DIST)
@@ -440,6 +444,13 @@ $(OUTDIR)/%-pcor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
 # Spearman's correlation
 $(OUTDIR)/%-scor.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)
 	$(ASSOCNET) --method=spearman $< >$@
+
+# Correlation of correlation
+$(OUTDIR)/%-pcor2.tsv: $(OUTDIR)/%-pcor.tsv $(OUTDIR)
+	$(ASSOCNET) --header-in --method=pearson $< >$@
+
+$(OUTDIR)/%-scor2.tsv: $(OUTDIR)/%-scor.tsv $(OUTDIR)
+	$(ASSOCNET) --header-in --method=spearman $< >$@
 
 # Normalized FunChisq
 $(OUTDIR)/%-nfchisq.tsv: $(DATADIR)/%-discr.tsv $(NFCHISQ_SCRIPT) $(OUTDIR)
