@@ -1,7 +1,7 @@
 import scipy
 import numpy
 import sklearn
-from sklearn import svm
+from sklearn import svm, linear_model
 import sys
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors.nearest_centroid import NearestCentroid
@@ -127,6 +127,15 @@ def naive_bayes(data,f1,f2):
 
     return ppairs,prediction,probability
 
+def log_reg(data,f1,f2):
+    model = linear_model.LogisticRegression()
+    test,ppairs = prediction_matrix(data)
+    train,outcomes,ppairs_train = traindata(f1,f2)
+
+    prediction = model.fit(train,outcomes).predict(test)
+    probability = model.fit(train,outcomes).predict_proba(test)
+    
+    return ppairs,prediction,probability
 
 if __name__ == "__main__":
  
@@ -134,10 +143,8 @@ if __name__ == "__main__":
     trueNeg = sys.argv[2]
     data = sys.argv[3]
     method = sys.argv[4]
-    print(method)
-	
+    	
     if method == "NB":
-        print("here")
         model = naive_bayes(data,trueNeg,truePos)
 		
     if method == "SVM":
@@ -145,6 +152,9 @@ if __name__ == "__main__":
 		
     if method == "kmeans":
         model = nearestneighbour(data,trueNeg,truePos)
+        
+    if method == "logreg":
+        model = log_reg(data,trueNeg,truePos)
 		
     ppairs = model[0]
     prediction = model[1]
