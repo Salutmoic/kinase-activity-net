@@ -191,7 +191,9 @@ NFCHISQ_SCRIPT = $(SRCDIR)/nfchisq.r
 ASSOC_SCRIPT = $(SRCDIR)/assoc_methods.r
 LM_PRED_SCRIPT = $(SRCDIR)/lm-pred.r
 PAIR_COR_SCRIPT = $(SRCDIR)/pairwise-cor.r
-PSSM_SCRIPT = $(SRCDIR)/PSSM.py
+PSSM_SCRIPT = $(SRCDIR)/pssm.py
+PSSM_DIST_SCRIPT = $(SRCDIR)/pssm-dist.py
+PSSM_LIB = $(SRCDIR)/pssms/__init__.py
 AA_FREQS_SCRIPT = $(SRCDIR)/aa-freqs.py
 FILTER_PSITE_PLUS_SCRIPT = $(SRCDIR)/filter-psite-plus-tbl.r
 KIN_SUB_OVERLAP_SCRIPT = $(SRCDIR)/kinase-overlap.r
@@ -491,11 +493,13 @@ $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 ## Kinase-substrate predictions
 
 # Calculate kinase-substrate PSSM scores
-$(KIN_KIN_SCORES) \
-$(KIN_KNOWN_PSITE_SCORES) \
+$(KIN_KIN_SCORES): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) \
+					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES) $(KINACT_DATA) $(PSSM_LIB)
+	$(PYTHON) $(PSSM_SCRIPT) $(KINACT_DATA)
+
 $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) \
-					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES) $(KINACT_DATA)
-	$(PYTHON2) $(PSSM_SCRIPT) $(KINACT_DATA)
+					$(HUMAN_KINASE_TABLE) $(KINACT_DATA) $(PSSM_LIB)
+	$(PYTHON) $(PSSM_DIST_SCRIPT) $(KINACT_DATA)
 
 ###################
 ## Merged predictor
