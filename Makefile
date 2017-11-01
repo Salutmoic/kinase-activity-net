@@ -330,7 +330,7 @@ $(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KSEA_DA
 # Filter the PhosphoSitePlus site list to just those on kinases for
 # which we have kinase activities
 $(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KSEA_DATA)
-	sed '1,3d' $< >$@.tmp
+	sed '1,3d' $< | awk -F"\t" -vOFS="\t" '{if (NR == 1 || $$7 == "human"){print}}' >$@.tmp
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
 	rm $@.tmp
 
@@ -493,11 +493,12 @@ $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 ## Kinase-substrate predictions
 
 # Calculate kinase-substrate PSSM scores
-$(KIN_KIN_SCORES): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) \
-					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES) $(KINACT_DATA) $(PSSM_LIB)
+$(KIN_KIN_SCORES): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
+					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
+					$(KINACT_DATA) $(PSSM_LIB)
 	$(PYTHON) $(PSSM_SCRIPT) $(KINACT_DATA)
 
-$(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE) \
+$(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_DIST_SCRIPT) $(KIN_SUBSTR_TABLE) \
 					$(HUMAN_KINASE_TABLE) $(KINACT_DATA) $(PSSM_LIB)
 	$(PYTHON) $(PSSM_DIST_SCRIPT) $(KINACT_DATA)
 
