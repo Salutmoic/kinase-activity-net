@@ -19,7 +19,6 @@ def traindata(file1,file2):
 
     for line in f1:
         y.append(0)
-        print line[0]
         line = line.split("\t")
         x.append([float(v) for v in line[2:]])
         ppairs.append([line[0],line[1]])
@@ -80,7 +79,6 @@ def find_centers(test,results):
 def dist(t,c):
 #calculates eucledian distance between point x and y
     dist = float(abs(t[0]-c[0])**2+abs(t[1]-c[1])**2+abs(t[2]-c[2])**2 + abs(t[3]-c[3])**2)**0.5
-    print dist
     return dist 
 
 def probability(c1,c2,test,results):
@@ -161,11 +159,11 @@ if __name__ == "__main__":
     if len(model) > 2:
         probability = model[2]
     
-    output = file(sys.argv[5],"w")
-    
-    for i in range(0,len(ppairs)):
-        if len(model) > 2:
-            output.write(str(ppairs[i][0]) + "\t"+ str(ppairs[i][1]) + "\t"+str(prediction[i]) +"\t" + str(max(probability[i])) + "\n" )
-        else:
-            output.write(str(ppairs[i][0]) + "\t"+ str(ppairs[i][1]) + "\t"+str(prediction[i]) +"\n" )
-
+    with open(sys.argv[5],"w") as output:
+        for i in range(0,len(ppairs)):
+            if len(model) > 2:
+                output.write(str(ppairs[i][0]) + "\t"+ str(ppairs[i][1]) \
+                + "\t"+str(prediction[i]) +"\t" + str(max(probability[i])) + "\n" )
+            else:
+                output.write(str(ppairs[i][0]) + "\t"+ str(ppairs[i][1])\
+                 + "\t"+str(prediction[i]) +"\n" )
