@@ -125,6 +125,7 @@ GO_CELL_LOCATION = $(DATADIR)/go-cell-location.tsv
 # predictor)
 STRING_ID_MAPPING = $(DATADIR)/string-id-map.tsv
 HUMAN_STRING_COEXP = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-coexp.tsv
+HUMAN_STRING_COEXP2 = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-coexp2.tsv
 HUMAN_STRING_EXPER = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-exper.tsv
 # Protein groupings
 COMBINED_GROUPING = $(DATADIR)/protein-groups.tsv
@@ -149,11 +150,12 @@ ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
 ASSOC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2-val.pdf
 PSSM_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-pssm-val.pdf
 STRING_COEXP_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp-val.pdf
+STRING_COEXP2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp2-val.pdf
 STRING_EXPER_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-exper-val.pdf
 PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor-val.pdf
 VAL_IMGS = $(ASSOC_VAL_IMG) $(ASSOC2_VAL_IMG) $(PSSM_VAL_IMG)	\
-	$(STRING_COEXP_VAL_IMG) $(STRING_EXPER_VAL_IMG) #			\
-	$(PREDICTOR_VAL_IMG)
+	$(STRING_COEXP_VAL_IMG) $(STRING_COEXP2_VAL_IMG)			\
+	$(STRING_EXPER_VAL_IMG) # $(PREDICTOR_VAL_IMG)
 
 ##################
 ## Program Options
@@ -400,6 +402,9 @@ $(HUMAN_STRING_COEXP): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) $
 	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(wordlist 1,3,$^) 6 >$@.tmp
 	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k1) >$@
 	rm $@.tmp
+
+$(HUMAN_STRING_COEXP2): $(HUMAN_STRING_COEXP)
+	$(ASSOCNET) --header-in --method=spearman $< >$@
 
 # STRING experimental
 $(HUMAN_STRING_EXPER): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) $(FORMAT_STRING_SCRIPT)
