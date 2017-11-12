@@ -46,8 +46,7 @@ def traindata(file1,file2,data,threshold):
                 x[i[1],i[0]] = datadict[i[1],i[0]]
                 y.append(0)
                 ppairs.append([i[0],i[1]])
-    print(len(y))
-    print(len(x))
+    
     return x,y,ppairs
 
 def prediction_matrix(data):
