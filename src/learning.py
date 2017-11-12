@@ -16,6 +16,7 @@ def traindata(file1,file2,data,threshold):
     y=[]
     ppairs = []
     datadict = prediction_matrix(data)[0]
+    
     with open(file2,"r") as f2:
         first_line = f2.readline()
         for line in f2:
@@ -36,8 +37,6 @@ def traindata(file1,file2,data,threshold):
                 line = line.split("\t")
                 x[line[0],line[1]] = [float(v) for v in line[2:]]
                 ppairs.append([line[0],line[1]])
-                if (len(x) -m) != (len(y) - n):
-                    print('error 3')
 
     k = list(x.keys())
     for i in k:
@@ -53,7 +52,6 @@ def traindata(file1,file2,data,threshold):
 
 def prediction_matrix(data):
     #makes matrix with pssm values string score and corr
-
     ppairs = []
     v = {}
     with open(data,"r") as d:
@@ -172,13 +170,10 @@ if __name__ == "__main__":
 
     testdict,ppairs = prediction_matrix(data)
     test = list(testdict.values())
-    print(len(test))
   
     traindict,outcomes,ppairs_train = traindata(truePos,trueNeg,data,threshold)
     train = list(traindict.values())
-    print(len(train))
-    print(len(ppairs_train))
-    print(len(outcomes))
+    
     if method == "NB":
         prediction = naive_bayes(train,outcomes,test)
 
