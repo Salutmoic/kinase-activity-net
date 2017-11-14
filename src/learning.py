@@ -16,15 +16,17 @@ def traindata(file1,file2,data,threshold):
     y=[]
     ppairs = []
     datadict = prediction_matrix(data)[0]
-    
     with open(file2,"r") as f2:
         first_line = f2.readline()
         for line in f2:
             if 'NA' not in line:
-                y.append(0)
+                line.replace("\n","")
                 line = line.split("\t")
-                x[line[0],line[1]] =[float(v) for v in line[2:]]
-                ppairs.append([line[0],line[1]])
+                line[1] = line[1].replace('\n','')
+                if (line[0],line[1]) in datadict:
+                    y.append(0)
+                    x[line[0],line[1]] = datadict[line[0],line[1]]
+                    ppairs.append([line[0],line[1]])
 
     with open(file1,"r") as f1:
         first_line = f1.readline()
@@ -32,11 +34,14 @@ def traindata(file1,file2,data,threshold):
             if 'NA' not in line:
                 n = len(y)
                 m = len(x)
-                y.append(1)
-
                 line = line.split("\t")
-                x[line[0],line[1]] = [float(v) for v in line[2:]]
-                ppairs.append([line[0],line[1]])
+                line[1] = line[1].replace("\n","")
+                if (line[0],line[1]) in datadict:
+                    y.append(1)
+                    x[line[0],line[1]] = datadict[line[0],line[1]]
+                    ppairs.append([line[0],line[1]])
+                if (len(x) -m) != (len(y) - n):
+                    print('error 3')
 
     k = list(x.keys())
     for i in k:
@@ -46,8 +51,10 @@ def traindata(file1,file2,data,threshold):
                 x[i[1],i[0]] = datadict[i[1],i[0]]
                 y.append(0)
                 ppairs.append([i[0],i[1]])
-    
+    print(len(y))
+    print(len(x))
     return x,y,ppairs
+
 
 def prediction_matrix(data):
     #makes matrix with pssm values string score and corr
