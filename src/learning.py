@@ -7,6 +7,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors.nearest_centroid import NearestCentroid
 from random import *
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
 
 def traindata(file1,file2,data,threshold):
 # Creates matrix (list of list) containing true pos and true negatives
@@ -73,12 +74,7 @@ def prediction_matrix(data):
 def SuppVectMach(train,outcomes,test):
 # uses Support Vector Machines to classify data into 1 (interaction) and 0 (no interaction) and #returns probabilities
 
-    clf = svm.SVC(probability = True)
-    clf.fit(train, outcomes)
-
-    results = clf.predict(test)
-    probability = clf.predict_proba(test)
-    return results,probability
+  
 
 def find_centers(test,results):
 #works with nearestneighbour this function finds the centers of
@@ -123,49 +119,7 @@ def probability(c1,c2,test,results):
             probability.append([p,1-p])
     return probability
 
-def nearestneighbour(train,outcomes,test):
-# clusters test data into 2 clusters (0 and 1)
-    clf = NearestCentroid()
-    clf.fit(train, outcomes)
-    results = clf.predict(test)
-
-    centers = find_centers(test,results)
-    c1 = centers[0]
-    c2 = centers[1]
-
-    if len(c1) > 0 and len(c2) > 0:
-
-        probs = probability(c1,c2,test,results)
-
-        return results,probs
-    else:
-        return results
-
-def naive_bayes(train,outcomes,test):
-# calculates naive bayes 
-    model = GaussianNB()
-
-    prediction = model.fit(train,outcomes).predict(test)
-    probability = model.fit(train,outcomes).predict_proba(test)
-
-    return prediction,probability
-
-def log_reg(train,outcomes,test):
-    model = linear_model.LogisticRegression()
-    prediction = model.fit(train,outcomes).predict(test)
-    probability = model.fit(train,outcomes).predict_proba(test)
-
-    return prediction,probability
-
-def randfor(train,outcomes,test):
-    forest = RandomForestClassifier()
-
-    forest.fit(train,outcomes)
-    prediction = forest.predict(test)
-    probability = forest.predict_proba(test)
-
-    return prediction,probability
-
+ 
 if __name__ == "__main__":
 
     truePos = sys.argv[1]
@@ -181,28 +135,48 @@ if __name__ == "__main__":
     train = list(traindict.values())
     
     if method == "NB":
-        prediction = naive_bayes(train,outcomes,test)
-
+        model = GaussianNB()
+        prediction = model.fit(train,outcomes).predict(test)
+        probability = model.fit(train,outcomes).predict_proba(test)
+po
     if method == "SVM":
-        prediction = SuppVectMach(train,outcomes,test)
+        model = svm.SVC(probability = True)
+        model.fit(train, outcomes)
+
+        prediction = model.predict(test)
+        probability = model.predict_proba(test)
 
     if method == "kmeans":
-        prediction = nearestneighbour(train,outcomes,test)
+        model = NearestCentroid()
+        model.fit(train, outcomes)
+        prediction = model.predict(test)
+
+        centers = find_centers(test,results)
+        c1 = centers[0]
+        c2 = centers[1]
+
+        if len(c1) > 0 and len(c2) > 0:
+        
+            probability = probability(c1,c2,test,results)
 
     if method == "logreg":
-        prediction = log_reg(train,outcomes,test)
+        model = linear_model.LogisticRegression()
+        prediction = model.fit(train,outcomes).predict(test)
+        probability = model.fit(train,outcomes).predict_proba(test)
 
     if method == "randfor":
-        prediction = randfor(train,outcomes,test)
+        model = RandomForestClassifier()
 
-    if len(prediction) > 1:
-        prob = prediction[1]
-        prediction = prediction[0]
+        model.fit(train,outcomes)
+        prediction = model.predict(test)
+        probability = model.predict_proba(test)
 
+    scores = cross_val_score(model, test, prediction, scoring = 'roc_auc', cv=5)
+    print(scores)
     with open(sys.argv[6],"w") as output:
         for i in range(len(testdict.keys())):
             s = str.join("\t",[str(x) for x in list(testdict.keys())[i]])
-            s = s + "\t"+ str(prediction[i]) +"\t"+ str(prob[i][1])
+            s = s + "\t"+ str(prediction[i]) +"\t"+ str(probability[i][1])
 
             output.write(s+"\n")
                                                                       
