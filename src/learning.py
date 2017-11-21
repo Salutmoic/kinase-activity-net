@@ -71,9 +71,6 @@ def prediction_matrix(data):
                 v[line[0],line[1]] = [float(x) for x in line[2:]]
     return v, ppairs
 
-def SuppVectMach(train,outcomes,test):
-# uses Support Vector Machines to classify data into 1 (interaction) and 0 (no interaction) and #returns probabilities
-
   
 
 def find_centers(test,results):
@@ -136,16 +133,10 @@ if __name__ == "__main__":
     
     if method == "NB":
         model = GaussianNB()
-        prediction = model.fit(train,outcomes).predict(test)
-        probability = model.fit(train,outcomes).predict_proba(test)
-po
+        
     if method == "SVM":
         model = svm.SVC(probability = True)
-        model.fit(train, outcomes)
-
-        prediction = model.predict(test)
-        probability = model.predict_proba(test)
-
+       
     if method == "kmeans":
         model = NearestCentroid()
         model.fit(train, outcomes)
@@ -161,18 +152,18 @@ po
 
     if method == "logreg":
         model = linear_model.LogisticRegression()
-        prediction = model.fit(train,outcomes).predict(test)
-        probability = model.fit(train,outcomes).predict_proba(test)
+        
 
     if method == "randfor":
         model = RandomForestClassifier()
 
-        model.fit(train,outcomes)
-        prediction = model.predict(test)
-        probability = model.predict_proba(test)
-
-    scores = cross_val_score(model, test, prediction, scoring = 'roc_auc', cv=5)
-    print(scores)
+    if model != "kmeans":
+        
+        prediction = model.fit(train,outcomes).predict(test)
+        probability = model.fit(train,outcomes).predict_proba(test)
+        scores = cross_val_score(model, test, prediction, scoring = 'roc_auc', cv=5)
+        print(scores)
+        
     with open(sys.argv[6],"w") as output:
         for i in range(len(testdict.keys())):
             s = str.join("\t",[str(x) for x in list(testdict.keys())[i]])
