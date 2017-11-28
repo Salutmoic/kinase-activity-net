@@ -167,8 +167,14 @@ if __name__ == "__main__":
         
         prediction = model.fit(train,outcomes).predict(test)
         probability = model.fit(train,outcomes).predict_proba(test)
-        scores = cross_val_score(model, test, prediction, scoring = 'roc_auc', cv=5)
-        print(scores)
+    
+    with open(sys.argv[7],"w") as crossval:t 
+        # repeated cross validation, is this something along the lines of what you were thinking 
+        for i in range(50):
+            scores = cross_val_score(model, test, prediction, scoring = 'roc_auc', cv=5)
+            for score in scores:
+                crossval.write(score + "\t")
+            crossval.write("\n")
         
     with open(sys.argv[6],"w") as output:
         for i in range(len(testdict.keys())):
