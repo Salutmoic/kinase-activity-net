@@ -49,7 +49,11 @@ VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
 # functionally related (e.g. in the same pathway) for a true negative.
 PROTEIN_GROUPING =  $(COMBINED_GROUPING) # $(COMBINED_GROUPING) $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
 
-MERGED_PRED_SOURCES = $(KINACT_ASSOC) $(KINACT_ASSOC2) $(KIN_KIN_SCORES) $(HUMAN_STRING_COEXP)
+MERGED_PRED_SOURCES = $(KINACT_ASSOC) $(KINACT_ASSOC2)				\
+	$(KIN_KIN_SCORES) $(HUMAN_STRING_COEXP) $(HUMAN_STRING_COEXP2)
+MERGED_PRED_SOURCES_KINOME = $(KINACT_ASSOC) $(KINACT_ASSOC2)	\
+	$(KIN_KIN_SCORES_KINOME) $(HUMAN_STRING_COEXP_KINOME)			\
+	$(HUMAN_STRING_COEXP2_KINOME)
 
 #####################
 ## External data sets
@@ -78,6 +82,8 @@ STRING_VERSION = 10.5
 HUMAN_STRING_RAW = $(EXT_DATADIR)/9606.protein.links.detailed.v$(STRING_VERSION).txt
 # Kinase beads
 KINASE_BEADS_RAW = $(EXT_DATADIR)/kinase-beads-activities.tsv
+# Kinome
+KINOME_RAW = $(EXT_DATADIR)/pkinfam.txt
 
 ######################
 ## Generated data sets
@@ -102,6 +108,7 @@ PREDICTOR = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor.t
 AA_FREQS = $(DATADIR)/aa-freqs.tsv
 # PSSM files
 KIN_KIN_SCORES = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-pssm.tsv
+KIN_KIN_SCORES_KINOME = $(OUTDIR)/human-kinome-pssm.tsv
 KIN_KNOWN_PSITE_SCORES = $(OUTDIR)/known_kinase_psite-score
 KIN_SCORE_DIST = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-pssm-dists.tsv
 # PhosphositePlus derived files
@@ -126,9 +133,15 @@ GO_CELL_LOCATION = $(DATADIR)/go-cell-location.tsv
 STRING_ID_MAPPING = $(DATADIR)/string-id-map.tsv
 HUMAN_STRING_COEXP = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-coexp.tsv
 HUMAN_STRING_COEXP2 = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-coexp2.tsv
+HUMAN_STRING_COEXP2_FULL = $(OUTDIR)/string-coexp2-full.tsv
 HUMAN_STRING_EXPER = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-exper.tsv
+HUMAN_STRING_COEXP_KINOME = $(OUTDIR)/human-kinome-string-coexp.tsv
+HUMAN_STRING_COEXP2_KINOME = $(OUTDIR)/human-kinome-string-coexp2.tsv
+HUMAN_STRING_EXPER_KINOME = $(OUTDIR)/human-kinome-string-exper.tsv
 # Protein groupings
 COMBINED_GROUPING = $(DATADIR)/protein-groups.tsv
+# Human kinome
+HUMAN_KINOME = $(DATADIR)/human-kinome.txt
 # Validation sets
 PSITE_PLUS_VALSET = $(DATADIR)/validation-set-psiteplus.tsv
 KEGG_ACT_VALSET = $(DATADIR)/validation-set-kegg-act.tsv
@@ -139,6 +152,7 @@ NEG_VALSET = $(DATADIR)/validation-set-negative.tsv
 KINASE_BEADS = $(DATADIR)/kinase-beads-activities.tsv
 # Merged predictor data
 MERGED_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-merged.tsv
+MERGED_PRED_KINOME = $(OUTDIR)/human-kinome-merged.tsv
 # Final predictor
 FINAL_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(PRED_METHOD).tsv
 
@@ -209,6 +223,7 @@ GO_CELL_LOC_SCRIPT = $(SRCDIR)/get-go-cell-component.py
 FORMAT_STRING_SCRIPT = $(SRCDIR)/format-string.py
 VAL_SCRIPT = $(SRCDIR)/validation.r
 MERGE_SCRIPT = $(SRCDIR)/merge.r
+FILTER_BY_PROTLIST_SCRIPT = $(SRCDIR)/filter-by-protein-list.r
 
 # Don't delete intermediate files
 .SECONDARY:
@@ -390,6 +405,11 @@ $(GO_ASSOC): $(FULL_GO_ASSOC_TABLE) $(UNIPROT_ID_MAPPING) $(REFORMAT_GO_ASSOC_SC
 $(GO_CELL_LOCATION): $(GO_ASSOC) $(GO_OBO) $(GO_CELL_LOC_SCRIPT)
 	$(PYTHON) $(GO_CELL_LOC_SCRIPT) $(GO_ASSOC) $(GO_OBO) | sed '1,2d' | sort | uniq >$@
 
+# Kinome
+$(HUMAN_KINOME): $(KINOME_RAW) $(UNIPROT_ID_MAPPING)
+	sed -n '/HUMAN/{s/  */\t/g;p}' $< | cut -f3 | sed 's/(//' | \
+		grep -f - $(UNIPROT_ID_MAPPING) | cut -f2 | sort >$@
+
 # STRING
 # Create the STRING ID map
 $(STRING_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
@@ -398,22 +418,49 @@ $(STRING_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
 	rm $@.tmp
 
 # STRING coexpression
-$(HUMAN_STRING_COEXP): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) $(FORMAT_STRING_SCRIPT)
-	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(wordlist 1,3,$^) 6 >$@.tmp
-	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k1) >$@
+$(HUMAN_STRING_COEXP): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) \
+		$(FORMAT_STRING_SCRIPT)
+	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
+		<(cut -f1 $(KINACT_DATA) | sort | uniq) 6 >$@.tmp
+	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
 	rm $@.tmp
 
-$(HUMAN_STRING_COEXP2): $(HUMAN_STRING_COEXP)
-	$(ASSOCNET) --header-in --method=spearman $< >$@
+$(HUMAN_STRING_COEXP2_FULL): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA)
+	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
+		<(cut -f1 $(KINACT_DATA) | sort | uniq) 6 --all >$@.tmp
+	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
+	rm $@.tmp
+
+$(HUMAN_STRING_COEXP2): $(HUMAN_STRING_COEXP2_FULL) $(KINACT_DATA)
+	$(ASSOCNET) --method=spearman $< | sed '1s/assoc/string.coexp.cor/' >$@.tmp
+	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp \
+		<(cut -f1 $(KINACT_DATA) | sort | uniq) $@
+	rm $@.tmp
+
+$(HUMAN_STRING_COEXP_KINOME): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
+		$(KINACT_DATA) $(HUMAN_KINOME) $(FORMAT_STRING_SCRIPT)
+	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
+		$(HUMAN_KINOME) 6 --all >$@.tmp
+	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
+	rm $@.tmp
+
+$(HUMAN_STRING_COEXP2_KINOME): $(HUMAN_STRING_COEXP2_FULL) $(HUMAN_KINOME)
+	$(ASSOCNET) --header-in --method=spearman $< | sed '1s/assoc/string.coexp.cor/' >$@.tmp
+	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp $(HUMAN_KINOME) $@
+	# rm $@.tmp
+
 
 # STRING experimental
-$(HUMAN_STRING_EXPER): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) $(FORMAT_STRING_SCRIPT)
-	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(wordlist 1,3,$^) 7 >$@.tmp
-	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k1) >$@
+$(HUMAN_STRING_EXPER): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) \
+		$(FORMAT_STRING_SCRIPT)
+	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
+		<(cut -f1 $(KINACT_DATA) | sort | uniq) 7 >$@.tmp
+	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
 	rm $@.tmp
 
 # Kegg pathway reference
-$(KEGG_PATH_REFERENCE): $(KEGG_RELATIONSHIPS) $(UNIPROT_ID_MAPPING) $(KEGG_PATH_REF_SCRIPT)
+$(KEGG_PATH_REFERENCE): $(KEGG_RELATIONSHIPS) $(UNIPROT_ID_MAPPING) \
+		$(KEGG_PATH_REF_SCRIPT)
 	$(PYTHON) $(KEGG_PATH_REF_SCRIPT) | sort | uniq >$@
 
 # Combined protein group set
@@ -501,7 +548,12 @@ $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 $(KIN_KIN_SCORES): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
 					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
 					$(KINACT_DATA) $(PSSM_LIB)
-	$(PYTHON) $(PSSM_SCRIPT) $(KINACT_DATA)
+	$(PYTHON) $(PSSM_SCRIPT) <(cut -f1 $(KINACT_DATA) | sort | uniq)
+
+$(KIN_KIN_SCORES_KINOME): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
+					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
+					$(HUMAN_KINOME) $(PSSM_LIB)
+	$(PYTHON) $(PSSM_SCRIPT) $(HUMAN_KINOME)
 
 $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_DIST_SCRIPT) $(KIN_SUBSTR_TABLE) \
 					$(HUMAN_KINASE_TABLE) $(KINACT_DATA) $(PSSM_LIB)
@@ -511,6 +563,9 @@ $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_DIST_SCRIPT) $(KIN_SUBSTR_TABLE) \
 ## Merged predictor
 
 $(MERGED_PRED): $(MERGED_PRED_SOURCES) $(MERGE_SCRIPT)
+	$(RSCRIPT) $(MERGE_SCRIPT) $@ $(filter-out $(MERGE_SCRIPT),$^)
+
+$(MERGED_PRED_KINOME): $(MERGED_PRED_SOURCES_KINOME) $(MERGE_SCRIPT)
 	$(RSCRIPT) $(MERGE_SCRIPT) $@ $(filter-out $(MERGE_SCRIPT),$^)
 
 #############

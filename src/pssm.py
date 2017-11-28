@@ -40,19 +40,22 @@ def calc_zscore(pssm_score, distr_mean, distr_stdev):
     return z
 
 
-def score_kin_pairs(ktable, kin_act_file, aa_freqs, psites):
+def read_kinase_file(kinase_file):
+    kinases = set()
+    with open(kinase_file) as h:
+        for line in h:
+            kinases.add(line.strip())
+    return(kinases)
+
+
+def score_kin_pairs(ktable, kinases, aa_freqs, psites):
     # loads a netwoek of kinase-> kinase interactions and scores them
     # with the pssm it returns a dictionary with kinasa A and kinase B
     # and list of scores for each phosphosite found on B
 
-    prots = set()
-    with open(kin_act_file) as h:
-        for line in h:
-            prot, _, _ = line.split()
-            prots.add(prot)
     # Just get interaction pairs for kinases that are in our kinase
     # activity table
-    pairs = itertools.product(prots, repeat=2)
+    pairs = itertools.product(kinases, repeat=2)
     scores = {}
     full_pssms = {}
     for kin_a, kin_b in pairs:
@@ -101,14 +104,15 @@ def score_kin_pairs(ktable, kin_act_file, aa_freqs, psites):
     return scores
 
 
-def score_network(kin_act_file):
+def score_network(kinase_file):
     # This takes network files and scores all edges according to pssm
 
     ktable = pssms.read_kin_sub_data("data/reduced_kinase_table.tsv")
     aa_freqs = pssms.read_aa_freqs("data/aa-freqs.tsv")
     psites = read_phosphosites("data/phosphosites_reduced.tsv")
-    scores = score_kin_pairs(ktable, kin_act_file, aa_freqs, psites)
-    out_file_base = os.path.splitext(os.path.basename(kin_act_file))[0]
+    kinases = read_kinase_file(kinase_file)
+    scores = score_kin_pairs(ktable, kinases, aa_freqs, psites)
+    out_file_base = os.path.splitext(os.path.basename(kinase_file))[0]
     out_file = "out/" + out_file_base + "-pssm.tsv"
     with open(out_file, "w") as v:
         v.write("\t".join(["node1", "node2", "pssm.score"])+"\n")
