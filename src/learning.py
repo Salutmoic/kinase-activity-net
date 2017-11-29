@@ -7,14 +7,16 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors.nearest_centroid import NearestCentroid
 from random import *
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score
 
 def traindata(file1,file2,data,threshold):
 # Creates matrix (list of list) containing true pos and true negatives
 # for training and predictions, f1 is true positives and f2 true negatives
     # x is predictive variables (ppsm, string,cor) and y outcomes
-    x = {}
-    y=[]
-    ppairs = []
+    pos = {}
+    neg={}
+    ypos = []
+    yneg = []
     datadict = prediction_matrix(data)[0]
     with open(file2,"r") as f2:
         first_line = f2.readline()
@@ -24,41 +26,46 @@ def traindata(file1,file2,data,threshold):
                 line = line.split("\t")
                 line[1] = line[1].replace('\n','')
                 if (line[0],line[1]) in datadict:
-                    y.append(0)
-                    x[line[0],line[1]] = datadict[line[0],line[1]]
-                    ppairs.append([line[0],line[1]])
+                    neg[line[0],line[1]] = datadict[line[0],line[1]]
+    yneg = [0] *len(neg)
 
     with open(file1,"r") as f1:
         first_line = f1.readline()
         for line in f1:
             if 'NA' not in line:
-                n = len(y)
-                m = len(x)
                 line = line.split("\t")
                 line[1] = line[1].replace("\n","")
                 if (line[0],line[1]) in datadict:
-                    y.append(1)
-                    x[line[0],line[1]] = datadict[line[0],line[1]]
-                    ppairs.append([line[0],line[1]])
-                if (len(x) -m) != (len(y) - n):
-                    print('error 3')
+                    
+                    pos[line[0],line[1]] = datadict[line[0],line[1]]
+    ypos = [1] *len(pos) 
 
-    k = list(x.keys())
+    whole = pos
+    y = ypos
+    k = list(pos.keys())
+    
     for i in k:
         rand = random()
         if rand > threshold:
-            if (i[1],i[0]) not in x:
-                x[i[1],i[0]] = datadict[i[1],i[0]]
+            if (i[1],i[0]) not in neg and (i[1],i[0]) not in pos:
+                whole[i[1],i[0]] = datadict[i[1],i[0]]
                 y.append(0)
-                ppairs.append([i[0],i[1]])
-    print(len(y))
-    print(len(x))
-    return x,y,ppairs
+
+    
+    m = shuffle(neg.keys())
+
+    while len(whole) < 2*len(pos):
+        key = m.pop()
+        whole[key] = neg[key]
+        y.append(0)
+
+    
+    return whole,y
+    
 
 
 def prediction_matrix(data):
     #makes matrix with pssm values string score and corr
-    ppairs = []
     v = {}
     with open(data,"r") as d:
         first_line = d.readline()
@@ -68,17 +75,9 @@ def prediction_matrix(data):
 
                 ppairs.append([line[0],line[1]])
                 v[line[0],line[1]] = [float(x) for x in line[2:]]
-    return v, ppairs
+    return v
 
-def SuppVectMach(train,outcomes,test):
-# uses Support Vector Machines to classify data into 1 (interaction) and 0 (no interaction) and #returns probabilities
-
-    clf = svm.SVC(probability = True)
-    clf.fit(train, outcomes)
-
-    results = clf.predict(test)
-    probability = clf.predict_proba(test)
-    return results,probability
+  
 
 def find_centers(test,results):
 #works with nearestneighbour this function finds the centers of
@@ -123,49 +122,7 @@ def probability(c1,c2,test,results):
             probability.append([p,1-p])
     return probability
 
-def nearestneighbour(train,outcomes,test):
-# clusters test data into 2 clusters (0 and 1)
-    clf = NearestCentroid()
-    clf.fit(train, outcomes)
-    results = clf.predict(test)
-
-    centers = find_centers(test,results)
-    c1 = centers[0]
-    c2 = centers[1]
-
-    if len(c1) > 0 and len(c2) > 0:
-
-        probs = probability(c1,c2,test,results)
-
-        return results,probs
-    else:
-        return results
-
-def naive_bayes(train,outcomes,test):
-# calculates naive bayes 
-    model = GaussianNB()
-
-    prediction = model.fit(train,outcomes).predict(test)
-    probability = model.fit(train,outcomes).predict_proba(test)
-
-    return prediction,probability
-
-def log_reg(train,outcomes,test):
-    model = linear_model.LogisticRegression()
-    prediction = model.fit(train,outcomes).predict(test)
-    probability = model.fit(train,outcomes).predict_proba(test)
-
-    return prediction,probability
-
-def randfor(train,outcomes,test):
-    forest = RandomForestClassifier()
-
-    forest.fit(train,outcomes)
-    prediction = forest.predict(test)
-    probability = forest.predict_proba(test)
-
-    return prediction,probability
-
+ 
 if __name__ == "__main__":
 
     truePos = sys.argv[1]
@@ -174,34 +131,54 @@ if __name__ == "__main__":
     method = sys.argv[4]
     threshold = float(sys.argv[5])
 
-    testdict,ppairs = prediction_matrix(data)
+    testdict = prediction_matrix(data)
     test = list(testdict.values())
   
-    traindict,outcomes,ppairs_train = traindata(truePos,trueNeg,data,threshold)
+    traindict,outcomes = traindata(truePos,trueNeg,data,threshold)
     train = list(traindict.values())
     
     if method == "NB":
-        prediction = naive_bayes(train,outcomes,test)
-
+        model = GaussianNB()
+        
     if method == "SVM":
-        prediction = SuppVectMach(train,outcomes,test)
-
+        model = svm.SVC(probability = True)
+       
     if method == "kmeans":
-        prediction = nearestneighbour(train,outcomes,test)
+        model = NearestCentroid()
+        model.fit(train, outcomes)
+        prediction = model.predict(test)
+
+        centers = find_centers(test,results)
+        c1 = centers[0]
+        c2 = centers[1]
+
+        if len(c1) > 0 and len(c2) > 0:
+        
+            probability = probability(c1,c2,test,results)
 
     if method == "logreg":
-        prediction = log_reg(train,outcomes,test)
+        model = linear_model.LogisticRegression()
+        
 
     if method == "randfor":
-        prediction = randfor(train,outcomes,test)
+        model = RandomForestClassifier()
 
-    if len(prediction) > 1:
-        prob = prediction[1]
-        prediction = prediction[0]
-
+    if model != "kmeans":
+        
+        prediction = model.fit(train,outcomes).predict(test)
+        probability = model.fit(train,outcomes).predict_proba(test)
+    
+    with open(sys.argv[7],"w") as crossval:t 
+        # repeated cross validation, is this something along the lines of what you were thinking 
+        for i in range(50):
+            scores = cross_val_score(model, test, prediction, scoring = 'roc_auc', cv=5)
+            for score in scores:
+                crossval.write(score + "\t")
+            crossval.write("\n")
+        
     with open(sys.argv[6],"w") as output:
         for i in range(len(testdict.keys())):
             s = str.join("\t",[str(x) for x in list(testdict.keys())[i]])
-            s = s + "\t"+ str(prediction[i]) +"\t"+ str(prob[i][1])
+            s = s + "\t"+ str(prediction[i]) +"\t"+ str(probability[i][1])
 
             output.write(s+"\n")
