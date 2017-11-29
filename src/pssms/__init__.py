@@ -212,7 +212,7 @@ def calc_pssm(motif_seqs, proteome_aa_freqs):
     # Add in pseudocounts and calculate residue frequencies
     motif_aa_freqs = np.zeros((20, seq_len))
     # The second argument, m, is a tunable parameter
-    num_pc = calc_num_pseudocounts(motif_seqs, 1)
+    num_pc = calc_num_pseudocounts(motif_seqs, 3) # 1 -> 3
     for i in range(seq_len):
         for aa in AMINO_ACIDS:
             # Use the background AA frequency to calculate

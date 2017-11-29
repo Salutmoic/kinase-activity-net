@@ -2,6 +2,7 @@ import os.path
 import sys
 import itertools
 import pssms
+from math import log2, log, exp
 
 
 def read_phosphosites(psites_file):
@@ -13,14 +14,16 @@ def read_phosphosites(psites_file):
         columns = f.readline()
         columns = columns.split("\t")
         seqind = columns.index("SITE_...7_AA")
+        posind = columns.index("MOD_RSD")
         for line in f:
             line_spl = line.split("\t")
             protein = line_spl[0]
             motif_seq = line_spl[seqind].upper()
+            pos = line_spl[posind][1:-2]
             if protein not in psites:
-                psites[protein] = [motif_seq]
+                psites[protein] = [(pos, motif_seq)]
             else:
-                psites[protein].append(motif_seq)
+                psites[protein].append((pos, motif_seq))
     return psites
 
 
@@ -46,6 +49,35 @@ def read_kinase_file(kinase_file):
         for line in h:
             kinases.add(line.strip())
     return(kinases)
+
+
+def read_hotspot_file(hotspot_file):
+    hotspots = dict()
+    with open(hotspot_file) as h:
+        for line in h:
+            prot, pos, is_phos, score = line.strip().split()
+            if prot not in hotspots:
+                hotspots[prot] = {pos: (int(is_phos), float(score))}
+            else:
+                hotspots[prot][pos] = (int(is_phos), float(score))
+    return hotspots
+
+
+def read_reg_sites_file(reg_sites_file):
+    reg_sites = dict()
+    with open(reg_sites_file) as h:
+        header = h.readline().split("\t")
+        geneind = header.index("GENE")
+        posind = header.index("MOD_RSD")
+        for line in h:
+            line_spl = line.strip().split("\t")
+            protein = line_spl[0]
+            pos = line_spl[posind][1:]
+            if protein not in reg_sites:
+                reg_sites[protein] = [pos]
+            else:
+                reg_sites[protein].append(pos)
+    return reg_sites
 
 
 def score_kin_pairs(ktable, kinases, aa_freqs, psites):
@@ -88,44 +120,75 @@ def score_kin_pairs(ktable, kinases, aa_freqs, psites):
         # Take only tyrosine or serine/threonine motif sequences from
         # kin_b, depending on the specificity of kin_a.
         kin_a_is_tyr_kin = pssms.is_tyr_kinase(pssm)
-        sub_motif_seqs = [seq for seq in psites[kin_b]
+        sub_motif_seqs = [(pos, seq) for pos, seq in psites[kin_b]
                           if ((kin_a_is_tyr_kin and seq[7] == 'Y') or
                               (not kin_a_is_tyr_kin and seq[7] in ['S', 'T']))]
         if not sub_motif_seqs:
             scores[(kin_a, kin_b)] = []
             continue
 
-        for motif_seq in sub_motif_seqs:
+        for pos, motif_seq in sub_motif_seqs:
             score = pssms.score_motif_seq(motif_seq, pssm)
             if (kin_a, kin_b) in scores:
-                scores[(kin_a, kin_b)].append(score)
+                scores[(kin_a, kin_b)].append((pos, score))
             else:
-                scores[(kin_a, kin_b)] = [score]
+                scores[(kin_a, kin_b)] = [(pos, score)]
     return scores
 
 
-def score_network(kinase_file):
+def calc_dcg(scores):
+    return sum([score/log2(n+2) for n, score in enumerate(scores)])
+
+
+def regulation_score(pair, scores, hotspots, reg_sites):
+    # Rank the PSSM scores
+    scores.sort(key=lambda t: t[1], reverse=True)
+    # Get the hotspot scores
+    kin_b_hotspots = hotspots.get(pair[1])
+    kin_b_reg_sites = reg_sites.get(pair[1])
+    hs_scores = []
+    for pos, score in scores:
+        if kin_b_reg_sites and pos in kin_b_reg_sites:
+            hs_score = 1.0
+        elif kin_b_hotspots and pos in kin_b_hotspots:
+            hs_score = kin_b_hotspots[pos][1]
+            if hs_score == 0:
+                hs_score = 0.001
+        else:
+            hs_score = 0.001
+        hs_scores.append(hs_score)
+    # Discounted Cumulative Gain
+    dcg = calc_dcg(hs_scores)
+    # Ideal Discounted Cumulative Gain
+    hs_scores.sort(reverse=True)
+    idcg = calc_dcg(hs_scores)
+    return dcg/idcg
+
+
+def score_network(kinase_file, out_file):
     # This takes network files and scores all edges according to pssm
 
     ktable = pssms.read_kin_sub_data("data/reduced_kinase_table.tsv")
     aa_freqs = pssms.read_aa_freqs("data/aa-freqs.tsv")
     psites = read_phosphosites("data/phosphosites_reduced.tsv")
     kinases = read_kinase_file(kinase_file)
+    hotspots = read_hotspot_file("data/kinase-phospho-hotspots.tsv")
+    reg_sites = read_reg_sites_file("data/reg_sites.tsv")
     scores = score_kin_pairs(ktable, kinases, aa_freqs, psites)
-    out_file_base = os.path.splitext(os.path.basename(kinase_file))[0]
-    out_file = "out/" + out_file_base + "-pssm.tsv"
     with open(out_file, "w") as v:
         v.write("\t".join(["node1", "node2", "pssm.score"])+"\n")
         for pair in scores:
             if not scores[pair]:
                 v.write("\t".join([pair[0], pair[1], "NA"])+"\n")
                 continue
-            max_score = max(scores[pair])
-            v.write("\t".join([pair[0], pair[1], str(max_score)])+"\n")
+            max_score = max([score for pos, score in scores[pair]])
+            dcg = regulation_score(pair, scores[pair], hotspots, reg_sites)
+            v.write("\t".join([pair[0], pair[1], str(dcg*max_score)])+"\n")
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        sys.exit("USAGE: <script> DATA_FILE")
+    if len(sys.argv) != 3:
+        sys.exit("USAGE: <script> DATA_FILE OUT_FILE")
     kin_act_file_arg = sys.argv[1]
-    score_network(kin_act_file_arg)
+    out_file = sys.argv[2]
+    score_network(kin_act_file_arg, out_file)
