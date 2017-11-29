@@ -17,7 +17,7 @@ def traindata(file1,file2,data,threshold):
     neg={}
     ypos = []
     yneg = []
-    datadict = prediction_matrix(data)[0]
+    datadict = prediction_matrix(data)
     with open(file2,"r") as f2:
         first_line = f2.readline()
         for line in f2:
@@ -40,7 +40,7 @@ def traindata(file1,file2,data,threshold):
                     pos[line[0],line[1]] = datadict[line[0],line[1]]
     ypos = [1] *len(pos) 
 
-    whole = pos
+    whole = pos.copy()
     y = ypos
     k = list(pos.keys())
     
@@ -51,14 +51,15 @@ def traindata(file1,file2,data,threshold):
                 whole[i[1],i[0]] = datadict[i[1],i[0]]
                 y.append(0)
 
+    print(list(neg.keys()))
+    n = list(neg.keys())
+    shuffle(n)
     
-    m = shuffle(neg.keys())
-
+    print(2*len(pos))
     while len(whole) < 2*len(pos):
-        key = m.pop()
+        key = n.pop()
         whole[key] = neg[key]
         y.append(0)
-
     
     return whole,y
     
@@ -72,8 +73,6 @@ def prediction_matrix(data):
         for line in d:
             if 'NA' not in line:
                 line = line.split("\t")
-
-                ppairs.append([line[0],line[1]])
                 v[line[0],line[1]] = [float(x) for x in line[2:]]
     return v
 
@@ -168,12 +167,12 @@ if __name__ == "__main__":
         prediction = model.fit(train,outcomes).predict(test)
         probability = model.fit(train,outcomes).predict_proba(test)
     
-    with open(sys.argv[7],"w") as crossval:t 
+    with open(sys.argv[7],"w") as crossval: 
         # repeated cross validation, is this something along the lines of what you were thinking 
         for i in range(50):
             scores = cross_val_score(model, test, prediction, scoring = 'roc_auc', cv=5)
             for score in scores:
-                crossval.write(score + "\t")
+                crossval.write(str(score) + "\t")
             crossval.write("\n")
         
     with open(sys.argv[6],"w") as output:
