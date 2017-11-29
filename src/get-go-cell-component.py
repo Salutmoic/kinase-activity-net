@@ -3,7 +3,7 @@
 #            script to take the cellular complexes 		       #
 #	     from GO-cellular component       			       #    
 #                                                                      #
-# Copyright (c) 2016 - 2019, EMBL - European Bioinformatics Institute  #
+# Copyright (c) 2016 - 2019, 2017, EMBL - European Bioinformatics Institute  #
 #       Author: Bruno Ariano (ariano@ebi.ac.uk)                        #
 #       Distributed under the GPLv3 License.                           #
 ########################################################################
@@ -41,8 +41,8 @@ def print_locations(assoc, cytoplasm, plasma_membrane, nucleus):
             in_nucl = in_nucl or term in nucleus
         if in_cyto:
             print("GO:0005737\t" + prot)
-        if in_memb:
-            print("GO:0005886\t" + prot)
+        # if in_memb:
+        #     print("GO:0005886\t" + prot)
         if in_nucl:
             print("GO:0005634\t" + prot)
 
