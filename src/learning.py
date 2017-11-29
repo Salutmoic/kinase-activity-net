@@ -205,5 +205,3 @@ if __name__ == "__main__":
             s = s + "\t"+ str(prediction[i]) +"\t"+ str(prob[i][1])
 
             output.write(s+"\n")
-                                                                      
-                                                                                                                                                                                          1,1           Top
