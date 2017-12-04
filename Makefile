@@ -87,6 +87,7 @@ KINASE_BEADS_RAW = $(EXT_DATADIR)/kinase-beads-activities.tsv
 KINOME_RAW = $(EXT_DATADIR)/pkinfam.txt
 # Kinase domain phosphorylation hot-spots from Marta
 HOTSPOTS_RAW = $(EXT_DATADIR)/kinase-phospho-hotspots.tsv
+TYR_HOTSPOTS_RAW = $(EXT_DATADIR)/tyr-kinase-phospho-hotspots.tsv
 
 ######################
 ## Generated data sets
@@ -184,8 +185,7 @@ STRING_COOCC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coocc2-val.pdf
 STRING_EXPER_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-exper-val.pdf
 PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor-val.pdf
 VAL_IMGS = $(ASSOC_VAL_IMG) $(ASSOC2_VAL_IMG) $(PSSM_VAL_IMG)	\
-	$(STRING_COEXP_VAL_IMG) $(STRING_COEXP2_VAL_IMG)			\
-	$(STRING_COOCC_VAL_IMG) $(STRING_COOCC2_VAL_IMG)			\
+	$(STRING_COEXP_VAL_IMG) $(STRING_COOCC_VAL_IMG)				\
 	$(STRING_EXPER_VAL_IMG) # $(PREDICTOR_VAL_IMG)
 
 ##################
@@ -546,8 +546,8 @@ $(KINASE_BEADS): $(KINASE_BEADS_RAW)
 	$(RSCRIPT) src/impute.r $@ $(DATADIR)/kinase-beads-activities-imp.tsv
 
 # Hotspots
-$(HOTSPOTS): $(HOTSPOTS_RAW) $(ENSEMBL_ID_MAPPING)
-	sed 's/, /\t/g' $< | cut -f2,4,6,7 | \
+$(HOTSPOTS): $(HOTSPOTS_RAW) $(TYR_HOTSPOTS_RAW) $(ENSEMBL_ID_MAPPING)
+	cat $(wordlist 1,2,$^) | sed 's/, /\t/g' | cut -f2,4,6,7 | \
 		awk -F"\t" -vOFS="\t" '{if ($$4==0){rel=1}else{rel=-log($$4)/log(10)/100}; print $$1, $$2, $$3, rel}' | \
 		sort -k1 | join -t'	' $(ENSEMBL_ID_MAPPING) - | cut -f2-5 >$@
 
@@ -602,7 +602,7 @@ $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 	$(ASSOCNET_FILTER) --header-in $< >$@
 
 # Regulatory site-based activity predictions
-$(REG_SITE_ASSOC): $(REG_SITES)
+$(REG_SITE_ASSOC): $(REG_SITES) $(REG_SITE_COR_SCRIPT)
 	$(RSCRIPT) $(REG_SITE_COR_SCRIPT)
 
 ###############################
@@ -611,12 +611,12 @@ $(REG_SITE_ASSOC): $(REG_SITES)
 # Calculate kinase-substrate PSSM scores
 $(KIN_KIN_SCORES): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
 					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
-					$(KINACT_DATA) $(PSSM_LIB)
+					$(KINACT_DATA) $(PSSM_LIB) $(HOTSPOTS)
 	$(PYTHON) $(PSSM_SCRIPT) <(cut -f1 $(KINACT_DATA) | sort | uniq) $@
 
 $(KIN_KIN_SCORES_KINOME): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
 					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
-					$(HUMAN_KINOME) $(PSSM_LIB)
+					$(HUMAN_KINOME) $(PSSM_LIB) $(HOTSPOTS)
 	$(PYTHON) $(PSSM_SCRIPT) $(HUMAN_KINOME) $@
 
 $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_DIST_SCRIPT) $(KIN_SUBSTR_TABLE) \
