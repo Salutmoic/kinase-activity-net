@@ -3,7 +3,7 @@
 #            script to take the cellular complexes 		       #
 #	     from GO-cellular component       			       #    
 #                                                                      #
-# Copyright (c) 2016 - 2019, 2017, EMBL - European Bioinformatics Institute  #
+# Copyright (c) 2016 - 2019, EMBL - European Bioinformatics Institute  #
 #       Author: Bruno Ariano (ariano@ebi.ac.uk)                        #
 #       Distributed under the GPLv3 License.                           #
 ########################################################################
@@ -40,11 +40,11 @@ def print_locations(assoc, cytoplasm, plasma_membrane, nucleus):
             in_memb = in_memb or term in plasma_membrane
             in_nucl = in_nucl or term in nucleus
         if in_cyto:
-            print("GO:0005737\t" + prot)
+            print("cytoplasmic_part\t" + prot)
         # if in_memb:
-        #     print("GO:0005886\t" + prot)
+        #     print("plasma_membrane_part\t" + prot)
         if in_nucl:
-            print("GO:0005634\t" + prot)
+            print("nuclear_part\t" + prot)
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
@@ -58,11 +58,11 @@ if __name__ == "__main__":
     for term in obo_dag:
         term_rec = obo_dag[term]
         parents = get_really_all_parents(term_rec)
-        if "GO:0005737" in parents:
+        if "GO:0044444" in parents:
             cytoplasm.add(term)
-        if "GO:0005886" in parents:
+        if "GO:0044459" in parents:
             plasma_membrane.add(term)
-        if "GO:0005634" in parents:
+        if "GO:0044428" in parents:
             nucleus.add(term)
     assoc = read_associations(assoc_file)
     print_locations(assoc, cytoplasm, plasma_membrane, nucleus)
