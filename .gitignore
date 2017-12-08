@@ -4,3 +4,11 @@ out/*
 img/*
 .RData
 .Rhistory
+*.pyc
+GPATH
+GRTAGS
+GTAGS
+tmp
+log
+.mypy_cache
+.#*
