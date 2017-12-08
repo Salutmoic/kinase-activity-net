@@ -5,170 +5,185 @@ if (length(argv) != 3){
     stop("USAGE: <script> DATA_FILE VAL_SET NEG_VAL_SET")
 }
 
-pred.score.file <- argv[1]
-val.set.file <- argv[2]
-neg.val.set.file <- argv[3]
+pred_score_file <- argv[1]
+val_set_file <- argv[2]
+neg_val_set_file <- argv[3]
 
 ## Get information from the prediction file name.  Build up a name of
 ## the prediction method for adding a title to plots, and figure out
 ## what kind of method was in use in order to determine any kind of
 ## normalisation that should be done before making predictions.
-pred.name <- strsplit(basename(pred.score.file), split="\\.")[[1]][1]
-pred.name <- sub("kinact-", "", pred.name)
-assoc.method <- "[undefined]"
+pred_name <- strsplit(basename(pred_score_file), split = "\\.")[[1]][1]
+pred_name <- sub("kinact-", "", pred_name)
+assoc_method <- "[undefined]"
 method <- "other"
-if (grepl("pcor2", pred.score.file)){
-    assoc.method <- "Pearson's Correlation^2"
+if (grepl("pcor2", pred_score_file)){
+    assoc_method <- "Pearson's Correlation^2"
     method <- "cor"
-}else if (grepl("pcor", pred.score.file)){
-    assoc.method <- "Pearson's Correlation"
+}else if (grepl("pcor", pred_score_file)){
+    assoc_method <- "Pearson's Correlation"
     method <- "cor"
-}else if (grepl("scor2", pred.score.file)){
-    assoc.method <- "Spearman's Correlation^2"
+}else if (grepl("scor2", pred_score_file)){
+    assoc_method <- "Spearman's Correlation^2"
     method <- "cor"
-}else if (grepl("scor", pred.score.file)){
-    assoc.method <- "Spearman's Correlation"
+}else if (grepl("scor", pred_score_file)){
+    assoc_method <- "Spearman's Correlation"
     method <- "cor"
-}else if (grepl("paircor", pred.score.file)){
-    assoc.method <- "Pairwise Spearman's Correlation"
+}else if (grepl("paircor", pred_score_file)){
+    assoc_method <- "Pairwise Spearman's Correlation"
     method <- "cor"
-}else if (grepl("nfchisq", pred.score.file)){
-    assoc.method <- "FunChiSq"
+}else if (grepl("nfchisq", pred_score_file)){
+    assoc_method <- "FunChiSq"
     method <- "nfchisq"
-}else if (grepl("fnn_mut_info", pred.score.file)){
-    assoc.method <- "FNN Mutual Information"
+}else if (grepl("fnn_mut_info", pred_score_file)){
+    assoc_method <- "FNN Mutual Information"
     method <- "mutinfo"
-}else if (grepl("mut_info", pred.score.file)){
-    assoc.method <- "Mutual Information"
+}else if (grepl("mut_info", pred_score_file)){
+    assoc_method <- "Mutual Information"
     method <- "mutinfo"
-}else if (grepl("partcor", pred.score.file)){
-    assoc.method <- "Partial Correlation"
+}else if (grepl("partcor", pred_score_file)){
+    assoc_method <- "Partial Correlation"
     method <- "cor"
-}else if (grepl("fvalue", pred.score.file)){
-    assoc.method <- "ANOVA F value."
+}else if (grepl("fvalue", pred_score_file)){
+    assoc_method <- "ANOVA F value_"
     method <- "meansq"
-}else if (grepl("pssm", pred.score.file)){
-    assoc.method <- "PSSM Score"
-}else if (grepl("string-coexp", pred.score.file)){
-    assoc.method <- "STRING Coexpression Score"
-}else if (grepl("string-exper", pred.score.file)){
-    assoc.method <- "STRING Experimental Score"
-}else if (grepl("all", pred.score.file)){
-    assoc.method <- "Mean Score"
+}else if (grepl("pssm", pred_score_file)){
+    assoc_method <- "PSSM Score"
+    method <- "pssm"
+}else if (grepl("string-coexp2", pred_score_file)){
+    assoc_method <- "STRING Coexpression Score (cor^2)"
+}else if (grepl("string-coexp", pred_score_file)){
+    assoc_method <- "STRING Coexpression Score"
+}else if (grepl("string-exper", pred_score_file)){
+    assoc_method <- "STRING Experimental Score"
+}else if (grepl("all", pred_score_file)){
+    assoc_method <- "Mean Score"
 }else{
-    assoc.method <- pred.score.file
+    assoc_method <- pred_score_file
 }
 ## The next two append info to the plot title and override for
 ## normalisation purposes the method used, in order of increasing
 ## precedence.
-if (grepl("filter", pred.score.file)){
-    assoc.method <- paste0(assoc.method, " (filtered)")
+if (grepl("filter", pred_score_file)){
+    assoc_method <- paste0(assoc_method, " (filtered)")
     method <- "filtered"
 }
-if (grepl("final-predictor", pred.score.file)){
-    assoc.method <- paste0(assoc.method, " (merged)")
+if (grepl("final-predictor", pred_score_file)){
+    assoc_method <- paste0(assoc_method, " (merged)")
     method <- "predictor"
 }
-if (grepl("balanced", pred.score.file)){
-    table.method <- "balanced table"
-}else if (grepl("max-rows", pred.score.file)){
-    table.method <- "max kinases"
-}else if (grepl("max-cols", pred.score.file)){
-    table.method <- "max conditions"
+if (grepl("balanced", pred_score_file)){
+    table_method <- "balanced table"
+}else if (grepl("max-rows", pred_score_file)){
+    table_method <- "max kinases"
+}else if (grepl("max-cols", pred_score_file)){
+    table_method <- "max conditions"
 }else{
-    table.method <- ""
+    table_method <- ""
 }
-
-pred.score <- read.delim(pred.score.file, as.is=TRUE)
-names(pred.score) <- c("prot1", "prot2", "pred.score")
-pred.score <- subset(pred.score, prot1 != prot2)
-rownames(pred.score) <- paste(pred.score$prot1, pred.score$prot2, sep="-")
+pred_score <- read.delim(pred_score_file, as.is = TRUE)
+names(pred_score) <- c("prot1", "prot2", "pred_score")
+pred_score <- subset(pred_score, prot1 != prot2)
+pred_score <- pred_score[complete.cases(pred_score),]
+rownames(pred_score) <- paste(pred_score$prot1, pred_score$prot2, sep = "-")
 
 if (method %in% c("cor", "nfchisq")){
-    min.pred <- min(pred.score$pred.score)
-    max.pred <- max(pred.score$pred.score)
-    pred.score$pred.score <- (pred.score$pred.score-min.pred)/(max.pred-min.pred)
+    min_pred <- min(pred_score$pred_score)
+    max_pred <- max(pred_score$pred_score)
+    pred_score$pred_score <- ((pred_score$pred_score - min_pred) /
+                              (max_pred - min_pred))
 }else if (method %in% c("mutinfo", "fvalue")){
-    pred.score$pred.score <- pred.score$pred.score/max(pred.score$pred.score)
+    pred_score$pred_score <- pred_score$pred_score / max(pred_score$pred_score)
 }
 
 
-true.intxns.tbl <- read.table(val.set.file, as.is=TRUE)
-possible.true.intxns <- paste(true.intxns.tbl[,1], true.intxns.tbl[,2], sep="-")
-possible.true.intxns <- intersect(possible.true.intxns, rownames(pred.score))
+true_intxns_tbl <- read.table(val_set_file, as.is = TRUE)
+possible_true_intxns <- paste(true_intxns_tbl[, 1], true_intxns_tbl[, 2],
+                              sep = "-")
+possible_true_intxns <- intersect(possible_true_intxns, rownames(pred_score))
 
-false.intxns.tbl <- read.table(neg.val.set.file, as.is=TRUE)
-possible.false.intxns <- paste(false.intxns.tbl[,1], false.intxns.tbl[,2], sep="-")
-possible.false.intxns <- intersect(possible.false.intxns, rownames(pred.score))
+false_intxns_tbl <- read.table(neg_val_set_file, as.is = TRUE)
+possible_false_intxns <- paste(false_intxns_tbl[, 1], false_intxns_tbl[, 2],
+                               sep = "-")
+possible_false_intxns <- intersect(possible_false_intxns, rownames(pred_score))
 
 ## Generate some reverse true interactions to be mixed in as negatives
-rev.true.intxns <- paste(true.intxns.tbl[,2], true.intxns.tbl[,1], sep="-")
-rev.true.intxns <- intersect(rev.true.intxns, rownames(pred.score))
-rev.true.intxns <- setdiff(rev.true.intxns, possible.true.intxns)
-rev.true.intxns <- setdiff(rev.true.intxns, possible.false.intxns)
+## rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
+## rev_true_intxns <- intersect(rev_true_intxns, rownames(pred_score))
 
-pred.data <- NULL
-label.data <- NULL
+rev_true_intxns <- rownames(pred_score)
+rev_true_intxns <- setdiff(rev_true_intxns, possible_true_intxns)
+rev_true_intxns <- setdiff(rev_true_intxns, possible_false_intxns)
 
-print(c(length(possible.false.intxns), length(possible.true.intxns), length(rev.true.intxns)))
+rev_true_intxns <- c()
+## possible_false_intxns <- c()
+
+pred_data <- NULL
+label_data <- NULL
+
+print(c(length(possible_false_intxns), length(possible_true_intxns),
+        length(rev_true_intxns)))
 
 n <- 100
 
-## sample.size <- 0.5*min(length(possible.false.intxns), length(possible.true.intxns))
-sample.size <- round(0.8*min(length(possible.false.intxns)+0.5*length(rev.true.intxns), length(possible.true.intxns)))
+num_rev_true <- length(rev_true_intxns)
+sample_size <- round(0.8 * min(length(possible_false_intxns) + num_rev_true,
+                               length(possible_true_intxns)))
 
 ## This procedure is sufficient for training-free predictions.
 for (i in 1:n){
-    ## false.intxns <- sample(possible.false.intxns, size=sample.size)
-    false.intxns <- sample(union(possible.false.intxns,
-                                 sample(rev.true.intxns, size=as.integer(0.5*length(rev.true.intxns)))),
-                                 size=sample.size)
-    true.intxns <- sample(possible.true.intxns, size=sample.size)
+    ## false_intxns <- sample(possible_false_intxns, size=sample_size)
+    false_intxns <- sample(union(possible_false_intxns,
+                                 sample(rev_true_intxns,
+                                        size=as.integer(num_rev_true))),
+                                 size=sample_size)
+    true_intxns <- sample(possible_true_intxns, size=sample_size)
     ## Put together the tables of predictions and TRUE/FALSE labels
-    intxns <- c(true.intxns, false.intxns)
-    preds <- pred.score[intxns, "pred.score"]
-    labels <- c(rep(TRUE, length(true.intxns)), rep(FALSE, length(false.intxns)))
-    if (is.null(pred.data)){
-        pred.data <- preds
-        label.data <- labels
+    intxns <- c(true_intxns, false_intxns)
+    preds <- pred_score[intxns, "pred_score"]
+    labels <- c(rep(TRUE, length(true_intxns)), rep(FALSE, length(false_intxns)))
+    if (is.null(pred_data)){
+        pred_data <- preds
+        label_data <- labels
     }else{
-        pred.data <- cbind(pred.data, preds)
-        label.data <- cbind(label.data, labels)
+        pred_data <- cbind(pred_data, preds)
+        label_data <- cbind(label_data, labels)
     }
-    if (i==1){
-        out.tbl <- cbind(intxns, pred.data, label.data)
-        write.table(out.tbl, "tmp/validation-test-set.tsv", quote=FALSE, row.names=FALSE, col.names=FALSE, sep="\t")
+    if (i == 1){
+        out_tbl <- cbind(intxns, pred_data, label_data)
+        write.table(out_tbl, "tmp/validation-test-set.tsv", quote = FALSE,
+                    row.names = FALSE, col.names = FALSE, sep = "\t")
     }
 }
 
-pred <- prediction(pred.data, label.data)
+pred <- prediction(pred_data, label_data)
 
-data.basename <- strsplit(basename(pred.score.file), split="\\.")[[1]][1]
-out.img <- paste0("img/", data.basename, "-val.pdf")
+data_basename <- strsplit(basename(pred_score_file), split = "\\.")[[1]][1]
+out_img <- paste0("img/", data_basename, "-val.pdf")
 
-pdf(out.img)
-par(cex=1.25, cex.main=0.8)
+pdf(out_img)
+par(cex = 1.25, cex.main = 0.8)
 
 ## ROC curve w/ AUC info
-perf.roc <- performance(pred, measure="tpr", x.measure="fpr")
-perf.auc <- performance(pred, "auc")
-mean.auc <- mean(unlist(perf.auc@y.values))
-se.auc <- sd(unlist(perf.auc@y.values))/sqrt(n)
-message(assoc.method)
-message(paste("Mean AUC =", format(mean.auc, digits=2)))
-message(paste("S.E.M. =", format(se.auc, digits=2)))
+perf_roc <- performance(pred, measure = "tpr", x.measure = "fpr")
+perf_auc <- performance(pred, "auc")
+mean_auc <- mean(unlist(perf_auc@y.values))
+se_auc <- sd(unlist(perf_auc@y.values)) / sqrt(n)
+message(assoc_method)
+message(paste("Mean AUC =", format(mean_auc, digits = 2)))
+message(paste("S.E.M. =", format(se_auc, digits = 2)))
 message(paste("n =", n))
-message(paste("sample size =", sample.size))
-plot(perf.roc, avg="vertical", spread.estimate="boxplot",
-     main=paste(assoc.method,
-                table.method,
-                paste0("Mean AUC=", format(mean.auc, digits=2)),
-                paste0("S.E.M.=", format(se.auc, digits=2)),
-                paste0("Sample size=", sample.size),
-                sep="\n"))
+message(paste("sample size =", sample_size))
+plot(perf_roc, avg = "vertical", spread.estimate = "boxplot",
+     main = paste(assoc_method,
+                  table_method,
+                  paste0("Mean AUC=", format(mean_auc, digits = 2)),
+                  paste0("S.E.M.=", format(se_auc, digits = 2)),
+                  paste0("Sample size=", sample_size),
+                  sep = "\n"))
 ## Precision-recall curve
-## perf.pr <- performance(pred, measure="prec", x.measure="rec")
-## plot(perf.pr, avg="vertical", spread.estimate="boxplot",
-##      main=paste(assoc.method, table.method, sep="\n"))
+## perf_pr <- performance(pred, measure="prec", x.measure="rec")
+## plot(perf_pr, avg="vertical", spread_estimate="boxplot",
+##      main=paste(assoc_method, table_method, sep="\n"))
 
 dev.off()
