@@ -11,6 +11,10 @@ function join(array, start, end, sep, result, i)
 }
 
 {
+    # Only take experimentally verified annotations
+    if ($3 != "EXP" && $3 != "IDA" && $3 != "IPI" &&
+            $3 != "IMP" && $3 != "IGI" && $3 != "IEP")
+        next
     if(a[$1])
     {
         a[$1] = a[$1]";"$2;
