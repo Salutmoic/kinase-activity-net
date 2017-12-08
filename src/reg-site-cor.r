@@ -58,12 +58,12 @@ for (i in 1:nrow(kin.pairs)){
             ct <- cor.test(kin1.ensp.phospho, kin2.ensp.phospho, method="pearson",
                            use="pairwise.complete.obs")
             p.value <- -log10(ct$p.value)
-            if (p.value > best.p.value)
+            if (!is.infinite(p.value) && p.value > best.p.value)
                 best.p.value <- p.value
         }
     }
     if (is.infinite(best.p.value))
-        best.rho <- NA
+        best.p.value <- NA
     kin1s <- c(kin1s, kin1)
     kin2s <- c(kin2s, kin2)
     p.vals <- c(p.vals, best.p.value)
