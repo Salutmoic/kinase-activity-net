@@ -50,8 +50,7 @@ VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
 PROTEIN_GROUPING =  $(COMBINED_GROUPING) # $(COMBINED_GROUPING) $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
 
 MERGED_PRED_SOURCES = $(KINACT_ASSOC) $(KINACT_ASSOC2)			\
-	$(REG_SITE_ASSOC) $(KIN_KIN_SCORES) $(HUMAN_STRING_COEXP)	\
-	$(HUMAN_STRING_COEXP2)
+	$(KIN_KIN_SCORES) $(HUMAN_STRING_COEXP)	
 MERGED_PRED_SOURCES_KINOME = $(KINACT_ASSOC) $(KINACT_ASSOC2)	\
 	$(KIN_KIN_SCORES_KINOME) $(HUMAN_STRING_COEXP_KINOME)		\
 	$(HUMAN_STRING_COEXP2_KINOME)
@@ -101,8 +100,8 @@ KINACT_DATA = $(DATADIR)/kinact-$(TABLE_STRATEGY).tsv
 IMP_KINACT_DATA = $(DATADIR)/kinact-$(TABLE_STRATEGY)-imp.tsv
 DISCR_KINACT_DATA = $(DATADIR)/kinact-$(TABLE_STRATEGY)-discr.tsv
 # EGF-signaling-related kinase activity
-EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,DATADIR)/egf-kinact-$(T).tsv)
-IMP_EGF_KIN_ACT_DATA = $(foreach T,perturbed unperturbed,$(DATADIR)/egf-kinact-$(T)-imp.tsv)
+EGF_KINACT_DATA = $(DATADIR)/kinact-egf-pert.tsv
+IMP_EGF_KINACT_DATA = $(DATADIR)/kinact-egf-pert-imp.tsv
 # Association table output
 KINACT_ASSOC = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD).tsv
 KINACT_ASSOC2 = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2.tsv
@@ -217,7 +216,9 @@ ASSOCNET_FILTER ?= $(BINDIR)/assocnet-filter $(ASSOCNET_FILTER_PARAMS)
 ## Scripts
 
 KSEA_POST_SCRIPT = $(SRCDIR)/ksea-post.r
+OPTIMIZE_KINACT_TBL_SCRIPT = $(SRCDIR)/optimize-activity-table.r
 GEN_KINACT_TBL_SCRIPT = $(SRCDIR)/gen-activity-table.r
+GEN_EGF_KINACT_TBL_SCRIPT = $(SRCDIR)/gen-egf-activity-table.r
 FINAL_PREDICTOR_SCRIPT = $(SRCDIR)/final-predictor.r
 DISCRETIZE_SCRIPT = $(SRCDIR)/discretize.r
 NFCHISQ_SCRIPT = $(SRCDIR)/nfchisq.r
@@ -263,7 +264,7 @@ assoc-results: $(KINACT_ASSOC) $(KINACT_ASSOC2)
 pssm: $(KIN_KIN_SCORES) $(KIN_KNOWN_PSITE_SCORES) $(KIN_SCORE_DIST)
 
 .PHONY: data
-data: $(KSEA_DATA) $(KINACT_DATA) $(IMP_KINACT_DATA)
+data: $(KSEA_DATA) $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KINACT_DATA)
 
 .PHONY: validation
 validation: $(VAL_IMGS)
@@ -345,9 +346,16 @@ $(KSEA_DATA): $(KSEA_TMP_DATA)
 
 # Kinase activity tables
 $(KINACT_DATA) \
-$(IMP_KINACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(KSEA_DATA) $(KIN_COND_PAIRS) \
-					$(KIN_SUB_OVERLAP)
-	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT) $(TABLE_STRATEGY) $(KSEA_MIN_SITES) $(ENTROPY_FILTER) $(NA_THRESHOLD)
+$(IMP_KINACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(OPTIMIZE_KINACT_TBL_SCRIPT) \
+					$(KSEA_DATA) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP)
+	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT) $(TABLE_STRATEGY) $(KSEA_MIN_SITES) \
+		$(ENTROPY_FILTER) $(NA_THRESHOLD)
+
+# EGF-specific kinase activity tables
+$(EGF_KINACT_DATA): $(GEN_EGF_KINACT_TBL_SCRIPT) $(OPTIMIZE_KINACT_TBL_SCRIPT) \
+					$(KSEA_DATA) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP)
+	$(RSCRIPT) $(GEN_EGF_KINACT_TBL_SCRIPT) $(TABLE_STRATEGY) $(KSEA_MIN_SITES) \
+		$(ENTROPY_FILTER) $(NA_THRESHOLD)
 
 # Discretized kinase activity
 $(DATADIR)/%-discr.tsv: $(DATADIR)/%-imp.tsv $(DISCRETIZE_SCRIPT)
@@ -417,7 +425,7 @@ $(ENSEMBL_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
 
 # GO associations (formatted for GOATOOLS)
 $(GO_ASSOC): $(FULL_GO_ASSOC_TABLE) $(UNIPROT_ID_MAPPING) $(REFORMAT_GO_ASSOC_SCRIPT)
-	sed '/^!/d' $< | cut -f2,5 | sort | uniq | awk -f $(REFORMAT_GO_ASSOC_SCRIPT) | sort -k1 >$@.tmp
+	sed '/^!/d' $< | cut -f2,5,7 | sort | uniq | awk -f $(REFORMAT_GO_ASSOC_SCRIPT) | sort -k1 >$@.tmp
 	join -t'	' $(UNIPROT_ID_MAPPING) $@.tmp | cut -f2,3 >$@
 	rm $@.tmp
 
@@ -456,9 +464,10 @@ $(HUMAN_STRING_COEXP2_FULL): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_D
 
 $(HUMAN_STRING_COEXP2): $(HUMAN_STRING_COEXP2_FULL) $(KINACT_DATA)
 	$(ASSOCNET) --header-in --method=spearman $< | sed '1s/assoc/string.coexp.cor/' >$@.tmp
-	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp \
-		<(cut -f1 $(KINACT_DATA) | sort | uniq) $@
+	cut -f1 $(KINACT_DATA) | sort | uniq >tmp/kinact-prots.txt
+	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp tmp/kinact-prots.txt $@
 	rm $@.tmp
+	rm tmp/kinact-prots.txt
 
 $(HUMAN_STRING_COEXP_KINOME): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
 		$(KINACT_DATA) $(HUMAN_KINOME) $(FORMAT_STRING_SCRIPT)
@@ -487,10 +496,11 @@ $(HUMAN_STRING_COOCC2_FULL): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_D
 	rm $@.tmp
 
 $(HUMAN_STRING_COOCC2): $(HUMAN_STRING_COOCC2_FULL) $(KINACT_DATA)
-	$(ASSOCNET) --header-in --method=spearman $< | sed '1s/assoc/string.coocc.cor/' >$@.tmp
-	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp \
-		<(cut -f1 $(KINACT_DATA) | sort | uniq) $@
+	# $(ASSOCNET) --header-in --method=spearman $< | sed '1s/assoc/string.coocc.cor/' >$@.tmp
+	cut -f1 $(KINACT_DATA) | sort | uniq >tmp/kinact-prots.txt
+	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp tmp/kinact-prots.txt $@
 	# rm $@.tmp
+	# rm tmp/kinact-prots.txt 
 
 $(HUMAN_STRING_COOCC_KINOME): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
 		$(KINACT_DATA) $(HUMAN_KINOME) $(FORMAT_STRING_SCRIPT)
@@ -527,7 +537,7 @@ $(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv \
 	$(RSCRIPT) $(KEGG_VAL_SCRIPT) $(wordlist 1,2,$^) $@
 
 # Negative validation set
-$(NEG_VALSET): $(NEG_VAL_SCRIPT) $(KINACT_ASSOC) $(VAL_SET) $(PROTEIN_GROUPING)
+$(NEG_VALSET): $(NEG_VAL_SCRIPT) $(VAL_SET) $(PROTEIN_GROUPING)
 	$(RSCRIPT) $^ $@
 
 # Calculate human proteome amino-acid frequencies
@@ -590,8 +600,9 @@ $(OUTDIR)/%-fnn_mut_info.tsv: $(DATADIR)/%-imp.tsv $(ASSOC_SCRIPT) $(OUTDIR)
 	$(RSCRIPT) $(ASSOC_SCRIPT) $< $@ fnn_mut_info
 
 # Linear model based predictions (poor man's MRA)
-$(OUTDIR)/%-fvalue.tsv: $(DATADIR)/%-imp.tsv $(LM_PRED_SCRIPT) $(KIN_INVIVO_CONDS) $(OUTDIR)
-	$(RSCRIPT) $(LM_PRED_SCRIPT) $< $@
+$(OUTDIR)/%-lmpred.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)/%-pssm.tsv $(LM_PRED_SCRIPT) \
+		$(KIN_INVIVO_CONDS) $(OUTDIR)
+	$(RSCRIPT) $(LM_PRED_SCRIPT) $(wordlist 1,2,$^) $@
 
 # Pairwise correlations, taking into account perturbations
 $(OUTDIR)/%-paircor.tsv: $(DATADIR)/%-imp.tsv $(PAIR_COR_SCRIPT) $(KIN_INVIVO_CONDS) $(OUTDIR)
@@ -609,10 +620,10 @@ $(REG_SITE_ASSOC): $(REG_SITES) $(REG_SITE_COR_SCRIPT)
 ## Kinase-substrate predictions
 
 # Calculate kinase-substrate PSSM scores
-$(KIN_KIN_SCORES): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
+$(OUTDIR)/%-pssm.tsv: $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
 					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
-					$(KINACT_DATA) $(PSSM_LIB) $(HOTSPOTS)
-	$(PYTHON) $(PSSM_SCRIPT) <(cut -f1 $(KINACT_DATA) | sort | uniq) $@
+					$(DATADIR)/%.tsv $(PSSM_LIB) $(HOTSPOTS)
+	$(PYTHON) $(PSSM_SCRIPT) <(cut -f1 $(DATADIR)/$*.tsv | sort | uniq) $@
 
 $(KIN_KIN_SCORES_KINOME): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
 					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
