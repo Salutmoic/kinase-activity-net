@@ -5,38 +5,40 @@ set_bart_machine_num_cores(24)
 suppressPackageStartupMessages(library(ROCR))
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 3){
-    stop("USAGE: <script> MERGED_PREDS VAL_SET NEG_VAL_SET")
+if (length(argv) != 4){
+    stop("USAGE: <script> MERGED_PREDS VAL_SET NEG_VAL_SET RAND_NEGS")
 }
 
 merged_pred_file <- argv[1]
 val_set_file <- argv[2]
 neg_val_set_file <- argv[3]
+use_rand_negs <- as.logical(argv[4])
 
 merged_pred <- read.delim(merged_pred_file, as.is=TRUE)
 names(merged_pred)[1:2] <- c("prot1", "prot2")
 merged_pred <- subset(merged_pred, prot1 != prot2)
+merged_pred <- merged_pred[complete.cases(merged_pred),]
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
 
 true_intxns_tbl <- read.table(val_set_file, as.is = TRUE)
 possible_true_intxns <- paste(true_intxns_tbl[, 1], true_intxns_tbl[, 2],
                               sep = "-")
-possible_true_intxns <- intersect(possible_true_intxns, rownames(merged_pred))
-
-false_intxns_tbl <- read.table(neg_val_set_file, as.is = TRUE)
-possible_false_intxns <- paste(false_intxns_tbl[, 1], false_intxns_tbl[, 2],
-                               sep = "-")
-possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
+true_intxns <- intersect(possible_true_intxns, rownames(merged_pred))
 
 ## Generate some reverse true interactions to be mixed in as negatives
-rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
-rev_true_intxns <- intersect(rev_true_intxns, rownames(merged_pred))
-rev_true_intxns <- setdiff(rev_true_intxns, possible_true_intxns)
-rev_true_intxns <- setdiff(rev_true_intxns, possible_false_intxns)
+if (use_rand_negs){
+    rand_neg_intxns <- rownames(merged_pred)
+    possible_false_intxns <- setdiff(rand_neg_intxns, possible_true_intxns)
+}else{
+    false_intxns_tbl <- read.table(neg_val_set_file, as.is = TRUE)
+    possible_false_intxns <- paste(false_intxns_tbl[, 1], false_intxns_tbl[, 2],
+                                   sep = "-")
+    possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
+}
 
-num_rev_true <- 0.5 * length(rev_true_intxns)
-false_intxns <- union(possible_false_intxns,
-                      sample(rev_true_intxns, num_rev_true))
+num_negs <- min(length(possible_false_intxns),
+                3*length(true_intxns))
+false_intxns <- sample(possible_false_intxns, num_negs)
 true_intxns <- possible_true_intxns
 
 ## Put together the tables of predictions and TRUE/FALSE labels
@@ -62,4 +64,8 @@ dev.off()
 pdf("img/bart-var-importance.pdf")
 investigate_var_importance(bart, type="splits")
 investigate_var_importance(bart, type="trees")
+dev.off()
+
+pdf("img/bart-cov-importance.pdf")
+cov_importance_test(bart, plot=TRUE)
 dev.off()
