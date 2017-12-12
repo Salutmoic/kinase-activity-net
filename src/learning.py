@@ -170,7 +170,7 @@ if __name__ == "__main__":
     with open(sys.argv[7],"w") as crossval: 
         # repeated cross validation, is this something along the lines of what you were thinking 
         for i in range(50):
-            scores = cross_val_score(model, test, prediction, scoring = 'roc_auc', cv=5)
+            scores = cross_val_score(model, train, outcomes, scoring = 'roc_auc', cv=5)
             for score in scores:
                 crossval.write(str(score) + "\t")
             crossval.write("\n")
