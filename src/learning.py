@@ -1,7 +1,7 @@
 import scipy
 import numpy as np
 import sklearn
-from sklearn import svm, linear_model
+from sklearn import svm, linear_model, preprocessing
 import sys
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors.nearest_centroid import NearestCentroid
@@ -129,12 +129,16 @@ if __name__ == "__main__":
     data = sys.argv[3]
     method = sys.argv[4]
     threshold = float(sys.argv[5])
+    
+    min_max_scaler = preprocessing.MinMaxScaler()
 
     testdict = prediction_matrix(data)
     test = list(testdict.values())
-  
+    test_scale = min_max_scaler(test)
+    
     traindict,outcomes = traindata(truePos,trueNeg,data,threshold)
     train = list(traindict.values())
+    train_scale = min_max_scaler(train)
     
     if method == "NB":
         model = GaussianNB()
@@ -144,8 +148,8 @@ if __name__ == "__main__":
        
     if method == "kmeans":
         model = NearestCentroid()
-        model.fit(train, outcomes)
-        prediction = model.predict(test)
+        model.fit(train_scale, outcomes)
+        prediction = model.predict(test_scale)
 
         centers = find_centers(test,results)
         c1 = centers[0]
@@ -164,15 +168,17 @@ if __name__ == "__main__":
 
     if model != "kmeans":
         
-        prediction = model.fit(train,outcomes).predict(test)
-        probability = model.fit(train,outcomes).predict_proba(test)
+        prediction = model.fit(train_scale,outcomes).predict(test_scale)
+        probability = model.fit(train_scale,outcomes).predict_proba(test_scale)
     
     with open(sys.argv[7],"w") as crossval: 
         # repeated cross validation, is this something along the lines of what you were thinking 
         for i in range(50):
             traindict,outcomes = traindata(truePos,trueNeg,data,threshold)
             train = list(traindict.values())
-            scores = cross_val_score(model, train, outcomes, scoring = 'roc_auc', cv=5)
+            min_max_scaler = preprocessing.MinMaxScaler()
+            train_scale = min_max_scaler(train)
+            scores = cross_val_score(model, train_scale, outcomes, scoring = 'roc_auc', cv=5)
             for score in scores:
                 crossval.write(str(score) + "\t")
             crossval.write("\n")
