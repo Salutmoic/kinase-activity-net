@@ -48,7 +48,8 @@ kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
 
 ## Filter out kinase activity predictions that were not based on
 ## enough sites
-kin.act <- filter.act.preds(kin.act, phospho.anno, phospho.vals, min.sites)
+kin.act <- filter.act.preds(kin.act, phospho.anno, phospho.vals, kin.sub.tbl,
+                            min.sites)
 
 ## We look for "empty" rows here...not really empty, but anything
 ## that's practically empty (>90% missing values).
@@ -62,6 +63,11 @@ empty.cols <- colnames(kin.act)[which(apply(kin.act, 2,
                                                 percent.na(tbl.col)>0.9
                                             }))]
 kin.act <- kin.act[,setdiff(colnames(kin.act), empty.cols)]
+
+## Filter out conditions where a supposedly inhibited kinase has
+## positive or unchanged activity
+bad.inhib.conds <- get.bad.inhib.conds(kin.act)
+kin.act <- kin.act[,setdiff(colnames(kin.act), bad.inhib.conds)]
 
 ## Filter out kinases that have overall low activity predictions.
 kin.act.filt <- filter.low.activity(kin.act)
