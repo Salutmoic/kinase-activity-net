@@ -55,7 +55,11 @@ bart <- bartMachineCV(preds,
                       serialize=TRUE)
 
 file_base <- strsplit(merged_pred_file, split="\\.")[[1]][1]
-save(bart, file=paste0(file_base, "-bart.Rdata"))
+if (use_rand_negs){
+    save(bart, file=paste0(file_base, "-rand-negs-bart.Rdata"))
+}else{
+    save(bart, file=paste0(file_base, "-bart.Rdata"))
+}
 
 pdf("img/bart-error-assumptions.pdf")
 check_bart_error_assumptions(bart)
