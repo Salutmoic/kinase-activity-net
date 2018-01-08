@@ -1,13 +1,15 @@
 suppressMessages(library(ROCR))
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 3){
-    stop("USAGE: <script> DATA_FILE VAL_SET NEG_VAL_SET")
+if (length(argv) != 5){
+    stop("USAGE: <script> DATA_FILE VAL_SET NEG_VAL_SET RAND_NEGS DIRECTED")
 }
 
 pred_score_file <- argv[1]
 val_set_file <- argv[2]
 neg_val_set_file <- argv[3]
+use_rand_negs <- as.logical(argv[4])
+directed <- as.logical(argv[5])
 
 ## Get information from the prediction file name.  Build up a name of
 ## the prediction method for adding a title to plots, and figure out
@@ -102,41 +104,43 @@ possible_true_intxns <- paste(true_intxns_tbl[, 1], true_intxns_tbl[, 2],
                               sep = "-")
 possible_true_intxns <- intersect(possible_true_intxns, rownames(pred_score))
 
-false_intxns_tbl <- read.table(neg_val_set_file, as.is = TRUE)
-possible_false_intxns <- paste(false_intxns_tbl[, 1], false_intxns_tbl[, 2],
-                               sep = "-")
-possible_false_intxns <- intersect(possible_false_intxns, rownames(pred_score))
+if (use_rand_negs){
+    possible_false_intxns <- rownames(pred_score)
+}else{
+    false_intxns_tbl <- read.table(neg_val_set_file, as.is = TRUE)
+    possible_false_intxns <- paste(false_intxns_tbl[, 1], false_intxns_tbl[, 2],
+                                   sep = "-")
+    possible_false_intxns <- intersect(possible_false_intxns, rownames(pred_score))
+}
 
-## Generate some reverse true interactions to be mixed in as negatives
-## rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
-## rev_true_intxns <- intersect(rev_true_intxns, rownames(pred_score))
-
-rev_true_intxns <- rownames(pred_score)
-rev_true_intxns <- setdiff(rev_true_intxns, possible_true_intxns)
-rev_true_intxns <- setdiff(rev_true_intxns, possible_false_intxns)
-
-rev_true_intxns <- c()
-## possible_false_intxns <- c()
+possible_false_intxns <- setdiff(possible_false_intxns, possible_true_intxns)
+rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
+rev_true_intxns <- setdiff(possible_true_intxns, rev_true_intxns)
+if (directed){
+    ## The predictor is directed, so include reverse-true interactions
+    ## as possible false ones since we take bi-directional
+    ## relationships to be statistically unlikely
+    possible_false_intxns <- union(possible_false_intxns, rev_true_intxns)
+}else{
+    ## Since we're testing for symmetrical associations, remove
+    ## reverse-true interactions from the possible false interactions
+    possible_false_intxns <- setdiff(possible_false_intxns, rev_true_intxns)
+}
 
 pred_data <- NULL
 label_data <- NULL
 
-print(c(length(possible_false_intxns), length(possible_true_intxns),
-        length(rev_true_intxns)))
+print(c(length(possible_false_intxns), length(possible_true_intxns)))
 
 n <- 100
 
-num_rev_true <- length(rev_true_intxns)
-sample_size <- round(0.8 * min(length(possible_false_intxns) + num_rev_true,
+sample_size <- round(0.8 * min(length(possible_false_intxns),
                                length(possible_true_intxns)))
 
 ## This procedure is sufficient for training-free predictions.
 for (i in 1:n){
     ## false_intxns <- sample(possible_false_intxns, size=sample_size)
-    false_intxns <- sample(union(possible_false_intxns,
-                                 sample(rev_true_intxns,
-                                        size=as.integer(num_rev_true))),
-                                 size=sample_size)
+    false_intxns <- sample(possible_false_intxns, size=sample_size)
     true_intxns <- sample(possible_true_intxns, size=sample_size)
     ## Put together the tables of predictions and TRUE/FALSE labels
     intxns <- c(true_intxns, false_intxns)
@@ -149,17 +153,16 @@ for (i in 1:n){
         pred_data <- cbind(pred_data, preds)
         label_data <- cbind(label_data, labels)
     }
-    if (i == 1){
-        out_tbl <- cbind(intxns, pred_data, label_data)
-        write.table(out_tbl, "tmp/validation-test-set.tsv", quote = FALSE,
-                    row.names = FALSE, col.names = FALSE, sep = "\t")
-    }
 }
 
 pred <- prediction(pred_data, label_data)
 
 data_basename <- strsplit(basename(pred_score_file), split = "\\.")[[1]][1]
-out_img <- paste0("img/", data_basename, "-val.pdf")
+if (use_rand_negs){
+    out_img <- paste0("img/", data_basename, "-rand-negs-val.pdf")
+}else{
+    out_img <- paste0("img/", data_basename, "-val.pdf")
+}
 
 pdf(out_img)
 par(cex = 1.25, cex.main = 0.8)
