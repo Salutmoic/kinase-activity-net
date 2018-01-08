@@ -1,4 +1,6 @@
 library(reshape2)
+## for the get.bad.inhib.conds function
+source("src/optimize-activity-table.r")
 
 argv <- commandArgs(TRUE)
 if (length(argv) != 2){
@@ -15,13 +17,18 @@ kin.act.m <- as.data.frame(acast(kin.act.tbl, kinase ~ condition))
 kin.cond.tbl <- read.delim("data/external/kinase_invivoconditions.csv",
                            as.is=TRUE, sep=",")
 
+## Filter out conditions where a supposedly inhibited kinase has
+## positive or unchanged activity
+bad.inhib.conds <- get.bad.inhib.conds(kin.act.m)
+kin.act.m <- kin.act.m[,setdiff(colnames(kin.act.m), bad.inhib.conds)]
+
 intxns <- NULL
 kinases1 <- c()
 kinases2 <- c()
 cors <- c()
 
 for (kinase1 in rownames(kin.act.m)){
-    message(paste(kinase1, "-", paste0(match(kinase1, rownames(kin.act.m)), "/", nrow(kin.act.m))))
+    ## message(paste(kinase1, "-", paste0(match(kinase1, rownames(kin.act.m)), "/", nrow(kin.act.m))))
     for (kinase2 in rownames(kin.act.m)){
         if (kinase2 %in% kin.cond.tbl$HGNC){
             kin2.conds <- subset(kin.cond.tbl, HGNC==kinase2)
