@@ -2,7 +2,8 @@ suppressMessages(library(reshape2))
 suppressMessages(library(VIM))
 suppressMessages(library(entropy))
 
-filter.act.preds <- function(kin.act, phospho.anno, phospho.vals, min.sites){
+filter.act.preds <- function(kin.act, phospho.anno, phospho.vals, kin.sub.tbl,
+                             min.sites){
     for (kinase in rownames(kin.act)){
         kin.subs <- subset(kin.sub.tbl, GENE==kinase)
         kin.subs.ensp <- merge(phospho.anno, kin.subs,
@@ -83,6 +84,26 @@ get.redundant.kins <- function(kin.overlap){
         redundant.kins <- c(redundant.kins, redundant.kin)
     }
     return(redundant.kins)
+}
+
+get.bad.inhib.conds <- function(kin.act){
+    kinase.conditions <- read.delim("data/external/kinase-condition-pairs.tsv",
+                                    as.is=TRUE)
+    conds <- colnames(kin.act)
+    bad.inhib.conds <- apply(kinase.conditions, 1,
+                             function(row){
+                                 cond <- row[1]
+                                 kin <- row[6]
+                                 direction <- row[7]
+                                 if (!(kin %in% rownames(kin.act)) ||
+                                     !(cond %in% colnames(kin.act)) ||
+                                     is.na(kin.act[kin, cond]) ||
+                                     (direction == "down" && kin.act[kin, cond] < 0) ||
+                                     (direction == "up" && kin.act[kin, cond] > 0) )
+                                     return(FALSE)
+                                 return(TRUE)
+                             })
+    return(unique(kinase.conditions$Condition[which(bad.inhib.conds)]))
 }
 
 percent.na <- function(x){
