@@ -41,6 +41,7 @@ DECONVOLUTION_A ?= 0.5
 # Eigenvalue Scaling parameter
 DECONVOLUTION_B ?= 0.99
 PRED_METHOD = log_reg
+USE_RAND_NEGS = FALSE
 
 KEGG_VALSET ?= $(KEGG_ACT_VALSET)
 VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
@@ -49,11 +50,9 @@ VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
 # functionally related (e.g. in the same pathway) for a true negative.
 PROTEIN_GROUPING =  $(COMBINED_GROUPING) # $(COMBINED_GROUPING) $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
 
-MERGED_PRED_SOURCES = $(KINACT_ASSOC) $(KINACT_ASSOC2)			\
-	$(REG_SITE_ASSOC) $(KIN_KIN_SCORES) $(HUMAN_STRING_COEXP)	
-MERGED_PRED_SOURCES_KINOME = $(KINACT_ASSOC) $(KINACT_ASSOC2)	\
-	$(KIN_KIN_SCORES_KINOME) $(HUMAN_STRING_COEXP_KINOME)		\
-	$(HUMAN_STRING_COEXP2_KINOME)
+MERGED_PRED_SOURCES = $(KINACT_ASSOC) $(KINACT_ASSOC2)	\
+	$(REG_SITE_ASSOC) $(HUMAN_STRING_COEXP)
+DIRECT_PRED_SOURCES = $(KIN_KIN_SCORES) $(INHIB_FX)
 
 #####################
 ## External data sets
@@ -105,6 +104,8 @@ IMP_EGF_KINACT_DATA = $(DATADIR)/kinact-egf-pert-imp.tsv
 # Association table output
 KINACT_ASSOC = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD).tsv
 KINACT_ASSOC2 = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2.tsv
+# Activity perturbation under inhibition
+INHIB_FX = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-inhib-fx.tsv
 # Regulatory site-based activity correlations
 REG_SITE_ASSOC = $(OUTDIR)/reg-site-cor.tsv
 # Final, merged predictor
@@ -154,6 +155,7 @@ HUMAN_STRING_EXPER_KINOME = $(OUTDIR)/human-kinome-string-exper.tsv
 COMBINED_GROUPING = $(DATADIR)/protein-groups.tsv
 # Human kinome
 HUMAN_KINOME = $(DATADIR)/human-kinome.txt
+KINS_TO_USE = $(DATADIR)/kinases-to-use.txt
 # Kinase-domain phosphorylation hot spots
 HOTSPOTS = $(DATADIR)/kinase-phospho-hotspots.tsv
 # Validation sets
@@ -167,6 +169,7 @@ KINASE_BEADS = $(DATADIR)/kinase-beads-activities.tsv
 # Merged predictor data
 MERGED_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-merged.tsv
 MERGED_PRED_KINOME = $(OUTDIR)/human-kinome-merged.tsv
+DIRECT_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-direct.tsv
 # Final predictor
 FINAL_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(PRED_METHOD).tsv
 
@@ -243,6 +246,7 @@ VAL_SCRIPT = $(SRCDIR)/validation.r
 MERGE_SCRIPT = $(SRCDIR)/merge.r
 FILTER_BY_PROTLIST_SCRIPT = $(SRCDIR)/filter-by-protein-list.r
 REG_SITE_COR_SCRIPT = $(SRCDIR)/reg-site-cor.r
+INHIB_FX_SCRIPT = $(SRCDIR)/inhib-fx.r
 
 # Don't delete intermediate files
 .SECONDARY:
@@ -441,6 +445,11 @@ $(HUMAN_KINOME): $(KINOME_RAW) $(UNIPROT_ID_MAPPING)
 	sed -n '/HUMAN/{s/  */\t/g;p}' $< | cut -f3 | sed 's/(//' | \
 		grep -f - $(UNIPROT_ID_MAPPING) | cut -f2 | sort >$@
 
+$(KINS_TO_USE): $(KINACT_DATA) $(REG_SITE_ASSOC)
+	cat <(cut -f1 $(KINACT_DATA) | sort | uniq) \
+		<(sed '1d' $(REG_SITE_ASSOC) | cut -f1 | sort | uniq) \
+		<(sed '1d' $(REG_SITE_ASSOC) | cut -f2 | sort | uniq) | sort | uniq >$@
+
 # STRING
 # Create the STRING ID map
 $(STRING_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
@@ -449,28 +458,27 @@ $(STRING_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
 	rm $@.tmp
 
 # STRING coexpression
-$(HUMAN_STRING_COEXP): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) \
+$(HUMAN_STRING_COEXP): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINS_TO_USE) \
 		$(FORMAT_STRING_SCRIPT)
 	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
-		<(cut -f1 $(KINACT_DATA) | sort | uniq) 6 >$@.tmp
+		$(KINS_TO_USE) 6 >$@.tmp
 	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
 	rm $@.tmp
 
-$(HUMAN_STRING_COEXP2_FULL): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA)
+$(HUMAN_STRING_COEXP2_FULL): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINS_TO_USE)
 	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
-		<(cut -f1 $(KINACT_DATA) | sort | uniq) 6 --all >$@.tmp
+		$(KINS_TO_USE) 6 --all >$@.tmp
 	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
 	rm $@.tmp
 
-$(HUMAN_STRING_COEXP2): $(HUMAN_STRING_COEXP2_FULL) $(KINACT_DATA)
+$(HUMAN_STRING_COEXP2): $(HUMAN_STRING_COEXP2_FULL) $(KINS_TO_USE)
 	$(ASSOCNET) --header-in --method=spearman $< | sed '1s/assoc/string.coexp.cor/' >$@.tmp
-	cut -f1 $(KINACT_DATA) | sort | uniq >tmp/kinact-prots.txt
-	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp tmp/kinact-prots.txt $@
+	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp $(KINS_TO_USE) $@
 	rm $@.tmp
 	rm tmp/kinact-prots.txt
 
 $(HUMAN_STRING_COEXP_KINOME): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
-		$(KINACT_DATA) $(HUMAN_KINOME) $(FORMAT_STRING_SCRIPT)
+		$(HUMAN_KINOME) $(FORMAT_STRING_SCRIPT)
 	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
 		$(HUMAN_KINOME) 6 --all >$@.tmp
 	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
@@ -482,28 +490,27 @@ $(HUMAN_STRING_COEXP2_KINOME): $(HUMAN_STRING_COEXP2_FULL) $(HUMAN_KINOME)
 	# rm $@.tmp
 
 # STRING cooccurrence
-$(HUMAN_STRING_COOCC): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) \
+$(HUMAN_STRING_COOCC): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINS_TO_USE) \
 		$(FORMAT_STRING_SCRIPT)
 	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
-		<(cut -f1 $(KINACT_DATA) | sort | uniq) 5 >$@.tmp
+		$(KINS_TO_USE) 5 >$@.tmp
 	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
 	rm $@.tmp
 
-$(HUMAN_STRING_COOCC2_FULL): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA)
+$(HUMAN_STRING_COOCC2_FULL): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINS_TO_USE)
 	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
-		<(cut -f1 $(KINACT_DATA) | sort | uniq) 5 --all >$@.tmp
+		$(KINS_TO_USE) 5 --all >$@.tmp
 	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
 	rm $@.tmp
 
-$(HUMAN_STRING_COOCC2): $(HUMAN_STRING_COOCC2_FULL) $(KINACT_DATA)
+$(HUMAN_STRING_COOCC2): $(HUMAN_STRING_COOCC2_FULL) $(KINS_TO_USE)
 	# $(ASSOCNET) --header-in --method=spearman $< | sed '1s/assoc/string.coocc.cor/' >$@.tmp
-	cut -f1 $(KINACT_DATA) | sort | uniq >tmp/kinact-prots.txt
-	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp tmp/kinact-prots.txt $@
+	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp $(KINS_TO_USE) $@
 	# rm $@.tmp
 	# rm tmp/kinact-prots.txt 
 
 $(HUMAN_STRING_COOCC_KINOME): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
-		$(KINACT_DATA) $(HUMAN_KINOME) $(FORMAT_STRING_SCRIPT)
+		$(HUMAN_KINOME) $(FORMAT_STRING_SCRIPT)
 	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
 		$(HUMAN_KINOME) 5 --all >$@.tmp
 	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
@@ -515,10 +522,10 @@ $(HUMAN_STRING_COOCC2_KINOME): $(HUMAN_STRING_COOCC2_FULL) $(HUMAN_KINOME)
 	# rm $@.tmp
 
 # STRING experimental
-$(HUMAN_STRING_EXPER): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINACT_DATA) \
+$(HUMAN_STRING_EXPER): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINS_TO_USE) \
 		$(FORMAT_STRING_SCRIPT)
 	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
-		<(cut -f1 $(KINACT_DATA) | sort | uniq) 7 >$@.tmp
+		$(KINS_TO_USE) 7 >$@.tmp
 	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
 	rm $@.tmp
 
@@ -605,7 +612,8 @@ $(OUTDIR)/%-lmpred.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)/%-pssm.tsv $(LM_PRED_SCRI
 	$(RSCRIPT) $(LM_PRED_SCRIPT) $(wordlist 1,2,$^) $@
 
 # Pairwise correlations, taking into account perturbations
-$(OUTDIR)/%-paircor.tsv: $(DATADIR)/%-imp.tsv $(PAIR_COR_SCRIPT) $(KIN_INVIVO_CONDS) $(OUTDIR)
+$(OUTDIR)/%-paircor.tsv: $(DATADIR)/%-imp.tsv $(PAIR_COR_SCRIPT) \
+		$(KIN_INVIVO_CONDS) $(OUTDIR)
 	$(RSCRIPT) $(PAIR_COR_SCRIPT) $< $@
 
 # Filter out indirect associations
@@ -616,14 +624,19 @@ $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 $(REG_SITE_ASSOC): $(REG_SITES) $(REG_SITE_COR_SCRIPT)
 	$(RSCRIPT) $(REG_SITE_COR_SCRIPT)
 
+# Inhibitory effects
+$(INHIB_FX): $(KSEA_DATA) $(KINS_TO_USE) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP) \
+		$(INHIB_FX_SCRIPT) $(OPTIMIZE_KINACT_TBL_SCRIPT)
+	$(RSCRIPT) $(INHIB_FX_SCRIPT) $(KINS_TO_USE) $(KSEA_MIN_SITES) $@
+
 ###############################
 ## Kinase-substrate predictions
 
 # Calculate kinase-substrate PSSM scores
 $(OUTDIR)/%-pssm.tsv: $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
 					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
-					$(DATADIR)/%.tsv $(PSSM_LIB) $(HOTSPOTS)
-	$(PYTHON) $(PSSM_SCRIPT) <(cut -f1 $(DATADIR)/$*.tsv | sort | uniq) $@
+					$(KINS_TO_USE) $(PSSM_LIB) $(HOTSPOTS)
+	$(PYTHON) $(PSSM_SCRIPT) $(KINS_TO_USE) $@
 
 $(KIN_KIN_SCORES_KINOME): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
 					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
@@ -638,16 +651,27 @@ $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_DIST_SCRIPT) $(KIN_SUBSTR_TABLE) \
 ## Merged predictor
 
 $(MERGED_PRED): $(MERGED_PRED_SOURCES) $(MERGE_SCRIPT)
-	$(RSCRIPT) $(MERGE_SCRIPT) $@ $(filter-out $(MERGE_SCRIPT),$^)
+	$(RSCRIPT) $(MERGE_SCRIPT) $@.tmp $(filter-out $(MERGE_SCRIPT),$^)
+	awk -vOFS="\t" '{if ($$3 == "NA" && $$4 == "NA" && $$5 == "NA" && $$6 == 0){next}else{print}}' $@.tmp >$@
 
 $(MERGED_PRED_KINOME): $(MERGED_PRED_SOURCES_KINOME) $(MERGE_SCRIPT)
 	$(RSCRIPT) $(MERGE_SCRIPT) $@ $(filter-out $(MERGE_SCRIPT),$^)
 
+$(DIRECT_PRED): $(DIRECT_PRED_SOURCES) $(MERGE_SCRIPT)
+	$(RSCRIPT) $(MERGE_SCRIPT) $@.tmp $(filter-out $(MERGE_SCRIPT),$^)
+	awk -vOFS="\t" '{if ($$3 == "NA" && $$4 == "NA"){next}else{print}}' $@.tmp >$@
+	rm $@.tmp
+
 #############
 ## Validation
 
-$(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(NEG_VALSET) $(IMGDIR) $(VAL_SCRIPT)
-	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^)
+$(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(NEG_VALSET) $(IMGDIR) \
+		$(VAL_SCRIPT)
+	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^) $(USE_RAND_NEGS) FALSE
+
+$(IMGDIR)/%-val-direct.pdf: $(OUTDIR)/%.tsv $(KEGG_PHOS_ACT_VALSET) \
+		$(NEG_VALSET) $(IMGDIR) $(VAL_SCRIPT)
+	$(RSCRIPT) $(ASSOC_VAL_SCRIPT) $(wordlist 1,3,$^) $(USE_RAND_NEGS) TRUE
 
 $(IMGDIR)/validation.pdf:
 	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$@ $(IMGDIR)/*-val.pdf
