@@ -6,6 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 from crossval import cross_validation
 from sklearn import preprocessing
+#Script to test out different number of estimators (number of trees in the forest). The probabilities seem to behave strangely when the number is low.
 
     
 if __name__ == "__main__":
