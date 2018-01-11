@@ -1,4 +1,4 @@
-#code that uses support vector machines to classify kinase-kinase interactions
+#code that uses support vector machines to classify kinase-kinase interactions, use to test different kernels and c parameters, so far I have not found any difference between the different settings.
 from train_set import * 
 import scipy
 import numpy as np
