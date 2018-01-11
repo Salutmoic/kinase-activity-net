@@ -6,6 +6,7 @@ from random import *
 
 
 def pos_set(f,data):
+    #returns a set of known positives
     pos = {}
     ypos = []
     datadict = prediction_matrix(data)
