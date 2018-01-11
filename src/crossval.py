@@ -7,7 +7,9 @@ from random import *
 from sklearn import preprocessing
 
 def cross_validation(model,file,truePos,trueNeg,data,j,method):
-
+    # function to use with the machine learning methods, model is the model that is being cross-validated.
+    # file is the output file. method is the methot used to provide true negatives (prior or random)
+    # data is the kinase-pair feature matrix.
     with open("cross_res/"+ file,"w") as crossval:
 
         for i in range(j):
