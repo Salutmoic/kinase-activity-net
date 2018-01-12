@@ -8,76 +8,8 @@ from sklearn.neighbors.nearest_centroid import NearestCentroid
 from random import *
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
-
-def traindata(file1,file2,data,threshold):
-# Creates matrix (list of list) containing true pos and true negatives
-# for training and predictions, f1 is true positives and f2 true negatives
-    # x is predictive variables (ppsm, string,cor) and y outcomes
-    pos = {}
-    neg={}
-    ypos = []
-    yneg = []
-    datadict = prediction_matrix(data)
-    with open(file2,"r") as f2:
-        first_line = f2.readline()
-        for line in f2:
-            if 'NA' not in line:
-                line.replace("\n","")
-                line = line.split("\t")
-                line[1] = line[1].replace('\n','')
-                if (line[0],line[1]) in datadict:
-                    neg[line[0],line[1]] = datadict[line[0],line[1]]
-    yneg = [0] *len(neg)
-
-    with open(file1,"r") as f1:
-        first_line = f1.readline()
-        for line in f1:
-            if 'NA' not in line:
-                line = line.split("\t")
-                line[1] = line[1].replace("\n","")
-                if (line[0],line[1]) in datadict:
-                    
-                    pos[line[0],line[1]] = datadict[line[0],line[1]]
-    ypos = [1] *len(pos) 
-
-    whole = pos.copy()
-    y = ypos
-    k = list(pos.keys())
-    
-    for i in k:
-        rand = random()
-        if rand > threshold:
-            if (i[1],i[0]) not in neg and (i[1],i[0]) not in pos:
-                whole[i[1],i[0]] = datadict[i[1],i[0]]
-                y.append(0)
-
-    print(list(neg.keys()))
-    n = list(neg.keys())
-    shuffle(n)
-    
-    print(2*len(pos))
-    while len(whole) < 2*len(pos):
-        key = n.pop()
-        whole[key] = neg[key]
-        y.append(0)
-    
-    return whole,y
-    
-
-
-def prediction_matrix(data):
-    #makes matrix with pssm values string score and corr
-    v = {}
-    with open(data,"r") as d:
-        first_line = d.readline()
-        for line in d:
-            if 'NA' not in line:
-                line = line.split("\t")
-                v[line[0],line[1]] = [float(x) for x in line[2:]]
-    return v
-
+from train_set import *
   
-
 def find_centers(test,results):
 #works with nearestneighbour this function finds the centers of
 #the two clusters
@@ -128,17 +60,24 @@ if __name__ == "__main__":
     trueNeg = sys.argv[2]
     data = sys.argv[3]
     method = sys.argv[4]
-    threshold = float(sys.argv[5])
+    train_method = sys.argv[5]
     
     min_max_scaler = preprocessing.MinMaxScaler()
 
     testdict = prediction_matrix(data)
     test = list(testdict.values())
-    test_scale = min_max_scaler(test)
-    
-    traindict,outcomes = traindata(truePos,trueNeg,data,threshold)
+    min_max_scaler.fit(test)
+
+    test_scale = min_max_scaler.transform(test)
+
+    if train_method == "random":
+        traindict,outcomes = train_random(truePos,data)
+    else:
+        traindict,outcomes = train_prior(truePos,trueNeg,data)
     train = list(traindict.values())
-    train_scale = min_max_scaler(train)
+    min_max_scaler.fit(train)
+    train_scale = min_max_scaler.transform(train)
+
     
     if method == "NB":
         model = GaussianNB()
@@ -174,10 +113,15 @@ if __name__ == "__main__":
     with open(sys.argv[7],"w") as crossval: 
         # repeated cross validation, is this something along the lines of what you were thinking 
         for i in range(50):
-            traindict,outcomes = traindata(truePos,trueNeg,data,threshold)
+            if train_method == "random":
+                traindict,outcomes = train_random(truePos,data)
+            else:
+               traindict,outcomes = train_prior(truePos,trueNeg,data)
             train = list(traindict.values())
             min_max_scaler = preprocessing.MinMaxScaler()
-            train_scale = min_max_scaler(train)
+            min_max_scaler.fit(train)
+            train_scale = min_max_scaler.transform(train)
+          
             scores = cross_val_score(model, train_scale, outcomes, scoring = 'roc_auc', cv=5)
             for score in scores:
                 crossval.write(str(score) + "\t")
