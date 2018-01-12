@@ -50,8 +50,8 @@ VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
 # functionally related (e.g. in the same pathway) for a true negative.
 PROTEIN_GROUPING =  $(COMBINED_GROUPING) # $(COMBINED_GROUPING) $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
 
-MERGED_PRED_SOURCES = $(KINACT_ASSOC) $(KINACT_ASSOC2)	\
-	$(REG_SITE_ASSOC) $(HUMAN_STRING_COEXP)
+MERGED_PRED_SOURCES = $(KINACT_FULL_ASSOC2) $(REG_SITE_ASSOC2)	\
+	$(HUMAN_STRING_COEXP) $(KIN_KIN_SCORES)
 DIRECT_PRED_SOURCES = $(KIN_KIN_SCORES) $(INHIB_FX)
 
 #####################
@@ -104,10 +104,13 @@ IMP_EGF_KINACT_DATA = $(DATADIR)/kinact-egf-pert-imp.tsv
 # Association table output
 KINACT_ASSOC = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD).tsv
 KINACT_ASSOC2 = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2.tsv
+KINACT_FULL_ASSOC = $(OUTDIR)/kinact-full-cor.tsv
+KINACT_FULL_ASSOC2 = $(OUTDIR)/kinact-full-cor2.tsv
 # Activity perturbation under inhibition
 INHIB_FX = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-inhib-fx.tsv
 # Regulatory site-based activity correlations
 REG_SITE_ASSOC = $(OUTDIR)/reg-site-cor.tsv
+REG_SITE_ASSOC2 = $(OUTDIR)/reg-site-cor2.tsv
 # Final, merged predictor
 PREDICTOR = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor.tsv
 # Human amino acid frequencies
@@ -167,7 +170,7 @@ NEG_VALSET = $(DATADIR)/validation-set-negative.tsv
 # Kinase beads activities
 KINASE_BEADS = $(DATADIR)/kinase-beads-activities.tsv
 # Merged predictor data
-MERGED_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-merged.tsv
+MERGED_PRED = $(OUTDIR)/kinact-merged_full.tsv
 MERGED_PRED_KINOME = $(OUTDIR)/human-kinome-merged.tsv
 DIRECT_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-direct.tsv
 # Final predictor
@@ -177,18 +180,26 @@ FINAL_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(PRED_METHOD).tsv
 ## Images
 
 # Validation
-ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-val.pdf
-ASSOC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2-val.pdf
-PSSM_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-pssm-val.pdf
-STRING_COEXP_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp-val.pdf
-STRING_COEXP2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp2-val.pdf
-STRING_COOCC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coocc-val.pdf
-STRING_COOCC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coocc2-val.pdf
-STRING_EXPER_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-exper-val.pdf
-PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor-val.pdf
+ifeq ($(USE_RAND_NEGS),TRUE)
+val_set = -val-rand-negs
+else
+val_set = -val
+endif
+ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)$(val_set).pdf
+ASSOC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2$(val_set).pdf
+PSSM_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-pssm$(val_set).pdf
+REG_SITE_ASSOC_VAL_IMG = $(IMGDIR)/reg-site-cor$(val_set).pdf
+INHIB_FX_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-inhib-fx$(val_set).pdf
+STRING_COEXP_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp$(val_set).pdf
+STRING_COEXP2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp2$(val_set).pdf
+STRING_COOCC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coocc$(val_set).pdf
+STRING_COOCC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coocc2$(val_set).pdf
+STRING_EXPER_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-exper$(val_set).pdf
+PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor$(val_set).pdf
 VAL_IMGS = $(ASSOC_VAL_IMG) $(ASSOC2_VAL_IMG) $(PSSM_VAL_IMG)	\
 	$(STRING_COEXP_VAL_IMG) $(STRING_COOCC_VAL_IMG)				\
-	$(STRING_EXPER_VAL_IMG) # $(PREDICTOR_VAL_IMG)
+	$(STRING_EXPER_VAL_IMG) $(REG_SITE_ASSOC_VAL_IMG)			\
+	$(INHIB_FX_VAL_IMG)
 
 ##################
 ## Program Options
@@ -246,6 +257,7 @@ VAL_SCRIPT = $(SRCDIR)/validation.r
 MERGE_SCRIPT = $(SRCDIR)/merge.r
 FILTER_BY_PROTLIST_SCRIPT = $(SRCDIR)/filter-by-protein-list.r
 REG_SITE_COR_SCRIPT = $(SRCDIR)/reg-site-cor.r
+KINACT_FULL_COR_SCRIPT = $(SRCDIR)/kinact-full-cor.r
 INHIB_FX_SCRIPT = $(SRCDIR)/inhib-fx.r
 
 # Don't delete intermediate files
@@ -445,10 +457,11 @@ $(HUMAN_KINOME): $(KINOME_RAW) $(UNIPROT_ID_MAPPING)
 	sed -n '/HUMAN/{s/  */\t/g;p}' $< | cut -f3 | sed 's/(//' | \
 		grep -f - $(UNIPROT_ID_MAPPING) | cut -f2 | sort >$@
 
-$(KINS_TO_USE): $(KINACT_DATA) $(REG_SITE_ASSOC)
-	cat <(cut -f1 $(KINACT_DATA) | sort | uniq) \
-		<(sed '1d' $(REG_SITE_ASSOC) | cut -f1 | sort | uniq) \
-		<(sed '1d' $(REG_SITE_ASSOC) | cut -f2 | sort | uniq) | sort | uniq >$@
+$(KINS_TO_USE): $(KINACT_FULL_ASSOC2) $(REG_SITE_ASSOC2)
+	cat <(sed '1d' $(KINACT_FULL_ASSOC2) | cut -f1 | sort | uniq) \
+		<(sed '1d' $(KINACT_FULL_ASSOC2) | cut -f2 | sort | uniq) \
+		<(sed '1d' $(REG_SITE_ASSOC2) | cut -f1 | sort | uniq) \
+		<(sed '1d' $(REG_SITE_ASSOC2) | cut -f2 | sort | uniq) | sort | uniq >$@
 
 # STRING
 # Create the STRING ID map
@@ -621,8 +634,14 @@ $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 	$(ASSOCNET_FILTER) --header-in $< >$@
 
 # Regulatory site-based activity predictions
-$(REG_SITE_ASSOC): $(REG_SITES) $(REG_SITE_COR_SCRIPT)
+$(REG_SITE_ASSOC) \
+$(REG_SITE_ASSOC2): $(REG_SITES) $(REG_SITE_COR_SCRIPT)
 	$(RSCRIPT) $(REG_SITE_COR_SCRIPT)
+
+# Full kinase-activity pairwise correlations
+$(KINACT_FULL_ASSOC) \
+$(KINACT_FULL_ASSOC2): $(KINACT_DATA) $(KINACT_FULL_COR_SCRIPT)
+	$(RSCRIPT) $(KINACT_FULL_COR_SCRIPT)
 
 # Inhibitory effects
 $(INHIB_FX): $(KSEA_DATA) $(KINS_TO_USE) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP) \
@@ -652,7 +671,7 @@ $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_DIST_SCRIPT) $(KIN_SUBSTR_TABLE) \
 
 $(MERGED_PRED): $(MERGED_PRED_SOURCES) $(MERGE_SCRIPT)
 	$(RSCRIPT) $(MERGE_SCRIPT) $@.tmp $(filter-out $(MERGE_SCRIPT),$^)
-	awk -vOFS="\t" '{if ($$3 == "NA" && $$4 == "NA" && $$5 == "NA" && $$6 == 0){next}else{print}}' $@.tmp >$@
+	awk -vOFS="\t" '{if ($$3 == "NA"){next}else{print}}' $@.tmp >$@
 
 $(MERGED_PRED_KINOME): $(MERGED_PRED_SOURCES_KINOME) $(MERGE_SCRIPT)
 	$(RSCRIPT) $(MERGE_SCRIPT) $@ $(filter-out $(MERGE_SCRIPT),$^)
@@ -665,13 +684,13 @@ $(DIRECT_PRED): $(DIRECT_PRED_SOURCES) $(MERGE_SCRIPT)
 #############
 ## Validation
 
-$(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(NEG_VALSET) $(IMGDIR) \
+$(IMGDIR)/%$(val_set).pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(NEG_VALSET) $(IMGDIR) \
 		$(VAL_SCRIPT)
 	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^) $(USE_RAND_NEGS) FALSE
 
-$(IMGDIR)/%-val-direct.pdf: $(OUTDIR)/%.tsv $(KEGG_PHOS_ACT_VALSET) \
+$(IMGDIR)/%$(val_set)-direct.pdf: $(OUTDIR)/%.tsv $(KEGG_PHOS_ACT_VALSET) \
 		$(NEG_VALSET) $(IMGDIR) $(VAL_SCRIPT)
-	$(RSCRIPT) $(ASSOC_VAL_SCRIPT) $(wordlist 1,3,$^) $(USE_RAND_NEGS) TRUE
+	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^) $(USE_RAND_NEGS) TRUE
 
 $(IMGDIR)/validation.pdf:
 	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$@ $(IMGDIR)/*-val.pdf

@@ -38,12 +38,14 @@ kin.pairs <- expand.grid(all.kins, all.kins, stringsAsFactors=FALSE)
 kin1s <- c()
 kin2s <- c()
 p.vals <- c()
+cors <- c()
 for (i in 1:nrow(kin.pairs)){
     kin1 <- kin.pairs[i, 1]
     kin2 <- kin.pairs[i, 2]
     kin1.reg.sites <- subset(reg.sites.ensp, gene_name==kin1)
     kin2.reg.sites <- subset(reg.sites.ensp, gene_name==kin2)
-    best.p.value <- -Inf
+    pair.p.vals <- c()
+    ## best.p.value <- -Inf
     for (kin1.ensp in rownames(kin1.reg.sites)){
         for (kin2.ensp in rownames(kin2.reg.sites)){
             kin1.ensp.dir <- reg.sites.ensp[kin1.ensp, "direction"]
@@ -55,22 +57,72 @@ for (i in 1:nrow(kin.pairs)){
                 next
             kin1.ensp.phospho <- phospho.vals[kin1.ensp,] * kin1.ensp.dir
             kin2.ensp.phospho <- phospho.vals[kin2.ensp,] * kin2.ensp.dir
-            ct <- cor.test(kin1.ensp.phospho, kin2.ensp.phospho, method="pearson",
+            ct <- cor.test(kin1.ensp.phospho, kin2.ensp.phospho, method="spearman",
                            use="pairwise.complete.obs")
             p.value <- -log10(ct$p.value)
-            if (!is.infinite(p.value) && p.value > best.p.value)
-                best.p.value <- p.value
+            if (!is.infinite(p.value)){ ## && p.value > best.p.value){
+                ## best.p.value <- p.value
+                ## best.cor.est <- ct$estimate
+                pair.p.vals <- c(pair.p.vals, p.value)
+            }
         }
     }
-    if (is.infinite(best.p.value))
-        best.p.value <- NA
+    ## if (is.infinite(best.p.value)){
+    ##     best.p.value <- NA
+    ##     best.cor.est <- NA
+    ## }
+    if (length(pair.p.vals) == 0){
+        p.val <- NA
+    }else{
+        p.val <- max(pair.p.vals, na.rm=TRUE)
+    }
+    if (is.null(p.val))
+        p.val <- NA
     kin1s <- c(kin1s, kin1)
     kin2s <- c(kin2s, kin2)
-    p.vals <- c(p.vals, best.p.value)
+    ## p.vals <- c(p.vals, best.p.value)
+    p.vals <- c(p.vals, p.val)
+    ## cors <- c(cors, best.cor.est)
 }
 
 results <- data.frame(node1=kin1s, node2=kin2s, reg.site.cor.p=p.vals)
 results$reg.site.cor.p <- results$reg.site.cor.p/max(results$reg.site.cor.p, na.rm=TRUE)
 
 write.table(results[order(results$node1),], "out/reg-site-cor.tsv", quote=FALSE,
+            row.names=FALSE, col.names=TRUE, sep="\t")
+
+## kin.cor <- acast(results, node1 ~ node2)
+kin.cor <- matrix(p.vals, nrow=length(all.kins))
+rownames(kin.cor) <- all.kins
+colnames(kin.cor) <- all.kins
+
+kin1s <- c()
+kin2s <- c()
+p.vals <- c()
+for (i in 1:nrow(kin.pairs)){
+    kin1 <- kin.pairs[i, 1]
+    kin2 <- kin.pairs[i, 2]
+    kin1.cor.pairs <- which(!is.na(kin.cor[kin1,]))
+    kin2.cor.pairs <- which(!is.na(kin.cor[kin2,]))
+    shared.pairs <- intersect(kin1.cor.pairs, kin2.cor.pairs)
+    if (length(shared.pairs) < 3){
+        p.value <- NA
+    }else{
+        kin1.cor <- kin.cor[kin1,]
+        kin2.cor <- kin.cor[kin2,]
+        ct <- cor.test(kin1.cor, kin2.cor, method="spearman",
+                       use="pairwise.complete.obs")
+        p.value <- -log10(ct$p.value)
+        if (is.infinite(p.value))
+            p.value <- NA
+    }
+    kin1s <- c(kin1s, kin1)
+    kin2s <- c(kin2s, kin2)
+    p.vals <- c(p.vals, p.value)
+}
+
+results <- data.frame(node1=kin1s, node2=kin2s, assoc.cor.p=p.vals)
+results$assoc.cor.p <- results$assoc.cor.p/max(results$assoc.cor.p, na.rm=TRUE)
+
+write.table(results[order(results$node1),], "out/reg-site-cor2.tsv", quote=FALSE,
             row.names=FALSE, col.names=TRUE, sep="\t")
