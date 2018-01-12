@@ -158,11 +158,14 @@ for (i in 1:n){
 pred <- prediction(pred_data, label_data)
 
 data_basename <- strsplit(basename(pred_score_file), split = "\\.")[[1]][1]
+data_basename <- paste(data_basename, "val", sep="-")
 if (use_rand_negs){
-    out_img <- paste0("img/", data_basename, "-rand-negs-val.pdf")
-}else{
-    out_img <- paste0("img/", data_basename, "-val.pdf")
+    data_basename <- paste(data_basename, "rand-negs", sep="-")
 }
+if (directed){
+    data_basename <- paste(data_basename, "direct", sep="-")
+}
+out_img <- paste0("img/", data_basename, ".pdf")
 
 pdf(out_img)
 par(cex = 1.25, cex.main = 0.8)
@@ -185,8 +188,8 @@ plot(perf_roc, avg = "vertical", spread.estimate = "boxplot",
                   paste0("Sample size=", sample_size),
                   sep = "\n"))
 ## Precision-recall curve
-## perf_pr <- performance(pred, measure="prec", x.measure="rec")
-## plot(perf_pr, avg="vertical", spread_estimate="boxplot",
-##      main=paste(assoc_method, table_method, sep="\n"))
+perf_pr <- performance(pred, measure="prec", x.measure="rec")
+plot(perf_pr, avg="vertical", spread.estimate="boxplot",
+     main=paste(assoc_method, table_method, sep="\n"))
 
 dev.off()
