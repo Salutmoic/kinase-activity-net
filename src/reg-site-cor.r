@@ -121,8 +121,8 @@ for (i in 1:nrow(kin.pairs)){
     p.vals <- c(p.vals, p.value)
 }
 
-results <- data.frame(node1=kin1s, node2=kin2s, assoc.cor.p=p.vals)
-results$assoc.cor.p <- results$assoc.cor.p/max(results$assoc.cor.p, na.rm=TRUE)
+results <- data.frame(node1=kin1s, node2=kin2s, reg.site.cor2.p=p.vals)
+results$reg.site.cor2.p <- results$reg.site.cor2.p/max(results$reg.site.cor2.p, na.rm=TRUE)
 
 write.table(results[order(results$node1),], "out/reg-site-cor2.tsv", quote=FALSE,
             row.names=FALSE, col.names=TRUE, sep="\t")
