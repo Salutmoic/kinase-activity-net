@@ -86,6 +86,14 @@ KINOME_RAW = $(EXT_DATADIR)/pkinfam.txt
 # Kinase domain phosphorylation hot-spots from Marta
 HOTSPOTS_RAW = $(EXT_DATADIR)/kinase-phospho-hotspots.tsv
 TYR_HOTSPOTS_RAW = $(EXT_DATADIR)/tyr-kinase-phospho-hotspots.tsv
+# Cancer datasets
+RNAI_DRIVE_ATARIS_DATA_RAW = $(EXT_DATADIR)/DRIVE_ATARiS_data.rds
+RNAI_DRIVE_RSA_DATA_RAW = $(EXT_DATADIR)/DRIVE_RSA_data.rds
+RNAI_ACHILLES_DATA_RAW = $(EXT_DATADIR)/Achilles_v2.20.2_GeneSolutions.gct
+CRISPR_DATA_RAW = $(EXT_DATADIR)/ceres-gene-effects.csv
+CELLLINE_EXPR_DATA_RAW = $(EXT_DATADIR)/data_expression_median.txt
+CELLLINE_RNASEQ_DATA_RAW = $(EXT_DATADIR)/CCLE_RNA-seq_tpm_matrix.csv
+TUMOR_EXPR_DATA_RAW = $(EXT_DATADIR)/GSM1536837_06_01_15_TCGA_24.tumor_Rsubread_TPM.txt
 
 ######################
 ## Generated data sets
@@ -173,6 +181,14 @@ KINASE_BEADS = $(DATADIR)/kinase-beads-activities.tsv
 MERGED_PRED = $(OUTDIR)/kinact-merged_full.tsv
 MERGED_PRED_KINOME = $(OUTDIR)/human-kinome-merged.tsv
 DIRECT_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-direct.tsv
+# Cancer datasets
+RNAI_DRIVE_ATARIS_DATA = $(DATADIR)/rnai-drive-ataris.tsv
+RNAI_DRIVE_RSA_DATA = $(DATADIR)/rnai-drive-rsa.tsv
+RNAI_ACHILLES_DATA = $(DATADIR)/rnai-achilles.tsv
+CRISPR_DATA = $(DATADIR)/ceres-gene-effects.tsv
+CELLLINE_EXPR_DATA = $(DATADIR)/cell-line-expr.tsv
+CELLLINE_RNASEQ_DATA = $(DATADIR)/cell-line-rnaseq.tsv
+TUMOR_EXPR_DATA = $(DATADIR)/tumor-expr.tsv
 # Final predictor
 FINAL_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(PRED_METHOD).tsv
 
@@ -259,6 +275,7 @@ FILTER_BY_PROTLIST_SCRIPT = $(SRCDIR)/filter-by-protein-list.r
 REG_SITE_COR_SCRIPT = $(SRCDIR)/reg-site-cor.r
 KINACT_FULL_COR_SCRIPT = $(SRCDIR)/kinact-full-cor.r
 INHIB_FX_SCRIPT = $(SRCDIR)/inhib-fx.r
+FORMAT_DRIVE_DATA_SCRIPT = $(SRCDIR)/format-drive-data.r
 
 # Don't delete intermediate files
 .SECONDARY:
@@ -580,6 +597,53 @@ $(HOTSPOTS): $(HOTSPOTS_RAW) $(TYR_HOTSPOTS_RAW) $(ENSEMBL_ID_MAPPING)
 	cat $(wordlist 1,2,$^) | sed 's/, /\t/g' | cut -f2,4,6,7 | \
 		awk -F"\t" -vOFS="\t" '{if ($$4==0){rel=1}else{rel=-log($$4)/log(10)/100}; print $$1, $$2, $$3, rel}' | \
 		sort -k1 | join -t'	' $(ENSEMBL_ID_MAPPING) - | cut -f2-5 >$@
+
+# RNAi data
+$(RNAI_DRIVE_ATARIS_DATA): $(RNAI_DRIVE_ATARIS_DATA_RAW) $(HUMAN_KINOME) \
+		$(FORMAT_DRIVE_DATA_SCRIPT)
+	$(RSCRIPT) $(FORMAT_DRIVE_DATA_SCRIPT) $< $(HUMAN_KINOME) $@
+
+$(RNAI_DRIVE_RSA_DATA): $(RNAI_DRIVE_RSA_DATA_RAW) $(HUMAN_KINOME) \
+		$(FORMAT_DRIVE_DATA_SCRIPT)
+	$(RSCRIPT) $(FORMAT_DRIVE_DATA_SCRIPT) $< $(HUMAN_KINOME) $@
+
+$(RNAI_ACHILLES_DATA): $(RNAI_ACHILLES_DATA_RAW) $(HUMAN_KINOME)
+	sed '1,2d' $< | cut -f1,3-503 >$@.tmp
+	grep -f $(HUMAN_KINOME) $@.tmp >$@.tmp2
+	rm $@.tmp
+	$(RSCRIPT) src/melt.r $@.tmp2 $@.tmp3
+	rm $@.tmp2
+	sort -k1,1 -k2,2 $@.tmp3 >$@
+	rm $@.tmp3
+
+$(CRISPR_DATA): $(CRISPR_DATA_RAW) $(HUMAN_KINOME)
+	sed 's/,/\t/g' $< >$@.tmp
+	grep -f $(HUMAN_KINOME) $@.tmp >$@.tmp2
+	rm $@.tmp
+	$(RSCRIPT) src/melt.r $@.tmp2 $@.tmp3
+	rm $@.tmp2
+	sort -k1,1 -k2,2 $@.tmp3 >$@
+	rm $@.tmp3
+
+$(CELLLINE_EXPR_DATA): $(CELLLINE_EXPR_DATA_RAW) $(HUMAN_KINOME)
+	cut -f1,3-503 $< >$@.tmp
+	grep -a -f $(HUMAN_KINOME) $@.tmp >$@.tmp2
+	# rm $@.tmp
+	$(RSCRIPT) src/melt.r $@.tmp2 $@.tmp3
+	# rm $@.tmp2
+	sort -k1,1 -k2,2 $@.tmp3 >$@
+	# rm $@.tmp3
+
+$(CELLLINE_RNASEQ_DATA): $(CELLLINE_RNASEQ_DATA_RAW) $(HUMAN_KINOME)
+	grep -f $(HUMAN_KINOME) $(ENSEMBL_ID_MAPPING) | cut -f1 | grep -f - $< >$@.tmp
+	$(RSCRIPT) src/melt.r $@.tmp $@.tmp2
+	rm $@.tmp
+	join -t'	' $@.tmp2 $(ENSEMBL_ID_MAPPING) | cut -f2,3 >$@.tmp3
+	rm $@.tmp2
+	grep -f $(HUMAN_KINOME) $@.tmp3 >$@.tmp4
+	rm $@.tmp3
+	sort -k1,1 -k2,2 $@.tmp4 >$@
+	rm $@.tmp4
 
 ###########################
 ## Association score tables
