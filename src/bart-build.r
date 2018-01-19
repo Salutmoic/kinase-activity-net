@@ -5,20 +5,27 @@ set_bart_machine_num_cores(24)
 suppressPackageStartupMessages(library(ROCR))
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 4){
-    stop("USAGE: <script> MERGED_PREDS VAL_SET NEG_VAL_SET RAND_NEGS")
+if (length(argv) != 5){
+    stop("USAGE: <script> MERGED_PREDS VAL_SET NEG_VAL_SET RAND_NEGS DIRECTED")
 }
 
 merged_pred_file <- argv[1]
 val_set_file <- argv[2]
 neg_val_set_file <- argv[3]
 use_rand_negs <- as.logical(argv[4])
+directed <- as.logical(argv[5])
 
 merged_pred <- read.delim(merged_pred_file, as.is=TRUE)
 names(merged_pred)[1:2] <- c("prot1", "prot2")
 merged_pred <- subset(merged_pred, prot1 != prot2)
-merged_pred <- merged_pred[complete.cases(merged_pred),]
+## merged_pred <- merged_pred[complete.cases(merged_pred),]
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
+
+for (i in 3:ncol(merged_pred)){
+    min_pred <- min(merged_pred[,i], na.rm=TRUE)
+    max_pred <- max(merged_pred[,i], na.rm=TRUE)
+    merged_pred[,i] <- (merged_pred[,i] - min_pred)/(max_pred - min_pred)
+}
 
 true_intxns_tbl <- read.table(val_set_file, as.is = TRUE)
 possible_true_intxns <- paste(true_intxns_tbl[, 1], true_intxns_tbl[, 2],
@@ -34,6 +41,19 @@ if (use_rand_negs){
     possible_false_intxns <- paste(false_intxns_tbl[, 1], false_intxns_tbl[, 2],
                                    sep = "-")
     possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
+}
+
+rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
+rev_true_intxns <- setdiff(possible_true_intxns, rev_true_intxns)
+if (directed){
+    ## The predictor is directed, so include reverse-true interactions
+    ## as possible false ones since we take bi-directional
+    ## relationships to be statistically unlikely
+    possible_false_intxns <- union(possible_false_intxns, rev_true_intxns)
+}else{
+    ## Since we're testing for symmetrical associations, remove
+    ## reverse-true interactions from the possible false interactions
+    possible_false_intxns <- setdiff(possible_false_intxns, rev_true_intxns)
 }
 
 num_negs <- min(length(possible_false_intxns),
@@ -56,20 +76,19 @@ bart <- bartMachineCV(preds,
 
 file_base <- strsplit(merged_pred_file, split="\\.")[[1]][1]
 if (use_rand_negs){
-    save(bart, file=paste0(file_base, "-rand-negs-bart.Rdata"))
-}else{
-    save(bart, file=paste0(file_base, "-bart.Rdata"))
+    file_base <- paste0(file_base, "rand-negs", sep="-")
 }
+if (directed){
+    file_base <- paste0(file_base, "directed", sep="-")
+}
+save(bart, file=paste0(file_base, "-bart.Rdata"))
 
-pdf("img/bart-error-assumptions.pdf")
-check_bart_error_assumptions(bart)
-dev.off()
+file_base <- basename(file_base)
+img_file <- paste0("img/", file_base, "-info.pdf")
 
-pdf("img/bart-var-importance.pdf")
+pdf(img_file)
+## check_bart_error_assumptions(bart)
 investigate_var_importance(bart, type="splits")
 investigate_var_importance(bart, type="trees")
-dev.off()
-
-pdf("img/bart-cov-importance.pdf")
 cov_importance_test(bart, plot=TRUE)
 dev.off()

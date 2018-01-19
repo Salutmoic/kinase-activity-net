@@ -22,6 +22,12 @@ merged_pred <- subset(merged_pred, prot1 != prot2)
 merged_pred <- merged_pred[complete.cases(merged_pred),]
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
 
+for (i in 3:ncol(merged_pred)){
+    min_pred <- min(merged_pred[,i], na.rm=TRUE)
+    max_pred <- max(merged_pred[,i], na.rm=TRUE)
+    merged_pred[,i] <- (merged_pred[,i] - min_pred)/(max_pred - min_pred)
+}
+
 true_intxns_tbl <- read.table(val_set_file, as.is = TRUE)
 possible_true_intxns <- paste(true_intxns_tbl[, 1], true_intxns_tbl[, 2],
                               sep = "-")
@@ -95,10 +101,10 @@ for (n in 1:num_reps){
             val_labels <- as.integer(val_labels)
             train_labels <- as.integer(train_labels)
         }
-        print(head(cbind(train_set, train_labels)))
         bart <- bartMachineCV(train_set,
                               train_labels,
                               use_missing_data=TRUE,
+                              use_missing_data_dummies_as_covars=FALSE,
                               replace_missing_data_with_x_j_bar=FALSE,
                               impute_missingness_with_x_j_bar_for_lm=FALSE,
                               verbose=FALSE,
@@ -123,6 +129,7 @@ for (n in 1:num_reps){
 
 rocr_pred <- prediction(all_probs, all_labels)
 rocr_roc <- performance(rocr_pred, measure="tpr", x.measure="fpr")
+rocr_prec <- performance(rocr_pred, measure="prec", x.measure="rec")
 rocr_auc <- performance(rocr_pred, "auc")
 mean_auc <- mean(unlist(rocr_auc@y.values), na.rm=TRUE)
 se_auc <- sd(unlist(rocr_auc@y.values), na.rm=TRUE)/sqrt(num_reps*k)
@@ -144,7 +151,10 @@ pdf(img_file)
 plot(rocr_roc, spread.estimate="boxplot", avg="vertical",
      main=paste0("BART\n(mean AUC=", format(mean_auc, digits=2),
                  ", S.E.M=", format(se_auc, digits=2), ")"))
-plot(rocr_roc, 
-     main=paste0("BART\n(mean AUC=", format(mean_auc, digits=2),
-                 ", S.E.M=", format(se_auc, digits=2), ")"))
+plot(rocr_prec, spread.estimate="boxplot", avg="vertical",
+     main=paste0("BART"))
+
+## plot(rocr_roc, 
+##      main=paste0("BART\n(mean AUC=", format(mean_auc, digits=2),
+##                  ", S.E.M=", format(se_auc, digits=2), ")"))
 dev.off()
