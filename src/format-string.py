@@ -63,7 +63,7 @@ def reformat_string(string_h, string_id_map, kinases, kinase_pairs, score_col):
             if prot_pair in intxns:
                 continue
             prot1, prot2 = prot_pair
-            print("\t".join([prot1, prot2, str(0.0)]))
+            print("\t".join([prot1, prot2, "NA"]))
 
 
 if __name__ == "__main__":
