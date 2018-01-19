@@ -12,12 +12,13 @@ KEGGDIR = $(EXT_DATADIR)/kegg-relationships
 OUTDIR = out
 IMGDIR = img
 TMPDIR = tmp
+CACHEDIR = cache
 ifeq ($(KSEA_USE_AUTOPHOS),FALSE)
 	KSEA_TMPDIR = $(TMPDIR)/ksea
 else
 	KSEA_TMPDIR = $(TMPDIR)/ksea-autophos
 endif
-BINDIR = /nfs/research2/beltrao/software-rh7/bin
+BINDIR = /nfs/research1/beltrao/software-rh7/bin
 
 #############
 ## Parameters
@@ -44,14 +45,14 @@ PRED_METHOD = log_reg
 USE_RAND_NEGS = FALSE
 
 KEGG_VALSET ?= $(KEGG_ACT_VALSET)
-VAL_SET = $(KEGG_VALSET) ## $(PSITE_PLUS_VALSET)
+VAL_SET = $(OMNIPATH_VALSET) ## $(KEGG_VALSET) $(PSITE_PLUS_VALSET)
 # A list of protein annotations used to group proteins so that during
 # validation we don't randomly select two kinases that are known to be
 # functionally related (e.g. in the same pathway) for a true negative.
 PROTEIN_GROUPING =  $(COMBINED_GROUPING) # $(COMBINED_GROUPING) $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
 
 MERGED_PRED_SOURCES = $(KINACT_FULL_ASSOC2) $(REG_SITE_ASSOC2)	\
-	$(HUMAN_STRING_COEXP) $(KIN_KIN_SCORES)
+	$(KIN_KIN_SCORES)
 DIRECT_PRED_SOURCES = $(KIN_KIN_SCORES) $(INHIB_FX)
 
 #####################
@@ -169,12 +170,15 @@ HUMAN_KINOME = $(DATADIR)/human-kinome.txt
 KINS_TO_USE = $(DATADIR)/kinases-to-use.txt
 # Kinase-domain phosphorylation hot spots
 HOTSPOTS = $(DATADIR)/kinase-phospho-hotspots.tsv
+# Omnipath
+OMNIPATH_CACHE = $(CACHEDIR)/default_network.pickle
 # Validation sets
 PSITE_PLUS_VALSET = $(DATADIR)/validation-set-psiteplus.tsv
 KEGG_ACT_VALSET = $(DATADIR)/validation-set-kegg-act.tsv
 KEGG_PHOS_ACT_VALSET = $(DATADIR)/validation-set-kegg-phos-act.tsv
 KEGG_PHOS_VALSET = $(DATADIR)/validation-set-kegg-phos.tsv
 NEG_VALSET = $(DATADIR)/validation-set-negative.tsv
+OMNIPATH_VALSET = $(DATADIR)/validation-set-omnipath.tsv
 # Kinase beads activities
 KINASE_BEADS = $(DATADIR)/kinase-beads-activities.tsv
 # Merged predictor data
@@ -203,8 +207,11 @@ val_set = -val
 endif
 ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)$(val_set).pdf
 ASSOC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2$(val_set).pdf
+FULL_ASSOC_VAL_IMG = $(IMGDIR)/kinact-full-$(ASSOC_METHOD)$(val_set).pdf
+FULL_ASSOC2_VAL_IMG = $(IMGDIR)/kinact-full-cor2$(val_set).pdf
 PSSM_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-pssm$(val_set).pdf
 REG_SITE_ASSOC_VAL_IMG = $(IMGDIR)/reg-site-cor$(val_set).pdf
+REG_SITE_ASSOC2_VAL_IMG = $(IMGDIR)/reg-site-cor2$(val_set).pdf
 INHIB_FX_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-inhib-fx$(val_set).pdf
 STRING_COEXP_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp$(val_set).pdf
 STRING_COEXP2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp2$(val_set).pdf
@@ -213,9 +220,10 @@ STRING_COOCC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coocc2$(val_se
 STRING_EXPER_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-exper$(val_set).pdf
 PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor$(val_set).pdf
 VAL_IMGS = $(ASSOC_VAL_IMG) $(ASSOC2_VAL_IMG) $(PSSM_VAL_IMG)	\
+	$(FULL_ASSOC_VAL_IMG) $(FULL_ASSOC2_VAL_IMG)				\
 	$(STRING_COEXP_VAL_IMG) $(STRING_COOCC_VAL_IMG)				\
 	$(STRING_EXPER_VAL_IMG) $(REG_SITE_ASSOC_VAL_IMG)			\
-	$(INHIB_FX_VAL_IMG)
+	$(REG_SITE_ASSOC2_VAL_IMG) $(INHIB_FX_VAL_IMG)
 
 ##################
 ## Program Options
@@ -245,6 +253,7 @@ ASSOCNET_FILTER ?= $(BINDIR)/assocnet-filter $(ASSOCNET_FILTER_PARAMS)
 ##########
 ## Scripts
 
+MELT_SCRIPT = $(SRCDIR)/melt.r
 KSEA_POST_SCRIPT = $(SRCDIR)/ksea-post.r
 OPTIMIZE_KINACT_TBL_SCRIPT = $(SRCDIR)/optimize-activity-table.r
 GEN_KINACT_TBL_SCRIPT = $(SRCDIR)/gen-activity-table.r
@@ -276,6 +285,8 @@ REG_SITE_COR_SCRIPT = $(SRCDIR)/reg-site-cor.r
 KINACT_FULL_COR_SCRIPT = $(SRCDIR)/kinact-full-cor.r
 INHIB_FX_SCRIPT = $(SRCDIR)/inhib-fx.r
 FORMAT_DRIVE_DATA_SCRIPT = $(SRCDIR)/format-drive-data.r
+INIT_OMNIPATH_SCRIPT = $(SRCDIR)/init-omnipath.py
+OMNIPATH_VAL_SCRIPT = $(SRCDIR)/gen-omnipath-valset.py
 
 # Don't delete intermediate files
 .SECONDARY:
@@ -577,16 +588,23 @@ $(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv \
 $(NEG_VALSET): $(NEG_VAL_SCRIPT) $(VAL_SET) $(PROTEIN_GROUPING)
 	$(RSCRIPT) $^ $@
 
+# Omnipath cache
+$(OMNIPATH_CACHE): $(INIT_OMNIPATH_SCRIPT)
+	$(PYTHON2) $(INIT_OMNIPATH_SCRIPT)
+
+$(OMNIPATH_VALSET): $(OMNIPATH_CACHE) $(KINS_TO_USE) $(OMNIPATH_VAL_SCRIPT)
+	$(PYTHON2) $(OMNIPATH_VAL_SCRIPT) $(KINS_TO_USE)
+
 # Calculate human proteome amino-acid frequencies
 $(AA_FREQS): $(AA_FREQS_SCRIPT)
 	$(PYTHON) $(AA_FREQS_SCRIPT) >$@
 
 # Kinase beads activities https://doi.org/10.1101/158295
-$(KINASE_BEADS): $(KINASE_BEADS_RAW)
+$(KINASE_BEADS): $(KINASE_BEADS_RAW) $(MELT_SCRIPT)
 	awk -F"\t" 'BEGIN{OFS="\t"}{for (i=1; i<=NF; i++){if ($$i==""){$$i="NA"}}; print}' $< \
 		| cut -f2,`seq 4 3 61 | tr '\n' ',' | sed 's/,$$//'` \
 		| sed '1{s/ log2 Fold-Change//g;s/ /./g;s/\(.*\)/\L\1/g}' >$@.tmp
-	$(RSCRIPT) src/melt.r $@.tmp $@.tmp2
+	$(RSCRIPT) $(MELT_SCRIPT) $@.tmp $@.tmp2
 	rm $@.tmp
 	sort -k1 $@.tmp2 >$@
 	rm $@.tmp2
@@ -607,36 +625,44 @@ $(RNAI_DRIVE_RSA_DATA): $(RNAI_DRIVE_RSA_DATA_RAW) $(HUMAN_KINOME) \
 		$(FORMAT_DRIVE_DATA_SCRIPT)
 	$(RSCRIPT) $(FORMAT_DRIVE_DATA_SCRIPT) $< $(HUMAN_KINOME) $@
 
-$(RNAI_ACHILLES_DATA): $(RNAI_ACHILLES_DATA_RAW) $(HUMAN_KINOME)
+$(RNAI_ACHILLES_DATA): $(RNAI_ACHILLES_DATA_RAW) $(HUMAN_KINOME) $(MELT_SCRIPT)
 	sed '1,2d' $< | cut -f1,3-503 >$@.tmp
-	grep -f $(HUMAN_KINOME) $@.tmp >$@.tmp2
+	grep -a -f $(HUMAN_KINOME) $@.tmp >$@.tmp2
 	rm $@.tmp
-	$(RSCRIPT) src/melt.r $@.tmp2 $@.tmp3
+	$(RSCRIPT) $(MELT_SCRIPT) $@.tmp2 $@.tmp3 TRUE
 	rm $@.tmp2
 	sort -k1,1 -k2,2 $@.tmp3 >$@
 	rm $@.tmp3
 
-$(CRISPR_DATA): $(CRISPR_DATA_RAW) $(HUMAN_KINOME)
+$(CRISPR_DATA): $(CRISPR_DATA_RAW) $(HUMAN_KINOME) $(MELT_SCRIPT)
 	sed 's/,/\t/g' $< >$@.tmp
-	grep -f $(HUMAN_KINOME) $@.tmp >$@.tmp2
+	grep -a -f $(HUMAN_KINOME) <(sed '1d' $@.tmp) >$@.tmp2
+	cat <(sed -n '1p' $@.tmp) $@.tmp2 >$@.tmp3
 	rm $@.tmp
-	$(RSCRIPT) src/melt.r $@.tmp2 $@.tmp3
+	$(RSCRIPT) $(MELT_SCRIPT) $@.tmp3 $@.tmp4 TRUE
 	rm $@.tmp2
-	sort -k1,1 -k2,2 $@.tmp3 >$@
+	sort -k1,1 -k2,2 $@.tmp4 >$@
 	rm $@.tmp3
 
-$(CELLLINE_EXPR_DATA): $(CELLLINE_EXPR_DATA_RAW) $(HUMAN_KINOME)
+$(CELLLINE_EXPR_DATA): $(CELLLINE_EXPR_DATA_RAW) $(HUMAN_KINOME) $(MELT_SCRIPT)
 	cut -f1,3-503 $< >$@.tmp
 	grep -a -f $(HUMAN_KINOME) $@.tmp >$@.tmp2
-	# rm $@.tmp
-	$(RSCRIPT) src/melt.r $@.tmp2 $@.tmp3
-	# rm $@.tmp2
+	rm $@.tmp
+	$(RSCRIPT) $(MELT_SCRIPT) $@.tmp2 $@.tmp3 TRUE
+	rm $@.tmp2
 	sort -k1,1 -k2,2 $@.tmp3 >$@
-	# rm $@.tmp3
+	rm $@.tmp3
 
-$(CELLLINE_RNASEQ_DATA): $(CELLLINE_RNASEQ_DATA_RAW) $(HUMAN_KINOME)
+$(TUMOR_EXPR_DATA): $(TUMOR_EXPR_DATA_RAW) $(HUMAN_KINOME) $(MELT_SCRIPT)
+	grep -a -f $(HUMAN_KINOME) $< > $@.tmp
+	$(RSCRIPT) $(MELT_SCRIPT) $@.tmp $@.tmp2 TRUE
+	rm $@.tmp
+	sort -k1,1 -k2,2 $@.tmp2 >$@
+	rm $@.tmp2
+
+$(CELLLINE_RNASEQ_DATA): $(CELLLINE_RNASEQ_DATA_RAW) $(HUMAN_KINOME) $(MELT_SCRIPT)
 	grep -f $(HUMAN_KINOME) $(ENSEMBL_ID_MAPPING) | cut -f1 | grep -f - $< >$@.tmp
-	$(RSCRIPT) src/melt.r $@.tmp $@.tmp2
+	$(RSCRIPT) $(MELT_SCRIPT) $@.tmp $@.tmp2 TRUE
 	rm $@.tmp
 	join -t'	' $@.tmp2 $(ENSEMBL_ID_MAPPING) | cut -f2,3 >$@.tmp3
 	rm $@.tmp2
