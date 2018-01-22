@@ -87,6 +87,9 @@ KINOME_RAW = $(EXT_DATADIR)/pkinfam.txt
 # Kinase domain phosphorylation hot-spots from Marta
 HOTSPOTS_RAW = $(EXT_DATADIR)/kinase-phospho-hotspots.tsv
 TYR_HOTSPOTS_RAW = $(EXT_DATADIR)/tyr-kinase-phospho-hotspots.tsv
+# PhosFun predictions
+PHOSFUN_ST_RAW = $(EXT_DATADIR)/phosfun-predictions-ST.tsv
+PHOSFUN_Y_RAW = $(EXT_DATADIR)/phosfun-predictions-Y.tsv
 # Cancer datasets
 RNAI_DRIVE_ATARIS_DATA_RAW = $(EXT_DATADIR)/DRIVE_ATARiS_data.rds
 RNAI_DRIVE_RSA_DATA_RAW = $(EXT_DATADIR)/DRIVE_RSA_data.rds
@@ -170,8 +173,11 @@ HUMAN_KINOME = $(DATADIR)/human-kinome.txt
 KINS_TO_USE = $(DATADIR)/kinases-to-use.txt
 # Kinase-domain phosphorylation hot spots
 HOTSPOTS = $(DATADIR)/kinase-phospho-hotspots.tsv
+# PhosFun predictions
+PHOSFUN = $(DATADIR)/phosfun.tsv
 # Omnipath
 OMNIPATH_CACHE = $(CACHEDIR)/default_network.pickle
+OMNIPATH_PATH_REFERENCE = $(DATADIR)/omnipath-path-ref.tsv
 # Validation sets
 PSITE_PLUS_VALSET = $(DATADIR)/validation-set-psiteplus.tsv
 KEGG_ACT_VALSET = $(DATADIR)/validation-set-kegg-act.tsv
@@ -287,6 +293,7 @@ INHIB_FX_SCRIPT = $(SRCDIR)/inhib-fx.r
 FORMAT_DRIVE_DATA_SCRIPT = $(SRCDIR)/format-drive-data.r
 INIT_OMNIPATH_SCRIPT = $(SRCDIR)/init-omnipath.py
 OMNIPATH_VAL_SCRIPT = $(SRCDIR)/gen-omnipath-valset.py
+OMNIPATH_PATH_REF_SCRIPT = $(SRCDIR)/make-omnipath-path-ref.py
 
 # Don't delete intermediate files
 .SECONDARY:
@@ -576,7 +583,7 @@ $(KEGG_PATH_REFERENCE): $(KEGG_RELATIONSHIPS) $(UNIPROT_ID_MAPPING) \
 	$(PYTHON) $(KEGG_PATH_REF_SCRIPT) | sort | uniq >$@
 
 # Combined protein group set
-$(COMBINED_GROUPING): $(GO_CELL_LOCATION) $(KEGG_PATH_REFERENCE)
+$(COMBINED_GROUPING): $(GO_CELL_LOCATION) $(OMNIPATH_PATH_REFERENCE)
 	cat $^ >$@
 
 # Kegg-based validation sets
@@ -591,6 +598,9 @@ $(NEG_VALSET): $(NEG_VAL_SCRIPT) $(VAL_SET) $(PROTEIN_GROUPING)
 # Omnipath cache
 $(OMNIPATH_CACHE): $(INIT_OMNIPATH_SCRIPT)
 	$(PYTHON2) $(INIT_OMNIPATH_SCRIPT)
+
+$(OMNIPATH_PATH_REFERENCE): $(OMNIPATH_CACHE) $(KINS_TO_USE) $(OMNIPATH_PATH_REF_SCRIPT)
+	$(PYTHON2) $(OMNIPATH_PATH_REF_SCRIPT) $(KINS_TO_USE)
 
 $(OMNIPATH_VALSET): $(OMNIPATH_CACHE) $(KINS_TO_USE) $(OMNIPATH_VAL_SCRIPT)
 	$(PYTHON2) $(OMNIPATH_VAL_SCRIPT) $(KINS_TO_USE)
@@ -615,6 +625,16 @@ $(HOTSPOTS): $(HOTSPOTS_RAW) $(TYR_HOTSPOTS_RAW) $(ENSEMBL_ID_MAPPING)
 	cat $(wordlist 1,2,$^) | sed 's/, /\t/g' | cut -f2,4,6,7 | \
 		awk -F"\t" -vOFS="\t" '{if ($$4==0){rel=1}else{rel=-log($$4)/log(10)/100}; print $$1, $$2, $$3, rel}' | \
 		sort -k1 | join -t'	' $(ENSEMBL_ID_MAPPING) - | cut -f2-5 >$@
+
+# PhosFun predictions
+$(PHOSFUN): $(PHOSFUN_ST_RAW) $(PHOSFUN_Y_RAW) $(UNIPROT_ID_MAPPING) $(HUMAN_KINOME)
+	cat <(sed '1d;s/[_,]/\t/g' $(PHOSFUN_ST_RAW)) \
+		<(sed '1d;s/[_,]/\t/g' $(PHOSFUN_Y_RAW)) | sort >$@.tmp
+	join -t'	' $@.tmp $(UNIPROT_ID_MAPPING) | \
+		awk -vOFS="\t" '{print $$4, $$2, $$3}' >$@.tmp2
+	rm $@.tmp
+	grep -f $(HUMAN_KINOME) $@.tmp2 | sort >$@
+	rm $@.tmp2
 
 # RNAi data
 $(RNAI_DRIVE_ATARIS_DATA): $(RNAI_DRIVE_ATARIS_DATA_RAW) $(HUMAN_KINOME) \

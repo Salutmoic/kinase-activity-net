@@ -11,10 +11,11 @@ def get_reg_rels(pa, prot_list):
         # if pa.dgenesymbol(prot) is None:
         #     continue
         # print(prot)
-        regs = list(pa.gs_stimulated_by(prot).gs())
-        regs.extend(list(pa.gs_inhibited_by(prot).gs()))
+        # regs = list(pa.gs_stimulated_by(prot).gs())
+        # regs.extend(list(pa.gs_inhibited_by(prot).gs()))
+        regs = list(pa.gs_affected_by(prot).gs())
         for reg in regs:
-            if reg == prot:
+            if reg == prot or reg not in prot_list:
                 continue
             reg_rels.add((reg, prot))
     return reg_rels

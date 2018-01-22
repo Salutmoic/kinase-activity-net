@@ -4,7 +4,7 @@ import pypath
 
 if __name__ == "__main__":
     pa = pypath.PyPath()
-    pa.init_network()
+    pa.init_network(exclude="psite")
     # remove high-throughput data
     pa.remove_htp()
     pa.get_directed()
