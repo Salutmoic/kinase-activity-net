@@ -51,16 +51,16 @@ def read_kinase_file(kinase_file):
     return(kinases)
 
 
-def read_hotspot_file(hotspot_file):
-    hotspots = dict()
-    with open(hotspot_file) as h:
+def read_phosfun_file(phosfun_file):
+    phosfun = dict()
+    with open(phosfun_file) as h:
         for line in h:
-            prot, pos, is_phos, score = line.strip().split()
-            if prot not in hotspots:
-                hotspots[prot] = {pos: (int(is_phos), float(score))}
+            prot, pos, score = line.strip().split()
+            if prot not in phosfun:
+                phosfun[prot] = {pos: float(score)}
             else:
-                hotspots[prot][pos] = (int(is_phos), float(score))
-    return hotspots
+                phosfun[prot][pos] = float(score)
+    return phosfun
 
 
 def read_reg_sites_file(reg_sites_file):
@@ -140,29 +140,26 @@ def calc_dcg(scores):
     return sum([score/log2(n+2) for n, score in enumerate(scores)])
 
 
-def regulation_score(pair, scores, hotspots, reg_sites):
+def regulation_score(pair, scores, phosfun, reg_sites):
     # Rank the PSSM scores
     scores.sort(key=lambda t: t[1], reverse=True)
-    # Get the hotspot scores
-    kin_b_hotspots = hotspots.get(pair[1])
     kin_b_reg_sites = reg_sites.get(pair[1])
+    kin_b_phosfun = phosfun.get(pair[1])
     hs_scores = []
     for pos, score in scores:
         if kin_b_reg_sites and pos in kin_b_reg_sites:
             hs_score = 1.0
-        elif kin_b_hotspots and pos in kin_b_hotspots:
-            hs_score = kin_b_hotspots[pos][1]
-            if hs_score == 0:
-                hs_score = 0.001
-        else:
+        elif kin_b_phosfun is None or pos not in kin_b_phosfun:
             hs_score = 0.001
+        else:
+            hs_score = kin_b_phosfun[pos]
         hs_scores.append(hs_score)
     # Discounted Cumulative Gain
     dcg = calc_dcg(hs_scores)
     # Ideal Discounted Cumulative Gain
     hs_scores.sort(reverse=True)
     idcg = calc_dcg(hs_scores)
-    return dcg/idcg
+    return (dcg/idcg)*max(hs_scores)
 
 
 def score_network(kinase_file, out_file):
@@ -172,7 +169,7 @@ def score_network(kinase_file, out_file):
     aa_freqs = pssms.read_aa_freqs("data/aa-freqs.tsv")
     psites = read_phosphosites("data/phosphosites_reduced.tsv")
     kinases = read_kinase_file(kinase_file)
-    hotspots = read_hotspot_file("data/kinase-phospho-hotspots.tsv")
+    phosfun = read_phosfun_file("data/phosfun.tsv")
     reg_sites = read_reg_sites_file("data/reg_sites.tsv")
     scores = score_kin_pairs(ktable, kinases, aa_freqs, psites)
     with open(out_file, "w") as v:
@@ -182,7 +179,7 @@ def score_network(kinase_file, out_file):
                 v.write("\t".join([pair[0], pair[1], "NA"])+"\n")
                 continue
             max_score = max([score for pos, score in scores[pair]])
-            dcg = regulation_score(pair, scores[pair], hotspots, reg_sites)
+            dcg = regulation_score(pair, scores[pair], phosfun, reg_sites)
             v.write("\t".join([pair[0], pair[1], str(dcg*max_score)])+"\n")
 
 
