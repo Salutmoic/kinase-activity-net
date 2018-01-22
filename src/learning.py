@@ -9,6 +9,15 @@ from random import *
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 from train_set import *
+from scipy import interp
+import matplotlib.pyplot as plt
+from itertools import cycle
+from sklearn.metrics import roc_curve, auc
+from sklearn.model_selection import StratifiedKFold
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.neural_network import MLPClassifier
+
+from sklearn.preprocessing import Imputer
   
 def find_centers(test,results):
 #works with nearestneighbour this function finds the centers of
@@ -52,7 +61,6 @@ def probability(c1,c2,test,results):
             p = dist(test[i],c1)/(dist(test[i],c2)+dist(test[i],c1))
             probability.append([p,1-p])
     return probability
-
  
 if __name__ == "__main__":
 
@@ -66,6 +74,7 @@ if __name__ == "__main__":
 
     testdict = prediction_matrix(data)
     test = list(testdict.values())
+   
     min_max_scaler.fit(test)
 
     test_scale = min_max_scaler.transform(test)
@@ -83,49 +92,94 @@ if __name__ == "__main__":
         model = GaussianNB()
         
     if method == "SVM":
-        model = svm.SVC(probability = True)
-       
+        model = svm.SVC(kernel = 'rbf',probability = True)
+    
+    if method == "boost":
+        model = AdaBoostClassifier(n_estimators=1000)     
+   
     if method == "kmeans":
         model = NearestCentroid()
         model.fit(train_scale, outcomes)
         prediction = model.predict(test_scale)
 
-        centers = find_centers(test,results)
+        centers = find_centers(test,prediction)
         c1 = centers[0]
         c2 = centers[1]
 
         if len(c1) > 0 and len(c2) > 0:
         
-            probability = probability(c1,c2,test,results)
+            probability = probability(c1,c2,test,prediction)
 
     if method == "logreg":
         model = linear_model.LogisticRegression()
-        
+    
+    if method == "neural":
+       model =  MLPClassifier()       
 
     if method == "randfor":
-        model = RandomForestClassifier()
+        model = RandomForestClassifier(n_estimators = 1000)
 
     if model != "kmeans":
         
         prediction = model.fit(train_scale,outcomes).predict(test_scale)
         probability = model.fit(train_scale,outcomes).predict_proba(test_scale)
     
-    with open(sys.argv[7],"w") as crossval: 
-        # repeated cross validation, is this something along the lines of what you were thinking 
-        for i in range(50):
-            if train_method == "random":
-                traindict,outcomes = train_random(truePos,data)
-            else:
-               traindict,outcomes = train_prior(truePos,trueNeg,data)
-            train = list(traindict.values())
-            min_max_scaler = preprocessing.MinMaxScaler()
-            min_max_scaler.fit(train)
-            train_scale = min_max_scaler.transform(train)
-          
-            scores = cross_val_score(model, train_scale, outcomes, scoring = 'roc_auc', cv=5)
-            for score in scores:
-                crossval.write(str(score) + "\t")
-            crossval.write("\n")
+    #cross validate results 
+    splits = StratifiedKFold(n_splits=5)
+    mean_fpr = np.linspace(0, 1, 100)
+    aucs= []
+    tprs = []
+    # repeated cross validation, is this something along the lines of what you were thinking 
+    for k in range(50):
+        if train_method == "random":
+            traindict,outcomes = train_random(truePos,data)
+        else:
+            traindict,outcomes = train_prior(truePos,trueNeg,data)
+        train = np.asarray(list(traindict.values()))
+        print(train)
+        outcomes = np.asarray(outcomes)
+        min_max_scaler = preprocessing.MinMaxScaler()
+        min_max_scaler.fit(train)
+        train_scale = min_max_scaler.transform(train)
+        i = 0    
+        for train,test in splits.split(train_scale,outcomes):
+            print(train)
+            probs = model.fit(train_scale[train],outcomes[train]).predict_proba(train_scale[test])
+            fpr, tpr, thresholds = roc_curve(outcomes[test],probs[:,1])
+            tprs.append(interp(mean_fpr, fpr, tpr))
+            tprs[-1][0] = 0.0
+            roc_auc = auc(fpr,tpr)
+            aucs.append(roc_auc)
+            plt.plot(fpr,tpr,lw =1, alpha = 0.3)
+            i +=1
+   # plot the diagonal line rperesenting random "luck"
+    plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
+         label='random', alpha=.8)
+
+
+    mean_tpr = np.mean(tprs, axis=0)
+    mean_tpr[-1] = 1.0
+    mean_auc = auc(mean_fpr, mean_tpr)
+    std_auc = np.std(aucs)
+    plt.plot(mean_fpr, mean_tpr, color='b',
+         label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
+         lw=2, alpha=.8)
+
+    std_tpr = np.std(tprs, axis=0)
+    tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
+    tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
+    plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
+                 label=r'$\pm$ 1 std. dev.')
+
+    plt.xlim([-0.05, 1.05])
+    plt.ylim([-0.05, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title(method + "_" + 'ROC')
+    plt.legend(loc="lower right")  
+    
+    plt.savefig("plots/"+ method + "_unscale_" + train_method+'_'+'ROC.pdf')
+
         
     with open(sys.argv[6],"w") as output:
         for i in range(len(testdict.keys())):
