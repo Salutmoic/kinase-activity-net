@@ -52,7 +52,9 @@ def read_kinase_file(kinase_file):
 
 
 def read_phosfun_file(phosfun_file):
+    from statistics import median
     phosfun = dict()
+    scores = []
     with open(phosfun_file) as h:
         for line in h:
             prot, pos, score = line.strip().split()
@@ -60,7 +62,8 @@ def read_phosfun_file(phosfun_file):
                 phosfun[prot] = {pos: float(score)}
             else:
                 phosfun[prot][pos] = float(score)
-    return phosfun
+            scores.append(float(score))
+    return (phosfun, median(scores))
 
 
 def read_reg_sites_file(reg_sites_file):
@@ -140,7 +143,7 @@ def calc_dcg(scores):
     return sum([score/log2(n+2) for n, score in enumerate(scores)])
 
 
-def regulation_score(pair, scores, phosfun, reg_sites):
+def regulation_score(pair, scores, phosfun, med_phosfun, reg_sites):
     # Rank the PSSM scores
     scores.sort(key=lambda t: t[1], reverse=True)
     kin_b_reg_sites = reg_sites.get(pair[1])
@@ -150,7 +153,7 @@ def regulation_score(pair, scores, phosfun, reg_sites):
         if kin_b_reg_sites and pos in kin_b_reg_sites:
             hs_score = 1.0
         elif kin_b_phosfun is None or pos not in kin_b_phosfun:
-            hs_score = 0.001
+            hs_score = med_phosfun
         else:
             hs_score = kin_b_phosfun[pos]
         hs_scores.append(hs_score)
@@ -169,7 +172,7 @@ def score_network(kinase_file, out_file):
     aa_freqs = pssms.read_aa_freqs("data/aa-freqs.tsv")
     psites = read_phosphosites("data/phosphosites_reduced.tsv")
     kinases = read_kinase_file(kinase_file)
-    phosfun = read_phosfun_file("data/phosfun.tsv")
+    phosfun, med_phosfun = read_phosfun_file("data/phosfun.tsv")
     reg_sites = read_reg_sites_file("data/reg_sites.tsv")
     scores = score_kin_pairs(ktable, kinases, aa_freqs, psites)
     with open(out_file, "w") as v:
@@ -179,7 +182,7 @@ def score_network(kinase_file, out_file):
                 v.write("\t".join([pair[0], pair[1], "NA"])+"\n")
                 continue
             max_score = max([score for pos, score in scores[pair]])
-            dcg = regulation_score(pair, scores[pair], phosfun, reg_sites)
+            dcg = regulation_score(pair, scores[pair], phosfun, med_phosfun, reg_sites)
             v.write("\t".join([pair[0], pair[1], str(dcg*max_score)])+"\n")
 
 
