@@ -4,7 +4,7 @@ import pypath
 
 
 def write_pathways(pa, prots, h):
-    paths = ["kegg", "netpath", "signalink", "signor"]
+    paths = ["kegg", "netpath", "signalink"]
     for prot in prots:
         if pa.gs(prot) is None:
             continue
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     pa = pypath.PyPath()
     pa.init_network(pfile="cache/default_network.pickle")
     pa.kegg_pathways()
-    pa.signor_pathways()
+    # pa.signor_pathways()
     pa.pathway_attributes()
     with open("data/omnipath-path-ref.tsv", 'w') as h:
         write_pathways(pa, kinases, h)

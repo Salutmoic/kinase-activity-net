@@ -17,6 +17,9 @@ def get_reg_rels(pa, prot_list):
         for reg in regs:
             if reg == prot or reg not in prot_list:
                 continue
+            srcs = pa.get_edge(reg, prot)["sources"]
+            if len(srcs) < 2:
+                continue
             reg_rels.add((reg, prot))
     return reg_rels
 
