@@ -471,7 +471,7 @@ $(UNIPROT_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING)
 
 $(ENSEMBL_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
 	awk 'BEGIN{OFS="\t"}{if ($$2=="Ensembl_PRO" && $$1 !~ /.-[0-9]/){print $$1, $$3}}' $< | sort -d -k1 >$@.tmp
-	join -t'	' $@.tmp $(UNIPROT_ID_MAPPING) | cut -f2,3 | sort >$@
+	join -t'	' $@.tmp $(UNIPROT_ID_MAPPING) | cut -f2,3 | sort | uniq >$@
 	rm $@.tmp
 
 # GO associations (formatted for GOATOOLS)
