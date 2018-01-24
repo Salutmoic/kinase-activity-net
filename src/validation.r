@@ -11,6 +11,9 @@ neg_val_set_file <- argv[3]
 use_rand_negs <- as.logical(argv[4])
 directed <- as.logical(argv[5])
 
+if (use_rand_negs && directed)
+    stop("Select either RAND_NEGS or DIRECTED")
+
 ## Get information from the prediction file name.  Build up a name of
 ## the prediction method for adding a title to plots, and figure out
 ## what kind of method was in use in order to determine any kind of
@@ -106,6 +109,9 @@ possible_true_intxns <- intersect(possible_true_intxns, rownames(pred_score))
 
 if (use_rand_negs){
     possible_false_intxns <- rownames(pred_score)
+}else if (directed){
+    rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
+    possible_false_intxns <- rev_true_intxns
 }else{
     false_intxns_tbl <- read.table(neg_val_set_file, as.is = TRUE)
     possible_false_intxns <- paste(false_intxns_tbl[, 1], false_intxns_tbl[, 2],
@@ -114,18 +120,6 @@ if (use_rand_negs){
 }
 
 possible_false_intxns <- setdiff(possible_false_intxns, possible_true_intxns)
-rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
-rev_true_intxns <- setdiff(possible_true_intxns, rev_true_intxns)
-if (directed){
-    ## The predictor is directed, so include reverse-true interactions
-    ## as possible false ones since we take bi-directional
-    ## relationships to be statistically unlikely
-    possible_false_intxns <- union(possible_false_intxns, rev_true_intxns)
-}else{
-    ## Since we're testing for symmetrical associations, remove
-    ## reverse-true interactions from the possible false interactions
-    possible_false_intxns <- setdiff(possible_false_intxns, rev_true_intxns)
-}
 
 pred_data <- NULL
 label_data <- NULL

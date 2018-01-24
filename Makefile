@@ -43,6 +43,7 @@ DECONVOLUTION_A ?= 0.5
 DECONVOLUTION_B ?= 0.99
 PRED_METHOD = log_reg
 USE_RAND_NEGS = FALSE
+DIRECTED = FALSE
 
 KEGG_VALSET ?= $(KEGG_ACT_VALSET)
 VAL_SET = $(OMNIPATH_VALSET) ## $(KEGG_VALSET) $(PSITE_PLUS_VALSET)
@@ -51,7 +52,7 @@ VAL_SET = $(OMNIPATH_VALSET) ## $(KEGG_VALSET) $(PSITE_PLUS_VALSET)
 # functionally related (e.g. in the same pathway) for a true negative.
 PROTEIN_GROUPING =  $(COMBINED_GROUPING) # $(COMBINED_GROUPING) $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
 
-MERGED_PRED_SOURCES = $(KINACT_FULL_ASSOC2) $(REG_SITE_ASSOC2)	\
+MERGED_PRED_SOURCES = $(KINACT_FULL_ASSOC) $(REG_SITE_ASSOC)	\
 	$(KIN_KIN_SCORES)
 DIRECT_PRED_SOURCES = $(KIN_KIN_SCORES) $(INHIB_FX)
 
@@ -210,7 +211,11 @@ FINAL_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(PRED_METHOD).tsv
 ifeq ($(USE_RAND_NEGS),TRUE)
 val_set = -val-rand-negs
 else
+ifeq ($(DIRECTED),TRUE)
+val_set = -val-direct
+else
 val_set = -val
+endif
 endif
 ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)$(val_set).pdf
 ASSOC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2$(val_set).pdf
@@ -796,13 +801,17 @@ $(DIRECT_PRED): $(DIRECT_PRED_SOURCES) $(MERGE_SCRIPT)
 #############
 ## Validation
 
-$(IMGDIR)/%$(val_set).pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(NEG_VALSET) $(IMGDIR) \
+$(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(NEG_VALSET) $(IMGDIR) \
 		$(VAL_SCRIPT)
-	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^) $(USE_RAND_NEGS) FALSE
+	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^) FALSE FALSE
 
-$(IMGDIR)/%$(val_set)-direct.pdf: $(OUTDIR)/%.tsv $(KEGG_PHOS_ACT_VALSET) \
+$(IMGDIR)/%-val-rand-negs.pdf: $(OUTDIR)/%.tsv $(KEGG_PHOS_ACT_VALSET) \
 		$(NEG_VALSET) $(IMGDIR) $(VAL_SCRIPT)
-	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^) $(USE_RAND_NEGS) TRUE
+	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^) TRUE FALSE
+
+$(IMGDIR)/%-val-direct.pdf: $(OUTDIR)/%.tsv $(KEGG_PHOS_ACT_VALSET) \
+		$(NEG_VALSET) $(IMGDIR) $(VAL_SCRIPT)
+	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^) FALSE TRUE
 
 $(IMGDIR)/validation.pdf:
 	gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile=$@ $(IMGDIR)/*-val.pdf
