@@ -6,29 +6,19 @@ suppressPackageStartupMessages(library(ROCR))
 
 argv <- commandArgs(TRUE)
 if (length(argv) != 2){
-    stop("USAGE: <script> MERGED_PREDS RAND_NEGS")
+    stop("USAGE: <script> MERGED_PREDS BART_MODEL")
 }
 
 merged_pred_file <- argv[1]
-use_rand_negs <- as.logical(argv[2])
+bart_model_file <- argv[2]
 
 merged_pred <- read.delim(merged_pred_file, as.is=TRUE)
 names(merged_pred)[1:2] <- c("prot1", "prot2")
-## merged_pred <- subset(merged_pred, prot1 != prot2)
+## Remove missing data
+merged_pred <- merged_pred[complete.cases(merged_pred),]
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
 
-for (i in 3:ncol(merged_pred)){
-    min_pred <- min(merged_pred[,i], na.rm=TRUE)
-    max_pred <- max(merged_pred[,i], na.rm=TRUE)
-    merged_pred[,i] <- (merged_pred[,i] - min_pred)/(max_pred - min_pred)
-}
-
-file_base <- strsplit(merged_pred_file, split="\\.")[[1]][1]
-if (use_rand_negs){
-    load(paste0(file_base, "-rand-negs-bart.Rdata"))
-}else{
-    load(paste0(file_base, "-bart.Rdata"))
-}
+load(bart_model_file)
 
 preds <- predict(bart, merged_pred[3:ncol(merged_pred)])
 
@@ -36,10 +26,6 @@ out_tbl <- data.frame(prot1=merged_pred$prot1,
                       prot2=merged_pred$prot2,
                       bart.pred=preds)
 
-if (use_rand_negs){
-    write.table(out_tbl, paste0(file_base, "-rand-negs-bart.tsv"), sep="\t",
-                quote=FALSE, col.names=TRUE, row.names=FALSE)
-}else{
-    write.table(out_tbl, paste0(file_base, "-bart.tsv"), sep="\t",
-                quote=FALSE, col.names=TRUE, row.names=FALSE)
-}
+file_base <- strsplit(bart_model_file, split="\\.")[[1]][1]
+write.table(out_tbl, paste0(file_base, "-preds.tsv"), sep="\t",
+            quote=FALSE, col.names=TRUE, row.names=FALSE)

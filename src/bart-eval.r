@@ -16,17 +16,14 @@ use_rand_negs <- as.logical(argv[4])
 classifier <- as.logical(argv[5])
 directed <- as.logical(argv[6])
 
+if (use_rand_negs && directed)
+    stop("Select either RAND_NEGS or DIRECTED")
+
 merged_pred <- read.delim(merged_pred_file, as.is=TRUE)
 names(merged_pred)[1:2] <- c("prot1", "prot2")
-merged_pred <- subset(merged_pred, prot1 != prot2)
+## Remove missing data
 merged_pred <- merged_pred[complete.cases(merged_pred),]
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
-
-for (i in 3:ncol(merged_pred)){
-    min_pred <- min(merged_pred[,i], na.rm=TRUE)
-    max_pred <- max(merged_pred[,i], na.rm=TRUE)
-    merged_pred[,i] <- (merged_pred[,i] - min_pred)/(max_pred - min_pred)
-}
 
 true_intxns_tbl <- read.table(val_set_file, as.is = TRUE)
 possible_true_intxns <- paste(true_intxns_tbl[, 1], true_intxns_tbl[, 2],
@@ -36,7 +33,10 @@ possible_true_intxns <- intersect(possible_true_intxns, rownames(merged_pred))
 ## Generate some reverse true interactions to be mixed in as negatives
 if (use_rand_negs){
     possible_false_intxns <- rownames(merged_pred)
-    possible_false_intxns <- setdiff(possible_false_intxns, possible_true_intxns)
+}else if (directed){
+    rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
+    possible_false_intxns <- rev_true_intxns
+    possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
 }else{
     false_intxns_tbl <- read.table(neg_val_set_file, as.is = TRUE)
     possible_false_intxns <- paste(false_intxns_tbl[, 1], false_intxns_tbl[, 2],
@@ -45,23 +45,10 @@ if (use_rand_negs){
 }
 possible_false_intxns <- setdiff(possible_false_intxns, possible_true_intxns)
 
-rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
-rev_true_intxns <- setdiff(possible_true_intxns, rev_true_intxns)
-if (directed){
-    ## The predictor is directed, so include reverse-true interactions
-    ## as possible false ones since we take bi-directional
-    ## relationships to be statistically unlikely
-    possible_false_intxns <- union(possible_false_intxns, rev_true_intxns)
-}else{
-    ## Since we're testing for symmetrical associations, remove
-    ## reverse-true interactions from the possible false interactions
-    possible_false_intxns <- setdiff(possible_false_intxns, rev_true_intxns)
-}
-
 sample_size <- round(0.8 * min(length(possible_false_intxns),
                                length(possible_true_intxns)))
 
-num_reps <- 50
+num_reps <- 10
 k <- 5
 all_probs <- NULL
 all_labels <- NULL
@@ -113,7 +100,7 @@ for (n in 1:num_reps){
         if (classifier){
             neg_val_preds <- which(val_preds$y_hat == FALSE)
             val_preds$p_hat[neg_val_preds] <- 1.0 - val_preds$p_hat[neg_val_preds]
-            val_preds <- val_preds$p_hat
+            l_preds <- val_preds$p_hat
         }else{
             val_preds <- val_preds$y_hat
         }

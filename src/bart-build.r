@@ -15,17 +15,14 @@ neg_val_set_file <- argv[3]
 use_rand_negs <- as.logical(argv[4])
 directed <- as.logical(argv[5])
 
+if (use_rand_negs && directed)
+    stop("Select either RAND_NEGS or DIRECTED")
+
 merged_pred <- read.delim(merged_pred_file, as.is=TRUE)
 names(merged_pred)[1:2] <- c("prot1", "prot2")
-merged_pred <- subset(merged_pred, prot1 != prot2)
-## merged_pred <- merged_pred[complete.cases(merged_pred),]
+## Remove missing data
+merged_pred <- merged_pred[complete.cases(merged_pred),]
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
-
-for (i in 3:ncol(merged_pred)){
-    min_pred <- min(merged_pred[,i], na.rm=TRUE)
-    max_pred <- max(merged_pred[,i], na.rm=TRUE)
-    merged_pred[,i] <- (merged_pred[,i] - min_pred)/(max_pred - min_pred)
-}
 
 true_intxns_tbl <- read.table(val_set_file, as.is = TRUE)
 possible_true_intxns <- paste(true_intxns_tbl[, 1], true_intxns_tbl[, 2],
@@ -34,26 +31,16 @@ true_intxns <- intersect(possible_true_intxns, rownames(merged_pred))
 
 ## Generate some reverse true interactions to be mixed in as negatives
 if (use_rand_negs){
-    rand_neg_intxns <- rownames(merged_pred)
-    possible_false_intxns <- setdiff(rand_neg_intxns, possible_true_intxns)
+    possible_false_intxns <- rownames(merged_pred)
+}else if (directed){
+    rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
+    possible_false_intxns <- rev_true_intxns
+    possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
 }else{
     false_intxns_tbl <- read.table(neg_val_set_file, as.is = TRUE)
     possible_false_intxns <- paste(false_intxns_tbl[, 1], false_intxns_tbl[, 2],
                                    sep = "-")
     possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
-}
-
-rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
-rev_true_intxns <- setdiff(possible_true_intxns, rev_true_intxns)
-if (directed){
-    ## The predictor is directed, so include reverse-true interactions
-    ## as possible false ones since we take bi-directional
-    ## relationships to be statistically unlikely
-    possible_false_intxns <- union(possible_false_intxns, rev_true_intxns)
-}else{
-    ## Since we're testing for symmetrical associations, remove
-    ## reverse-true interactions from the possible false interactions
-    possible_false_intxns <- setdiff(possible_false_intxns, rev_true_intxns)
 }
 
 num_negs <- min(length(possible_false_intxns),
@@ -69,6 +56,7 @@ labels <- c(rep(TRUE, length(true_intxns)),
 bart <- bartMachineCV(preds,
                       as.integer(labels),
                       use_missing_data=TRUE,
+                      use_missing_data_dummies_as_covars=FALSE,
                       replace_missing_data_with_x_j_bar=FALSE,
                       impute_missingness_with_x_j_bar_for_lm=FALSE,
                       verbose=FALSE,
@@ -76,10 +64,10 @@ bart <- bartMachineCV(preds,
 
 file_base <- strsplit(merged_pred_file, split="\\.")[[1]][1]
 if (use_rand_negs){
-    file_base <- paste0(file_base, "rand-negs", sep="-")
+    file_base <- paste0(file_base, "-rand-negs")
 }
 if (directed){
-    file_base <- paste0(file_base, "directed", sep="-")
+    file_base <- paste0(file_base, "-directed")
 }
 save(bart, file=paste0(file_base, "-bart.Rdata"))
 
