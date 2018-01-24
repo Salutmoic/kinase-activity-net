@@ -170,7 +170,8 @@ HUMAN_STRING_EXPER_KINOME = $(OUTDIR)/human-kinome-string-exper.tsv
 COMBINED_GROUPING = $(DATADIR)/protein-groups.tsv
 # Human kinome
 HUMAN_KINOME = $(DATADIR)/human-kinome.txt
-KINS_TO_USE = $(DATADIR)/kinases-to-use.txt
+# KINS_TO_USE = $(DATADIR)/kinases-to-use.txt
+KINS_TO_USE = $(HUMAN_KINOME)
 # Kinase-domain phosphorylation hot spots
 HOTSPOTS = $(DATADIR)/kinase-phospho-hotspots.tsv
 # PhosFun predictions
@@ -470,7 +471,8 @@ $(UNIPROT_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING)
 	awk 'BEGIN{OFS="\t"}{if ($$2=="Gene_Name"){print $$1, $$3}}' $< | sort >$@
 
 $(ENSEMBL_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
-	awk 'BEGIN{OFS="\t"}{if ($$2=="Ensembl_PRO" && $$1 !~ /.-[0-9]/){print $$1, $$3}}' $< | sort -d -k1 >$@.tmp
+	awk 'BEGIN{OFS="\t"}{if ($$2=="Ensembl_PRO"){print $$1, $$3}}' $< | \
+		sort -d -k1 | sed 's/-[0-9][0-9]*\t/\t/' >$@.tmp
 	join -t'	' $@.tmp $(UNIPROT_ID_MAPPING) | cut -f2,3 | sort | uniq >$@
 	rm $@.tmp
 
@@ -492,11 +494,11 @@ $(HUMAN_KINOME): $(KINOME_RAW) $(UNIPROT_ID_MAPPING)
 	sed -n '/HUMAN/{s/  */\t/g;p}' $< | cut -f3 | sed 's/(//' | \
 		grep -f - $(UNIPROT_ID_MAPPING) | cut -f2 | sort >$@
 
-$(KINS_TO_USE): $(KINACT_FULL_ASSOC2) $(REG_SITE_ASSOC2)
-	cat <(sed '1d' $(KINACT_FULL_ASSOC2) | cut -f1 | sort | uniq) \
-		<(sed '1d' $(KINACT_FULL_ASSOC2) | cut -f2 | sort | uniq) \
-		<(sed '1d' $(REG_SITE_ASSOC2) | cut -f1 | sort | uniq) \
-		<(sed '1d' $(REG_SITE_ASSOC2) | cut -f2 | sort | uniq) | sort | uniq >$@
+# $(KINS_TO_USE): $(KINACT_FULL_ASSOC2) $(REG_SITE_ASSOC2)
+# 	cat <(sed '1d' $(KINACT_FULL_ASSOC2) | cut -f1 | sort | uniq) \
+# 		<(sed '1d' $(KINACT_FULL_ASSOC2) | cut -f2 | sort | uniq) \
+# 		<(sed '1d' $(REG_SITE_ASSOC2) | cut -f1 | sort | uniq) \
+# 		<(sed '1d' $(REG_SITE_ASSOC2) | cut -f2 | sort | uniq) | sort | uniq >$@
 
 # STRING
 # Create the STRING ID map
@@ -599,11 +601,11 @@ $(NEG_VALSET): $(NEG_VAL_SCRIPT) $(VAL_SET) $(PROTEIN_GROUPING)
 $(OMNIPATH_CACHE): $(INIT_OMNIPATH_SCRIPT)
 	$(PYTHON2) $(INIT_OMNIPATH_SCRIPT)
 
-$(OMNIPATH_PATH_REFERENCE): $(OMNIPATH_CACHE) $(KINS_TO_USE) $(OMNIPATH_PATH_REF_SCRIPT)
-	$(PYTHON2) $(OMNIPATH_PATH_REF_SCRIPT) $(KINS_TO_USE)
+$(OMNIPATH_PATH_REFERENCE): $(OMNIPATH_CACHE) $(HUMAN_KINOME) $(OMNIPATH_PATH_REF_SCRIPT)
+	$(PYTHON2) $(OMNIPATH_PATH_REF_SCRIPT) $(HUMAN_KINOME)
 
-$(OMNIPATH_VALSET): $(OMNIPATH_CACHE) $(KINS_TO_USE) $(OMNIPATH_VAL_SCRIPT)
-	$(PYTHON2) $(OMNIPATH_VAL_SCRIPT) $(KINS_TO_USE)
+$(OMNIPATH_VALSET): $(OMNIPATH_CACHE) $(HUMAN_KINOME) $(OMNIPATH_VAL_SCRIPT)
+	$(PYTHON2) $(OMNIPATH_VAL_SCRIPT) $(HUMAN_KINOME)
 
 # Calculate human proteome amino-acid frequencies
 $(AA_FREQS): $(AA_FREQS_SCRIPT)
@@ -764,12 +766,12 @@ $(INHIB_FX): $(KSEA_DATA) $(KINS_TO_USE) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP) \
 # Calculate kinase-substrate PSSM scores
 $(OUTDIR)/%-pssm.tsv: $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
 					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
-					$(KINS_TO_USE) $(PSSM_LIB) $(HOTSPOTS)
+					$(KINS_TO_USE) $(PSSM_LIB) $(PHOSFUN)
 	$(PYTHON) $(PSSM_SCRIPT) $(KINS_TO_USE) $@
 
 $(KIN_KIN_SCORES_KINOME): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
 					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
-					$(HUMAN_KINOME) $(PSSM_LIB) $(HOTSPOTS)
+					$(HUMAN_KINOME) $(PSSM_LIB) $(PHOSFUN)
 	$(PYTHON) $(PSSM_SCRIPT) $(HUMAN_KINOME) $@
 
 $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_DIST_SCRIPT) $(KIN_SUBSTR_TABLE) \
