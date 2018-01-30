@@ -2,8 +2,14 @@ library(reshape2)
 suppressMessages(library(Biobase))
 source("src/optimize-activity-table.r")
 
+argv <- commandArgs(TRUE)
+if (length(argv) != 1){
+    stop("USAGE: <script> KINACT_PREDS")
+}
+kinact.file <- argv[1]
+
 load("data/external/esetNR.Rdata")
-load("data/log.wKSEA.kinase_condition.clean.Rdata")
+load(kinact.file)
 kin.act <- log.wKSEA.kinase_condition.clean
 cond.anno <- pData(esetNR)
 phospho.anno <- fData(esetNR)
@@ -32,7 +38,7 @@ kin.overlap.sub <- kin.overlap
 good.kins <- unique(c(kin.overlap.sub$kinase1, kin.overlap.sub$kinase2))
 
 ## Remove redundant kinases
-redundant.kins <- get.redundant.kins(kin.overlap.sub)
+redundant.kins <- get.redundant.kins(kin.overlap.sub, kin.act)
 
 kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
 
@@ -62,6 +68,9 @@ kin.act <- kin.act[,setdiff(colnames(kin.act), bad.inhib.conds)]
 ## Filter out kinases that have overall low activity predictions.
 kin.act.filt <- filter.low.activity(kin.act)
 
+kinase.conditions <- read.delim("data/external/kinase-condition-pairs.tsv",
+                                as.is=TRUE)
+
 all.kins <- rownames(kin.act)
 kin.pairs <- expand.grid(all.kins, all.kins, stringsAsFactors=FALSE)
 
@@ -72,15 +81,29 @@ cors <- c()
 for (i in 1:nrow(kin.pairs)){
     kin1 <- kin.pairs[i, 1]
     kin2 <- kin.pairs[i, 2]
-    kin1.meas.conds <- which(!is.na(kin.act[kin1,]))
-    kin2.meas.conds <- which(!is.na(kin.act[kin2,]))
+    if (kin1 == kin2 || !(kin1 %in% rownames(kin.act)) ||
+        !(kin2 %in% rownames(kin.act))){
+        kin1s <- c(kin1s, kin1)
+        kin2s <- c(kin2s, kin2)
+        p.vals <- c(p.vals, NA)
+        cors <- c(cors, NA)
+        next
+    }
+    kin2.conds <- kinase.conditions[which(kinase.conditions$Kinase==kin2),
+                                    "Condition"]
+    kin2.conds <- intersect(kin2.conds, colnames(kin.act))
+    kin1.act <- kin.act[kin1,]
+    kin2.act <- kin.act[kin2,]
+    ## Remove conditions where kinase 2 was inhibited or
+    ## activated, so we don't calculate correlations on them
+    kin2.act[kin2.conds] <- NA
+    kin1.meas.conds <- which(!is.na(kin1.act))
+    kin2.meas.conds <- which(!is.na(kin2.act))
     shared.conds <- intersect(kin1.meas.conds, kin2.meas.conds)
-    if (length(shared.conds) < 3){
+    if (length(shared.conds) < 5){
         p.value <- NA
         cor.est <- NA
     }else{
-        kin1.act <- kin.act[kin1,]
-        kin2.act <- kin.act[kin2,]
         ct <- cor.test(kin1.act, kin2.act, method="spearman",
                        use="pairwise.complete.obs")
         p.value <- -log10(ct$p.value)
