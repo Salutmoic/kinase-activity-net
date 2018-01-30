@@ -2,20 +2,21 @@ suppressMessages(library(Biobase))
 source("src/optimize-activity-table.r")
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 4){
-    stop("USAGE: <script> STRATEGY MIN_SITES ENTROPY_FILTER NA_THRESHOLD")
+if (length(argv) != 5){
+    stop("USAGE: <script> KINACT_PREDS STRATEGY MIN_SITES ENTROPY_FILTER NA_THRESHOLD")
 }
-strategy <- argv[1]
-min.sites <- as.integer(argv[2])
-entropy.filter.stren <- as.numeric(argv[3])
-na.threshold <- as.numeric(argv[4])
+kinact.file <- argv[1]
+strategy <- argv[2]
+min.sites <- as.integer(argv[3])
+entropy.filter.stren <- as.numeric(argv[4])
+na.threshold <- as.numeric(argv[5])
 
 ## General parameters
 entropy.bins <- 10
 
 ## Load data
 load("data/external/esetNR.Rdata")
-load("data/log.wKSEA.kinase_condition.clean.Rdata")
+load(kinact.file)
 kin.act <- log.wKSEA.kinase_condition.clean
 cond.anno <- pData(esetNR)
 phospho.anno <- fData(esetNR)
@@ -42,7 +43,7 @@ kin.overlap.sub <- kin.overlap
 good.kins <- unique(c(kin.overlap.sub$kinase1, kin.overlap.sub$kinase2))
 
 ## Remove redundant kinases
-redundant.kins <- get.redundant.kins(kin.overlap.sub)
+redundant.kins <- get.redundant.kins(kin.overlap.sub, kin.act)
 
 kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
 
