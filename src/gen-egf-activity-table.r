@@ -91,6 +91,7 @@ kinase.conditions <- read.delim("data/external/kinase-condition-pairs.tsv",
 kinase.cond <- subset(kinase.conditions, Kinase %in% egf.kinases &
                                          Kinase %in% rownames(kin.act.filt) &
                                          Condition %in% colnames(kin.act.filt) &
+                                         Control == "Control" &
                                          Regulation=="down")
 kinase.cond$activity <- apply(kinase.cond, 1,
                               function(row){
@@ -99,6 +100,22 @@ kinase.cond$activity <- apply(kinase.cond, 1,
                                   return(kin.act.filt[kinase, cond])
                               })
 kinase.cond <- subset(kinase.cond, activity < 0)
+
+## kinase.cond.best <- c()
+## for (kin in unique(kinase.cond$Kinase)){
+##     kinase.cond.sub <- subset(kinase.cond, Kinase==kin)
+##     act.order <- order(order(kinase.cond.sub$activity))
+##     cond.nas <- c()
+##     for (cond in kinase.cond.sub$Condition){
+##         cond.na <- percent.na(kin.act.filt[,cond])
+##         cond.nas <- c(cond.nas, cond.na)
+##     }
+##     na.order <- order(order(cond.nas))
+##     best.cond <- which.min(abs(act.order-na.order))
+##     kinase.cond.best <- rbind(kinase.cond.best, kinase.cond.sub[best.cond,])
+## }
+## names(kinase.cond.best) <- names(kinase.cond)
+## kinase.cond <- kinase.cond.best
 
 ## kinase.invivocond <- subset(kinase.invivoconditions, Kinase %in% egf.kinases)
 
@@ -110,6 +127,11 @@ egf.kin.act.pert <- egf.kin.act.pert.full[which(apply(egf.kin.act.pert.full,
                                                       1, percent.na) < 0.5),]
 egf.kin.act.pert <- egf.kin.act.pert[,which(apply(egf.kin.act.pert,
                                                   2, percent.na) < 1/3)]
+## lost.conds <- which(!(kinase.cond$Condition %in% colnames(egf.kin.act.pert)))
+## lost.kins <- unique(kinase.cond$Kinase[lost.conds])
+## kept.kins <- setdiff(rownames(egf.kin.act.pert), lost.kins)
+## egf.kin.act.pert <- egf.kin.act.pert[kept.kins,]
+
 egf.kin.act.all <- egf.kin.act[, which(apply(egf.kin.act, 2, percent.na) < 1/3)]
 
 non.pert.conds <- setdiff(colnames(kin.act.filt), unique(kinase.cond$Condition))
