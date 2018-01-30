@@ -1,10 +1,9 @@
 ## phos stores kinase activiteis acorss conditions (Ochoa et al. 2016)
-load("data/log.wKSEA.kinase_condition.clean.Rdata")
-kin.act <- log.wKSEA.kinase_condition.clean
+kinome = read.delim("data/human-kinome.txt", as.is=TRUE)
 
 ksub = read.delim("data/human_kinase_table.tsv", as.is=TRUE)
 
-kinases = rownames(kin.act)
+kinases = kinome[,1]
 
 overlap = c()
 
