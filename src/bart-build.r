@@ -1,5 +1,5 @@
 suppressPackageStartupMessages(library(data.table))
-options(java.parameters = "-Xmx16g")
+options(java.parameters = "-Xmx24g")
 suppressPackageStartupMessages(library(bartMachine))
 set_bart_machine_num_cores(24)
 suppressPackageStartupMessages(library(ROCR))
@@ -54,11 +54,12 @@ preds <- merged_pred[intxns, 3:ncol(merged_pred)]
 labels <- c(rep(TRUE, length(true_intxns)),
             rep(FALSE, length(false_intxns)))
 bart <- bartMachineCV(preds,
-                      as.integer(labels),
+                      as.factor(labels),
                       use_missing_data=TRUE,
                       use_missing_data_dummies_as_covars=FALSE,
                       replace_missing_data_with_x_j_bar=FALSE,
                       impute_missingness_with_x_j_bar_for_lm=FALSE,
+                      prob_rule_class=0.0,
                       verbose=FALSE,
                       serialize=TRUE)
 

@@ -5,16 +5,15 @@ set_bart_machine_num_cores(24)
 suppressPackageStartupMessages(library(ROCR))
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 6){
-    stop("USAGE: <script> MERGED_PREDS VAL_SET NEG_VAL_SET RAND_NEGS CLASSIFIER DIRECTED")
+if (length(argv) != 5){
+    stop("USAGE: <script> MERGED_PREDS VAL_SET NEG_VAL_SET RAND_NEGS DIRECTED")
 }
 
 merged_pred_file <- argv[1]
 val_set_file <- argv[2]
 neg_val_set_file <- argv[3]
 use_rand_negs <- as.logical(argv[4])
-classifier <- as.logical(argv[5])
-directed <- as.logical(argv[6])
+directed <- as.logical(argv[5])
 
 if (use_rand_negs && directed)
     stop("Select either RAND_NEGS or DIRECTED")
@@ -81,29 +80,20 @@ for (n in 1:num_reps){
         val_labels <- labels[val_rows]
         train_set <- preds[train_rows,]
         train_labels <- labels[train_rows]
-        if (classifier){
-            val_labels <- as.factor(val_labels)
-            train_labels <- as.factor(train_labels)
-        }else{
-            val_labels <- as.integer(val_labels)
-            train_labels <- as.integer(train_labels)
-        }
+        val_labels <- as.factor(val_labels)
+        train_labels <- as.factor(train_labels)
         bart <- bartMachineCV(train_set,
                               train_labels,
                               use_missing_data=TRUE,
                               use_missing_data_dummies_as_covars=FALSE,
                               replace_missing_data_with_x_j_bar=FALSE,
                               impute_missingness_with_x_j_bar_for_lm=FALSE,
+                              prob_rule_class=0.0,
                               verbose=FALSE,
                               serialize=FALSE)
-        val_preds <- bart_predict_for_test_data(bart, val_set, val_labels)
-        if (classifier){
-            neg_val_preds <- which(val_preds$y_hat == FALSE)
-            val_preds$p_hat[neg_val_preds] <- 1.0 - val_preds$p_hat[neg_val_preds]
-            l_preds <- val_preds$p_hat
-        }else{
-            val_preds <- val_preds$y_hat
-        }
+        ## val_preds <- bart_predict_for_test_data(bart, val_set, val_labels,
+        ##                                         prob_rule_class=0.0)
+        val_preds <- 1.0-bart_machine_get_posterior(bart, val_set)$y_hat
         if (is.null(all_probs)){
             all_probs <- val_preds
             all_labels <- val_labels
@@ -121,11 +111,17 @@ rocr_auc <- performance(rocr_pred, "auc")
 mean_auc <- mean(unlist(rocr_auc@y.values), na.rm=TRUE)
 se_auc <- sd(unlist(rocr_auc@y.values), na.rm=TRUE)/sqrt(num_reps*k)
 
+fprs <- rocr_roc@x.values
+fpr0.5s <- unlist(lapply(fprs,
+                        function(f){
+                            fpr0.5 <-max(which(f<0.05))
+                            rocr_roc@alpha.values[[1]][fpr0.5]
+                        }))
+cutoff <- mean(fpr0.5s)
+message(paste("FPR 0.5 cutoff: ", cutoff))
+
 file_base <- strsplit(basename(merged_pred_file), split="\\.")[[1]][1]
 img_file <- paste0(file_base, "-bart")
-if (classifier){
-    img_file <- paste(img_file, "classifier",  sep="-")
-}
 if (use_rand_negs){
     img_file <- paste(img_file, "rand-negs", sep="-")
 }
@@ -138,6 +134,8 @@ pdf(img_file)
 plot(rocr_roc, spread.estimate="boxplot", avg="vertical",
      main=paste0("BART\n(mean AUC=", format(mean_auc, digits=2),
                  ", S.E.M=", format(se_auc, digits=2), ")"))
+abline(v=0.05, lty=2, col="blue")
+legend("bottomright", legend=paste0("FPR=0.05 -> ", cutoff), lty=2, col="blue")
 plot(rocr_prec, spread.estimate="boxplot", avg="vertical",
      main=paste0("BART"))
 

@@ -27,7 +27,7 @@ for m in $BART_MODELS; do
          bsub -J bart-predict-full-${m} \
               -o ${LOGDIR}/bart-predict-full-${m}.out -e ${LOGDIR}/bart-predict-full-${m}.err \
               -M $MEM  -R "rusage[mem=${MEM}]" -n $CORES \
-              Rscript src/bart-predict.r $FULL_DATA $out/kinact-merged_full-${m}.Rdata
+              Rscript src/bart-predict.r $FULL_DATA out/kinact-merged_full-${m}.Rdata
 done
 
 # bsub -J bart-predict-direct \

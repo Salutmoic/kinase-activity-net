@@ -24,15 +24,15 @@ mkdir -p $LOGDIR
 bsub -J bart-eval-full \
      -o ${LOGDIR}/bart-eval-full.out -e ${LOGDIR}/bart-eval-full.err \
      -M $MEM  -R "rusage[mem=${MEM}]" -n $CORES \
-     Rscript src/bart-eval.r $FULL_DATA $VALSET $NEG_VALSET FALSE FALSE FALSE
+     Rscript src/bart-eval.r $FULL_DATA $VALSET $NEG_VALSET FALSE FALSE
 bsub -J bart-eval-full-rand-negs \
      -o ${LOGDIR}/bart-eval-full-rand-negs.out -e ${LOGDIR}/bart-eval-full-rand-negs.err \
      -M $MEM  -R "rusage[mem=${MEM}]" -n $CORES \
-     Rscript src/bart-eval.r $FULL_DATA $VALSET $NEG_VALSET TRUE FALSE FALSE
+     Rscript src/bart-eval.r $FULL_DATA $VALSET $NEG_VALSET TRUE FALSE
 bsub -J bart-eval-full-direct \
      -o ${LOGDIR}/bart-eval-full-direct.out -e ${LOGDIR}/bart-eval-full-direct.err \
      -M $MEM  -R "rusage[mem=${MEM}]" -n $CORES \
-     Rscript src/bart-eval.r $FULL_DATA $VALSET $NEG_VALSET FALSE FALSE TRUE
+     Rscript src/bart-eval.r $FULL_DATA $VALSET $NEG_VALSET FALSE TRUE
 
 # bsub -J bart-eval-direct \
 #      -o ${LOGDIR}/bart-eval-direct.out -e ${LOGDIR}/bart-eval-direct.err \
