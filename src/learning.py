@@ -178,7 +178,7 @@ if __name__ == "__main__":
     plt.title(method + "_" + 'ROC')
     plt.legend(loc="lower right")  
     
-    plt.savefig("plots/"+ method + "_unscale_" + train_method+'_'+'ROC.pdf')
+    plt.savefig("img/"+ method + "_unscale_" + train_method+'_'+'ROC.pdf')
 
         
     with open(sys.argv[6],"w") as output:
