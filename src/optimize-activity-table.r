@@ -32,7 +32,7 @@ filter.act.preds <- function(kin.act, phospho.anno, phospho.vals, kin.sub.tbl,
     return(kin.act)
 }
 
-choose.redundant.kin <- function(row){
+choose.redundant.kin <- function(row, kin.act){
     kin1 <- row[1]
     no.subs1 <- as.integer(row[2])
     kin2 <- row[3]
@@ -72,16 +72,23 @@ choose.redundant.kin <- function(row){
     }
 }
 
-get.redundant.kins <- function(kin.overlap){
+get.redundant.kins <- function(kin.overlap, kin.act){
     kin.overlap <- kin.overlap[order(kin.overlap$proportion.of.substrates.shared,
                                      decreasing=TRUE),]
     redundant.kins <- c()
     for (i in 1:nrow(kin.overlap)){
         row <- unlist(kin.overlap[i,])
-        if (row[1] %in% redundant.kins || row[2] %in% redundant.kins)
+        if (row[1] %in% redundant.kins || row[3] %in% redundant.kins)
             next
-        redundant.kin <- choose.redundant.kin(row)
-        redundant.kins <- c(redundant.kins, redundant.kin)
+        if (row[1] %in% rownames(kin.act) && row[3] %in% rownames(kin.act)){
+            redundant.kin <- choose.redundant.kin(row, kin.act)
+            redundant.kins <- c(redundant.kins, redundant.kin)
+        }else{
+            if (!(row[1] %in% rownames(kin.act)))
+                redundant.kins <- c(redundant.kins, row[1])
+            if (!(row[3] %in% rownames(kin.act)))
+                redundant.kins <- c(redundant.kins, row[3])
+        }
     }
     return(redundant.kins)
 }
