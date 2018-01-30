@@ -18,13 +18,21 @@ ifeq ($(KSEA_USE_AUTOPHOS),FALSE)
 else
 	KSEA_TMPDIR = $(TMPDIR)/ksea-autophos
 endif
+ifeq ($(KS_USE_AUTOPHOS),FALSE)
+	KS_TMPDIR = $(TMPDIR)/ks
+else
+	KS_TMPDIR = $(TMPDIR)/ks-autophos
+endif
 BINDIR = /nfs/research1/beltrao/software-rh7/bin
 
 #############
 ## Parameters
 
+KINACT_PREDS = $(KSEA_DATA)
 KSEA_NUM_CONDS = 668
 KSEA_USE_AUTOPHOS ?= TRUE
+KS_NUM_CONDS = $(KSEA_NUM_CONDS)
+KSEA_USE_AUTOPHOS ?= $(KSEA_USE_AUTOPHOS)
 TABLE_STRATEGIES = max-rows max-cols balanced
 TABLE_STRATEGY ?= max-rows
 KSEA_MIN_SITES ?= 3
@@ -106,6 +114,8 @@ TUMOR_EXPR_DATA_RAW = $(EXT_DATADIR)/GSM1536837_06_01_15_TCGA_24.tumor_Rsubread_
 # Kinase activity predictions
 KSEA_TMP_DATA = $(foreach COND_NUM,$(shell seq 1 $(KSEA_NUM_CONDS)),$(KSEA_TMPDIR)/cond-$(COND_NUM).tsv)
 KSEA_DATA = $(DATADIR)/log.wKSEA.kinase_condition.clean.Rdata
+KS_TMP_DATA = $(foreach COND_NUM,$(shell seq 1 $(KS_NUM_CONDS)),$(KS_TMPDIR)/cond-$(COND_NUM).tsv)
+KS_DATA = $(DATADIR)/ks-kinact.Rdata
 # Initial kinase-activity tables, trying to
 # maximize #rows, #cols or both.  Raw and imputed datasets
 KINACT_DATA = $(DATADIR)/kinact-$(TABLE_STRATEGY).tsv
@@ -321,7 +331,7 @@ assoc-results: $(KINACT_ASSOC) $(KINACT_ASSOC2)
 pssm: $(KIN_KIN_SCORES) $(KIN_KNOWN_PSITE_SCORES) $(KIN_SCORE_DIST)
 
 .PHONY: data
-data: $(KSEA_DATA) $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KINACT_DATA)
+data: $(KINACT_PREDS) $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KINACT_DATA)
 
 .PHONY: validation
 validation: $(VAL_IMGS)
@@ -398,19 +408,25 @@ $(IMGDIR):
 # the do-ksea.sh script
 $(KSEA_DATA): $(KSEA_TMP_DATA)
 	cat $^ >$@.tmp
-	$(RSCRIPT) $(KSEA_POST_SCRIPT) $@.tmp
+	$(RSCRIPT) $(KSEA_POST_SCRIPT) $@.tmp $@
+	rm $@.tmp
+
+$(KS_DATA): $(KS_TMP_DATA)
+	cat $^ >$@.tmp
+	$(RSCRIPT) $(KSEA_POST_SCRIPT) $@.tmp $@
 	rm $@.tmp
 
 # Kinase activity tables
 $(KINACT_DATA) \
 $(IMP_KINACT_DATA): $(GEN_KINACT_TBL_SCRIPT) $(OPTIMIZE_KINACT_TBL_SCRIPT) \
-					$(KSEA_DATA) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP)
-	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT) $(TABLE_STRATEGY) $(KSEA_MIN_SITES) \
-		$(ENTROPY_FILTER) $(NA_THRESHOLD)
+					$(KINACT_PREDS) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP)
+	$(RSCRIPT) $(GEN_KINACT_TBL_SCRIPT) $(KINACT_PREDS)			\
+		$(TABLE_STRATEGY) $(KSEA_MIN_SITES) $(ENTROPY_FILTER)	\
+		$(NA_THRESHOLD)
 
 # EGF-specific kinase activity tables
 $(EGF_KINACT_DATA): $(GEN_EGF_KINACT_TBL_SCRIPT) $(OPTIMIZE_KINACT_TBL_SCRIPT) \
-					$(KSEA_DATA) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP)
+					$(KINACT_PREDS) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP)
 	$(RSCRIPT) $(GEN_EGF_KINACT_TBL_SCRIPT) $(TABLE_STRATEGY) $(KSEA_MIN_SITES) \
 		$(ENTROPY_FILTER) $(NA_THRESHOLD)
 
@@ -424,12 +440,12 @@ $(HUMAN_KINASE_TABLE): $(FULL_KIN_SUBSTR_TABLE)
 
 # Filter the human kinase-substrates to just those for which we have
 # kinase activities
-$(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KSEA_DATA)
+$(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_PREDS)
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $< $@
 
 # Filter the PhosphoSitePlus site list to just those on kinases for
 # which we have kinase activities
-$(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KSEA_DATA)
+$(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_PREDS)
 	sed '1,3d' $< | awk -F"\t" -vOFS="\t" '{if (NR == 1 || $$7 == "human"){print}}' >$@.tmp
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
 	rm $@.tmp
@@ -440,11 +456,11 @@ $(HUMAN_REG_SITES): $(FULL_REG_SITES_TABLE)
 
 # Further filter to just include reg sites on kinases for which we
 # have kinase activities
-$(REG_SITES): $(HUMAN_REG_SITES) $(FILTER_PSITE_PLUS_SCRIPT) $(KSEA_DATA)
+$(REG_SITES): $(HUMAN_REG_SITES) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_PREDS)
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $< $@
 
 # Kinase-substrate overlap
-$(KIN_SUB_OVERLAP): $(HUMAN_KINASE_TABLE) $(KSEA_DATA) $(KIN_SUB_OVERLAP_SCRIPT)
+$(KIN_SUB_OVERLAP): $(HUMAN_KINASE_TABLE) $(KINACT_PREDS) $(KIN_SUB_OVERLAP_SCRIPT)
 	$(RSCRIPT) $(KIN_SUB_OVERLAP_SCRIPT)
 
 # Combine PhosphositePlus kinase-substrate and regulatory sites tables
@@ -595,7 +611,7 @@ $(COMBINED_GROUPING): $(GO_CELL_LOCATION) $(OMNIPATH_PATH_REFERENCE)
 
 # Kegg-based validation sets
 $(DATADIR)/validation-set-kegg-%.tsv: $(DATADIR)/kegg-%-rels.tsv \
-			$(UNIPROT_ID_MAPPING) $(KEGG_VAL_SCRIPT) $(KSEA_DATA)
+			$(UNIPROT_ID_MAPPING) $(KEGG_VAL_SCRIPT) $(KINACT_PREDS)
 	$(RSCRIPT) $(KEGG_VAL_SCRIPT) $(wordlist 1,2,$^) $@
 
 # Negative validation set
@@ -757,11 +773,11 @@ $(REG_SITE_ASSOC2): $(REG_SITES) $(REG_SITE_COR_SCRIPT)
 
 # Full kinase-activity pairwise correlations
 $(KINACT_FULL_ASSOC) \
-$(KINACT_FULL_ASSOC2): $(KINACT_DATA) $(KINACT_FULL_COR_SCRIPT)
-	$(RSCRIPT) $(KINACT_FULL_COR_SCRIPT)
+$(KINACT_FULL_ASSOC2): $(KINACT_PREDS) $(KINACT_FULL_COR_SCRIPT)
+	$(RSCRIPT) $(KINACT_FULL_COR_SCRIPT) $(KINACT_PREDS)
 
 # Inhibitory effects
-$(INHIB_FX): $(KSEA_DATA) $(KINS_TO_USE) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP) \
+$(INHIB_FX): $(KINACT_PREDS) $(KINS_TO_USE) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP) \
 		$(INHIB_FX_SCRIPT) $(OPTIMIZE_KINACT_TBL_SCRIPT)
 	$(RSCRIPT) $(INHIB_FX_SCRIPT) $(KINS_TO_USE) $(KSEA_MIN_SITES) $@
 
