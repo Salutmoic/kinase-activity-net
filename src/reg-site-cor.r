@@ -32,15 +32,7 @@ rownames(phospho.vals) <- paste(phospho.vals.gene, phospho.vals.pos, sep="_")
 
 reg.sites <- read.delim("data/reg_sites.tsv", as.is=TRUE)
 reg.sites$MOD_RSD <- sub("^[STY]", "", reg.sites$MOD_RSD)
-## reg.sites <- reg.sites.full[which(grepl("enzymatic activity, induced",
-##                                         reg.sites.full$ON_FUNCTION) |
-##                                   grepl("enzymatic activity, inhibited",
-##                                         reg.sites.full$ON_FUNCTION)),]
 rownames(reg.sites) <- paste(reg.sites$GENE, reg.sites$MOD_RSD, sep="_")
-
-## activity induction => 1, activity inhibition => -1
-## reg.sites$direction <- as.integer(grepl("induced", reg.sites$ON_FUNCTION))*2 - 1
-
 
 phosfun <- read.delim("data/phosfun.tsv", as.is=TRUE)
 names(phosfun) <- c("prot", "pos", "score")
@@ -50,6 +42,9 @@ for (site in rownames(phosfun)){
         phosfun[site, "score"] <- 1.0
 }
 med.phosfun <- median(phosfun$score)
+
+kinase.conditions <- read.delim("data/external/kinase-condition-pairs.tsv",
+                                as.is=TRUE)
 
 kin.pairs <- expand.grid(all.kins, all.kins, stringsAsFactors=FALSE)
 kin1s <- c()
@@ -68,15 +63,32 @@ for (i in 1:nrow(kin.pairs)){
     }
     kin1.sites <- which(phospho.vals.gene == kin1)
     kin2.sites <- which(phospho.vals.gene == kin2)
+    kin1.conds <- kinase.conditions[which(kinase.conditions$Kinase==kin1),
+                                    "Condition"]
+    kin2.conds <- kinase.conditions[which(kinase.conditions$Kinase==kin2),
+                                    "Condition"]
     pair.p.vals <- c()
     ## best.p.value <- -Inf
     for (kin1.site in kin1.sites){
         for (kin2.site in kin2.sites){
-            kin1.meas.conds <- which(!is.na(phospho.vals[kin1.site,]))
-            kin2.meas.conds <- which(!is.na(phospho.vals[kin2.site,]))
+            kin1.phospho <- phospho.vals[kin1.site,]
+            kin2.phospho <- phospho.vals[kin2.site,]
+            ## Remove conditions where the kinases were inhibited or
+            ## activated, because the phosphorylation state of a site
+            ## might not reflect the chemically induced activity of
+            ## the kinase (e.g. if the site is regulated by a
+            ## different kinase, the site might still get
+            ## phosphorylated, even if the substrate kinase has been
+            ## inhibited.  So we don't calculate correlations on these
+            ## conditions.
+            kin1.phospho[kin1.conds] <- NA
+            kin2.phospho[kin2.conds] <- NA
+            kin1.meas.conds <- which(!is.na(kin1.phospho))
+            kin2.meas.conds <- which(!is.na(kin2.phospho))
             shared.conds <- intersect(kin1.meas.conds, kin2.meas.conds)
             if (length(shared.conds) < 5)
                 next
+            ## Get the functional score prediction for both sites
             kin1.phosfun.i <- rownames(phospho.vals)[kin1.site]
             kin2.phosfun.i <- rownames(phospho.vals)[kin2.site]
             if (!(kin1.phosfun.i %in% rownames(phosfun))){
@@ -89,15 +101,10 @@ for (i in 1:nrow(kin.pairs)){
             }else{
                 kin2.phosfun <- phosfun[kin2.phosfun.i, "score"]
             }
-            kin1.phospho <- phospho.vals[kin1.site,]
-            kin2.phospho <- phospho.vals[kin2.site,]
             ct <- cor.test(kin1.phospho, kin2.phospho, method="spearman",
                            use="pairwise.complete.obs")
-            ## p.value <- -log10(ct$p.value/(kin1.phosfun*kin2.phosfun))
             p.value <- -log10(ct$p.value)*kin1.phosfun*kin2.phosfun
             if (!is.infinite(p.value)){ ## && p.value > best.p.value){
-                ## best.p.value <- p.value
-                ## best.cor.est <- ct$estimate
                 pair.p.vals <- c(pair.p.vals, p.value)
             }
         }
