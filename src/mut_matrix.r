@@ -1,7 +1,7 @@
-
 #Possible predictor, haven't tried yet. Based on the principle of synthetic lethality
 #So if gene A is mutated in some cell lines and there is difference in survival between those cell lines and the rest when gene B is ko-> possible interaction between A and B
-#note to self, incorporate effect size and.... the mutated sample is usually much smaller.
+#note to self, incorporate effect size and.... the mutated sample is usually much smaller. 
+#remember to normalize Achilles
 
 
 mut.data = read.delim("data/external/CCLE_hybrid_capture1650_hg19_NoCommonSNPs_NoNeutralVariants_CDS_2012.05.07.maf")
