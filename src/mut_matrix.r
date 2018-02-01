@@ -66,4 +66,6 @@ print(i)
 }
 
 
-cbind(kin.pairs,p.scores)
+kin.table = cbind(kin.pairs,p.scores)
+write.table(kin.table,"out/mutation_essential.tsv",sep = "\t",quote = F, row.names = F)
+
