@@ -107,9 +107,12 @@ for (i in 1:nrow(kin.pairs)){
         ct <- cor.test(kin1.act, kin2.act, method="spearman",
                        use="pairwise.complete.obs")
         p.value <- -log10(ct$p.value)
-        cor.est <- ct$estimate
-        if (is.infinite(p.value))
+        ## z-transformation of Spearman's rho
+        cor.est <- sqrt((length(shared.conds)-3)/1.06)*atanh(ct$estimate)
+        if (is.infinite(p.value)){
             p.value <- NA
+            cor.est <- NA
+        }
     }
     kin1s <- c(kin1s, kin1)
     kin2s <- c(kin2s, kin2)
@@ -119,8 +122,12 @@ for (i in 1:nrow(kin.pairs)){
 
 results <- data.frame(node1=kin1s, node2=kin2s, kinact.cor.p=p.vals)
 results$kinact.cor.p <- results$kinact.cor.p/max(results$kinact.cor.p, na.rm=TRUE)
-
 write.table(results[order(results$node1),], "out/kinact-full-cor.tsv", quote=FALSE,
+            row.names=FALSE, col.names=TRUE, sep="\t")
+
+cor.est.results <- data.frame(node1=kin1s, node2=kin2s, kinact.cor.est=cors)
+write.table(cor.est.results[order(cor.est.results$node1),],
+            "out/kinact-full-cor-sign.tsv", quote=FALSE,
             row.names=FALSE, col.names=TRUE, sep="\t")
 
 ## kin.cor <- acast(results, node1 ~ node2)
