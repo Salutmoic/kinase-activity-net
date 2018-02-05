@@ -17,10 +17,11 @@ for (f in argv[2:length(argv)]){
         next
     }
     new.dat <- read.delim(f, as.is=TRUE)
-    meth.match <- regexpr("([a-z0-9]*)\\.tsv", f, perl=TRUE)
-    new.meth <- substring(f, attr(meth.match, "capture.start"),
-                      attr(meth.match, "capture.start")
-                      + attr(meth.match, "capture.length")-1)
+    ## meth.match <- regexpr("([a-z0-9-]*)\\.tsv", f, perl=TRUE)
+    ## new.meth <- substring(f, attr(meth.match, "capture.start"),
+    ##                   attr(meth.match, "capture.start")
+    ##                   + attr(meth.match, "capture.length")-1)
+    new.meth <- gsub("-", ".", strsplit(basename(f), split="\\.")[[1]][1])
     merged.dat <- merge(merged.dat, new.dat,
                         by.x=c("node1", "node2"),
                         by.y=c("node1", "node2"),
