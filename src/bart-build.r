@@ -21,7 +21,7 @@ if (use_rand_negs && directed)
 merged_pred <- read.delim(merged_pred_file, as.is=TRUE)
 names(merged_pred)[1:2] <- c("prot1", "prot2")
 ## Remove missing data
-merged_pred <- merged_pred[complete.cases(merged_pred),]
+## merged_pred <- merged_pred[complete.cases(merged_pred),]
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
 
 true_intxns_tbl <- read.table(val_set_file, as.is = TRUE)
@@ -56,7 +56,7 @@ labels <- c(rep(TRUE, length(true_intxns)),
 bart <- bartMachineCV(preds,
                       as.factor(labels),
                       use_missing_data=TRUE,
-                      use_missing_data_dummies_as_covars=FALSE,
+                      use_missing_data_dummies_as_covars=TRUE,
                       replace_missing_data_with_x_j_bar=FALSE,
                       impute_missingness_with_x_j_bar_for_lm=FALSE,
                       prob_rule_class=0.0,

@@ -21,7 +21,7 @@ if (use_rand_negs && directed)
 merged_pred <- read.delim(merged_pred_file, as.is=TRUE)
 names(merged_pred)[1:2] <- c("prot1", "prot2")
 ## Remove missing data
-merged_pred <- merged_pred[complete.cases(merged_pred),]
+## merged_pred <- merged_pred[complete.cases(merged_pred),]
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
 
 true_intxns_tbl <- read.table(val_set_file, as.is = TRUE)
@@ -69,9 +69,9 @@ for (n in 1:num_reps){
     rep_probs <- NULL
     rep_labels <- NULL
     for (i in 1:k){
-        val_i <- ((i-1)*k + 1)
+        val_i <- (val_n*(i-1))+1
         if (i < k){
-            val_rows <- val_i:(val_i + val_n)
+            val_rows <- val_i:(val_i + val_n - 1)
         }else{
             val_rows <- val_i:nrow(preds)
         }
@@ -85,7 +85,7 @@ for (n in 1:num_reps){
         bart <- bartMachineCV(train_set,
                               train_labels,
                               use_missing_data=TRUE,
-                              use_missing_data_dummies_as_covars=FALSE,
+                              use_missing_data_dummies_as_covars=TRUE,
                               replace_missing_data_with_x_j_bar=FALSE,
                               impute_missingness_with_x_j_bar_for_lm=FALSE,
                               prob_rule_class=0.0,
@@ -112,13 +112,13 @@ mean_auc <- mean(unlist(rocr_auc@y.values), na.rm=TRUE)
 se_auc <- sd(unlist(rocr_auc@y.values), na.rm=TRUE)/sqrt(num_reps*k)
 
 fprs <- rocr_roc@x.values
-fpr0.5s <- unlist(lapply(fprs,
+fpr0.05s <- unlist(lapply(fprs,
                         function(f){
-                            fpr0.5 <-max(which(f<0.05))
-                            rocr_roc@alpha.values[[1]][fpr0.5]
+                            fpr0.05 <-max(which(f<0.05))
+                            rocr_roc@alpha.values[[1]][fpr0.05]
                         }))
-cutoff <- mean(fpr0.5s)
-message(paste("FPR 0.5 cutoff: ", cutoff))
+cutoff <- mean(fpr0.05s)
+message(paste("FPR 0.05 cutoff: ", cutoff))
 
 file_base <- strsplit(basename(merged_pred_file), split="\\.")[[1]][1]
 img_file <- paste0(file_base, "-bart")
