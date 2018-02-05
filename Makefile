@@ -646,7 +646,6 @@ $(KINASE_BEADS): $(KINASE_BEADS_RAW) $(MELT_SCRIPT)
 # Hotspots
 $(HOTSPOTS): $(HOTSPOTS_RAW) $(TYR_HOTSPOTS_RAW) $(ENSEMBL_ID_MAPPING)
 	cat $(wordlist 1,2,$^) | sed 's/, /\t/g' | cut -f2,4,6,7 | \
-		awk -F"\t" -vOFS="\t" '{if ($$4==0){rel=1}else{rel=-log($$4)/log(10)/100}; print $$1, $$2, $$3, rel}' | \
 		sort -k1 | join -t'	' $(ENSEMBL_ID_MAPPING) - | cut -f2-5 >$@
 
 # PhosFun predictions
