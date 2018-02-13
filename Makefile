@@ -81,6 +81,7 @@ FULL_PHOS_SITES_TABLE = $(EXT_DATADIR)/Phosphorylation_site_dataset_$(PHOSPHOSIT
 # Kegg data
 KEGG_RELATIONSHIPS = $(wildcard $(KEGGDIR)/*.ppip)
 # Uniprot data
+HUMAN_PROTEOME = $(EXT_DATADIR)/UP000005640_9606-2017-10-25.fasta
 FULL_UNIPROT_ID_MAPPING = $(EXT_DATADIR)/HUMAN_9606_idmapping.dat
 # Gene Ontology
 GO_OBO_VERSION = 2017-10-04
@@ -97,6 +98,7 @@ KINOME_RAW = $(EXT_DATADIR)/pkinfam.txt
 HOTSPOTS_RAW = $(EXT_DATADIR)/kinase-phospho-hotspots.tsv
 TYR_HOTSPOTS_RAW = $(EXT_DATADIR)/tyr-kinase-phospho-hotspots.tsv
 # PhosFun predictions
+PHOSFUN_FEATS_RAW = $(EXT_DATADIR)/phosphoproteome_annotated
 PHOSFUN_ST_RAW = $(EXT_DATADIR)/phosfun-predictions-ST.tsv
 PHOSFUN_Y_RAW = $(EXT_DATADIR)/phosfun-predictions-Y.tsv
 # Cancer datasets
@@ -107,6 +109,8 @@ CRISPR_DATA_RAW = $(EXT_DATADIR)/ceres-gene-effects.csv
 CELLLINE_EXPR_DATA_RAW = $(EXT_DATADIR)/data_expression_median.txt
 CELLLINE_RNASEQ_DATA_RAW = $(EXT_DATADIR)/CCLE_RNA-seq_tpm_matrix.csv
 TUMOR_EXPR_DATA_RAW = $(EXT_DATADIR)/GSM1536837_06_01_15_TCGA_24.tumor_Rsubread_TPM.txt
+# Pfam predictions
+PFAM_DATA_RAW = $(EXT_DATADIR)/Pfam-9606.31.0.tsv
 
 ######################
 ## Generated data sets
@@ -157,6 +161,7 @@ KEGG_PHOS = $(DATADIR)/kegg-phos-rels.tsv
 KEGG_PATH_REFERENCE = $(DATADIR)/kegg-path-ref.tsv
 # Uniprot-derived files
 UNIPROT_ID_MAPPING = $(DATADIR)/uniprot-id-map.tsv
+UNIPROT_ID_MAPPING_SMALL = $(DATADIR)/uniprot-id-map-small.tsv
 ENSEMBL_ID_MAPPING = $(DATADIR)/ensembl-id-map.tsv
 # GO-derived files
 GO_ASSOC = $(DATADIR)/go-assoc.tsv
@@ -186,6 +191,7 @@ KINS_TO_USE = $(HUMAN_KINOME)
 # Kinase-domain phosphorylation hot spots
 HOTSPOTS = $(DATADIR)/kinase-phospho-hotspots.tsv
 # PhosFun predictions
+PHOSFUN_FEATS = $(DATADIR)/phosfun-features.tsv
 PHOSFUN = $(DATADIR)/phosfun.tsv
 # Omnipath
 OMNIPATH_CACHE = $(CACHEDIR)/default_network.pickle
@@ -213,6 +219,8 @@ CELLLINE_RNASEQ_DATA = $(DATADIR)/cell-line-rnaseq.tsv
 TUMOR_EXPR_DATA = $(DATADIR)/tumor-expr.tsv
 # Final predictor
 FINAL_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(PRED_METHOD).tsv
+# Pfam data
+PFAM_DATA = $(DATADIR)/human-pfam.tsv
 
 #########
 ## Images
@@ -446,7 +454,7 @@ $(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_
 # Filter the PhosphoSitePlus site list to just those on kinases for
 # which we have kinase activities
 $(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_PREDS)
-	sed '1,3d' $< | awk -F"\t" -vOFS="\t" '{if (NR == 1 || $$7 == "human"){print}}' >$@.tmp
+	sed '1,3d' $< | awk -F"\t" -vOFS="\t" '{if ((NR == 1 || $$7 == "human") && $$5 !~ /^G/){print}}' >$@.tmp
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
 	rm $@.tmp
 
@@ -491,6 +499,9 @@ $(KEGG_PHOS): $(KEGG_RELATIONSHIPS)
 $(UNIPROT_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING)
 	awk 'BEGIN{OFS="\t"}{if ($$2=="Gene_Name"){print $$1, $$3}}' $< | sort >$@
 
+$(UNIPROT_ID_MAPPING_SMALL): $(HUMAN_PROTEOME)
+	sed -n '/^>sp.*GN=/{s/>sp|\([A-Z0-9-][A-Z0-9-]*\)|.*GN=\([[:alnum:]][[:alnum:]]*\).*/\1\t\2/;p}' $< >$@
+
 $(ENSEMBL_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
 	awk 'BEGIN{OFS="\t"}{if ($$2=="Ensembl_PRO"){print $$1, $$3}}' $< | \
 		sort -d -k1 | sed 's/-[0-9][0-9]*\t/\t/' >$@.tmp
@@ -527,6 +538,15 @@ $(STRING_ID_MAPPING): $(FULL_UNIPROT_ID_MAPPING) $(UNIPROT_ID_MAPPING)
 	awk 'BEGIN{OFS="\t"}{if ($$2=="STRING" && $$1 !~ /.-[0-9]/){print $$1, $$3}}' $< | sort -d -k1 >$@.tmp
 	join -t'	' $@.tmp $(UNIPROT_ID_MAPPING) | cut -f2,3 >$@
 	rm $@.tmp
+
+# Pfam data
+$(PFAM_DATA): $(PFAM_DATA_RAW) $(UNIPROT_ID_MAPPING_SMALL)
+	sed '/^#/d;s/  */\t/g;s/\(ENSP[0-9][0-9]*\)\.[0-9][0-9]*/\1/' $< | \
+	 	cut -f1,4,5,7 | sort -k1 >$@.tmp
+	join -t'	' $@.tmp $(UNIPROT_ID_MAPPING_SMALL) | \
+	 	awk -vOFS="\t" '{print $$5, $$4, $$2, $$3}' | sort -k1 >$@.tmp2
+	cat <(printf "%s\t%s\t%s\t%s\n" protein domain start end) $@.tmp2 >$@
+	rm $@.tmp $@.tmp2
 
 # STRING coexpression
 $(HUMAN_STRING_COEXP): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINS_TO_USE) \
