@@ -161,7 +161,8 @@ if (cond.num > ncol(phospho.vals)){
 }
 
 ## Load kinase-substrate relationships
-kin.sub.tbl <- read.delim("data/human_kinase_table.tsv", as.is=TRUE, sep="\t")
+kin.sub.tbl <- read.delim("data/psiteplus-kinase-substrates.tsv", as.is=TRUE,
+                          sep="\t")
 kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
 
 ## Remove all autophosphorylations, as in Ochoa et al 2016.  The
@@ -175,7 +176,7 @@ if (!use.autophos){
 ## ## Get all the sites annotated as substrates for each kinase.
 kinase.sites <- get.kinase.sites(kin.sub.tbl, phospho.anno)
 
-## kin.overlap <- read.delim("data/kinase_substrate_overlap.tsv", as.is=TRUE)
+## kin.overlap <- read.delim("data/psiteplus-kinase-substrate-overlap.tsv", as.is=TRUE)
 ## ## Remove redundant kinases
 ## redundant.kins <- get.redundant.kins(kin.overlap, kinase.sites, phospho.vals,
 ##                                      phospho.anno)

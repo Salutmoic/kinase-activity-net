@@ -89,7 +89,7 @@ def read_reg_sites_file(reg_sites_file):
         for line in h:
             line_spl = line.strip().split("\t")
             protein = line_spl[0]
-            pos = line_spl[posind][1:]
+            pos = line_spl[posind].replace("-p", "")[1:]
             func = line_spl[funcind]
             if "activity, induced" in func:
                 sign = 1.0
@@ -213,13 +213,13 @@ def signed_regulation_score(pair, scores, phosfun, med_phosfun, reg_sites, signs
 def score_network(kinase_file, out_file):
     # This takes network files and scores all edges according to pssm
 
-    ktable = pssms.read_kin_sub_data("data/reduced_kinase_table.tsv")
+    ktable = pssms.read_kin_sub_data("data/psiteplus-kinase-substrates.tsv")
     aa_freqs = pssms.read_aa_freqs("data/aa-freqs.tsv")
-    psites = read_phosphosites("data/phosphosites_reduced.tsv")
+    psites = read_phosphosites("data/psiteplus-phosphosites.tsv")
     kinases = read_kinase_file(kinase_file)
     phosfun, med_phosfun = read_phosfun_file("data/phosfun.tsv")
     signs = read_sign_file("out/reg-site-bart-sign-preds.tsv")
-    reg_sites = read_reg_sites_file("data/reg_sites.tsv")
+    reg_sites = read_reg_sites_file("data/psiteplus-reg-sites.tsv")
     scores = score_kin_pairs(ktable, kinases, aa_freqs, psites)
     with open(out_file, "w") as v:
         v.write("\t".join(["node1", "node2", "pssm.score"])+"\n")

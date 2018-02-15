@@ -20,9 +20,11 @@ kin.act <- log.wKSEA.kinase_condition.clean
 cond.anno <- pData(esetNR)
 phospho.anno <- fData(esetNR)
 phospho.vals <- exprs(esetNR)
-kin.sub.tbl <- read.delim("data/human_kinase_table.tsv", as.is=TRUE, sep="\t")
+kin.sub.tbl <- read.delim("data/psiteplus-kinase-substrates.tsv", as.is=TRUE,
+                          sep="\t")
 kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
-kin.overlap <- read.delim("data/kinase_substrate_overlap.tsv", as.is=TRUE)
+kin.overlap <- read.delim("data/psiteplus-kinase-substrate-overlap.tsv",
+                          as.is=TRUE)
 
 ## Please note also we added the breast cancer CPTAC data from two different
 ## sources: The CPTAC database as well as from the supplementary material of

@@ -4,7 +4,7 @@ get_pos_in_domain <- function(pos, dom_start, dom_end){
     return((pos-dom_start)/(dom_end-dom_start))
 }
 
-phospho_table <- read.delim("data/phosphosites_reduced.tsv", as.is=TRUE)
+phospho_table <- read.delim("data/psiteplus-phosphosites.tsv", as.is=TRUE)
 phospho_table$residue <- sapply(phospho_table$MOD_RSD, substr, 1, 1)
 phospho_table$MOD_RSD <- sub("^[STY]", "", phospho_table$MOD_RSD)
 phospho_table$MOD_RSD <- sub("-p$", "", phospho_table$MOD_RSD)

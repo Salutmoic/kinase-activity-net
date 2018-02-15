@@ -31,8 +31,9 @@ phospho.vals.gene <- ensp.id.map[phospho.vals.ensp, "gene.name"]
 
 rownames(phospho.vals) <- paste(phospho.vals.gene, phospho.vals.pos, sep="_")
 
-reg.sites <- read.delim("data/reg_sites.tsv", as.is=TRUE)
+reg.sites <- read.delim("data/psiteplus-reg-sites.tsv", as.is=TRUE)
 reg.sites$MOD_RSD <- sub("^[STY]", "", reg.sites$MOD_RSD)
+reg.sites$MOD_RSD <- sub("-p$", "", reg.sites$MOD_RSD)
 rownames(reg.sites) <- paste(reg.sites$GENE, reg.sites$MOD_RSD, sep="_")
 
 phosfun <- read.delim("data/phosfun.tsv", as.is=TRUE)
@@ -43,7 +44,7 @@ for (site in rownames(phosfun)){
         phosfun[site, "score"] <- 1.0
 }
 
-kin.subs.full <- read.delim("data/reduced_kinase_table.tsv", as.is=TRUE)
+kin.subs.full <- read.delim("data/psiteplus-kinase-substrates.tsv", as.is=TRUE)
 kin.subs.full$SUB_MOD_RSD <- sub("^[STY]", "", kin.subs.full$SUB_MOD_RSD)
 
 ## egf.kinases <- c("AKT1", "AKT2", "ARAF", "BRAF", "CHUK", "GSK3A", "GSK3B",

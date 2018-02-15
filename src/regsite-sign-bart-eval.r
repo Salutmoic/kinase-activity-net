@@ -11,7 +11,7 @@ get_pos_in_domain <- function(pos, dom_start, dom_end){
     return((pos-dom_start)/(dom_end-dom_start))
 }
 
-reg_sites <- read.delim("data/reg_sites.tsv")
+reg_sites <- read.delim("data/psiteplus-reg-sites.tsv")
 reg_sites$MOD_RSD <- sub("^[STY]", "", reg_sites$MOD_RSD)
 reg_sites$MOD_RSD <- sub("-p$", "", reg_sites$MOD_RSD)
 ## reg_sites$ACC_ID <- sub("-[0-9]+", "", reg_sites$ACC_ID)

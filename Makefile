@@ -145,16 +145,12 @@ REG_SITE_ASSOC_SIGN = $(OUTDIR)/reg-site-cor-sign.tsv
 AA_FREQS = $(DATADIR)/aa-freqs.tsv
 # PSSM files
 KIN_KIN_SCORES = $(OUTDIR)/kinase-pssm.tsv
-KIN_KIN_SCORES_KINOME = $(OUTDIR)/human-kinome-pssm.tsv
-KIN_KNOWN_PSITE_SCORES = $(OUTDIR)/known_kinase_psite-score
 KIN_SCORE_DIST = $(OUTDIR)/kinase-pssm-dists.tsv
 # PhosphositePlus derived files
-KIN_SUBSTR_TABLE = $(DATADIR)/reduced_kinase_table.tsv
-HUMAN_KINASE_TABLE = $(DATADIR)/human_kinase_table.tsv
-PHOSPHOSITES = $(DATADIR)/phosphosites_reduced.tsv
-HUMAN_REG_SITES = $(DATADIR)/human_reg_sites.tsv
-REG_SITES = $(DATADIR)/reg_sites.tsv
-KIN_SUB_OVERLAP = $(DATADIR)/kinase_substrate_overlap.tsv
+KIN_SUBSTR_TABLE = $(DATADIR)/psiteplus-kinase-substrates.tsv
+PHOSPHOSITES = $(DATADIR)/psiteplus-phosphosites.tsv
+REG_SITES = $(DATADIR)/psiteplus-reg-sites.tsv
+KIN_SUB_OVERLAP = $(DATADIR)/psiteplus-kinase-substrate-overlap.tsv
 # Kegg-derived files
 KEGG_ACT = $(DATADIR)/kegg-act-rels.tsv
 KEGG_PHOS_ACT = $(DATADIR)/kegg-phos-act-rels.tsv
@@ -441,14 +437,13 @@ $(EGF_KINACT_DATA): $(GEN_EGF_KINACT_TBL_SCRIPT) $(OPTIMIZE_KINACT_TBL_SCRIPT) \
 $(DATADIR)/%-discr.tsv: $(DATADIR)/%-imp.tsv $(DISCRETIZE_SCRIPT)
 	$(RSCRIPT) $(DISCRETIZE_SCRIPT) $(DISCR_METHOD) $< $@
 
-# Grab just the human kinase-substrate relationships
-$(HUMAN_KINASE_TABLE): $(FULL_KIN_SUBSTR_TABLE)
-	sed '1,3d;4s|+/-|...|' $< | awk -F"\t" '{if (NR==1 || ($$4=="human" && $$9=="human")){print}}' >$@
-
 # Filter the human kinase-substrates to just those for which we have
-# kinase activities
-$(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_PREDS)
-	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $< $@
+# enough evidence
+$(KIN_SUBSTR_TABLE): $(FULL_KIN_SUBSTR_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) \
+		$(HUMAN_KINOME)
+	sed '1,3d;4s|+/-|...|' $< | \
+		awk -F"\t" '{if (NR==1 || ($$4=="human" && $$9=="human")){print}}' >$@.tmp
+	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
 
 # Filter the PhosphoSitePlus site list to just those on kinases for
 # which we have kinase activities
@@ -458,17 +453,17 @@ $(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_P
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
 	rm $@.tmp
 
-# Filter the Regulatory sites table to have just human phosphosites
-$(HUMAN_REG_SITES): $(FULL_REG_SITES_TABLE)
-	sed '1,3d' $< | awk -F"\t" 'BEGIN{OFS="\t"}{if (NR==1 || $$7=="human" && $$8~/-p$$/){print}}' | sed 's/-p//' >$@
-
 # Further filter to just include reg sites on kinases for which we
 # have kinase activities
-$(REG_SITES): $(HUMAN_REG_SITES) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_PREDS)
-	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $< $@
+$(REG_SITES): $(FULL_REG_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) \
+		$(HUMAN_KINOME)
+	sed '1,3d' $< | \
+		awk -F"\t" 'BEGIN{OFS="\t"}{if (NR==1 || $$7=="human" && $$8~/-p$$/){print}}' | \
+		sed 's/-p//' >$@.tmp
+	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
 
 # Kinase-substrate overlap
-$(KIN_SUB_OVERLAP): $(HUMAN_KINASE_TABLE) $(KINACT_PREDS) $(KIN_SUB_OVERLAP_SCRIPT)
+$(KIN_SUB_OVERLAP): $(KIN_SUBSTR_TABLE) $(KINACT_PREDS) $(KIN_SUB_OVERLAP_SCRIPT)
 	$(RSCRIPT) $(KIN_SUB_OVERLAP_SCRIPT)
 
 # Combine PhosphositePlus kinase-substrate and regulatory sites tables
@@ -807,17 +802,17 @@ $(INHIB_FX): $(KINACT_PREDS) $(KINS_TO_USE) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP)
 
 # Calculate kinase-substrate PSSM scores
 $(OUTDIR)/%-pssm.tsv: $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
-					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
-					$(KINS_TO_USE) $(PSSM_LIB) $(PHOSFUN)
+					$(PHOSPHOSITES) $(KINS_TO_USE) $(PSSM_LIB)			\
+					$(PHOSFUN)
 	$(PYTHON) $(PSSM_SCRIPT) $(KINS_TO_USE) $@
 
-$(KIN_KIN_SCORES_KINOME): $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
-					$(HUMAN_KINASE_TABLE) $(PHOSPHOSITES)			\
+$(KIN_KIN_SCORES_KINOME): $(AA_FREQS) $(PSSM_SCRIPT)		\
+					$(KIN_SUBSTR_TABLE) $(PHOSPHOSITES)		\
 					$(HUMAN_KINOME) $(PSSM_LIB) $(PHOSFUN)
 	$(PYTHON) $(PSSM_SCRIPT) $(HUMAN_KINOME) $@
 
-$(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_DIST_SCRIPT) $(KIN_SUBSTR_TABLE) \
-					$(HUMAN_KINASE_TABLE) $(KINACT_DATA) $(PSSM_LIB)
+$(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_DIST_SCRIPT)					\
+					 $(KIN_SUBSTR_TABLE) $(KINACT_DATA) $(PSSM_LIB)
 	$(PYTHON) $(PSSM_DIST_SCRIPT) $(KINACT_DATA)
 
 ###################
@@ -838,7 +833,7 @@ $(DIRECT_PRED): $(DIRECT_PRED_SOURCES) $(MERGE_SCRIPT)
 ##################
 ## Sign prediction
 
-$(SIGN_GUESS): $(REG_SITES) $(HUMAN_KINASE_TABLE) $(KIN_SUB_OVERLAP) \
+$(SIGN_GUESS): $(REG_SITES) $(KIN_SUBSTR_TABLE) $(KIN_SUB_OVERLAP) \
 				$(HUMAN_KINOME) $(ENSEMBL_ID_MAPPING) $(PHOSFUN) \
 				$(KIN_COND_PAIRS) $(PSITE_DATA) $(KINACT_PREDS)
 	$(RSCRIPT) $(GUESS_REG_SIGN_SCRIPT) $(KINACT_PREDS)

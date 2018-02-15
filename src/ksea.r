@@ -90,7 +90,8 @@ if (cond.num > ncol(phospho.vals)){
 }
 
 ## Load kinase-substrate relationships
-kin.sub.tbl <- read.delim("data/human_kinase_table.tsv", as.is=TRUE, sep="\t")
+kin.sub.tbl <- read.delim("data/psiteplus-kinase-substrates.tsv", as.is=TRUE,
+                          sep="\t")
 kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
 
 ## Remove all autophosphorylations, as in Ochoa et al 2016.  The

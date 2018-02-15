@@ -2,6 +2,14 @@ suppressMessages(library(Biobase))
 suppressMessages(library(reshape2))
 load("data/external/esetNR.Rdata")
 
+calc.dcg <- function(scores){
+    dcg <- sapply(1:length(scores),
+                  function(i){
+                      scores[i]/log2(i+1)
+                  })
+    return (dcg)
+}
+
 cond.anno <- pData(esetNR)
 phospho.anno <- fData(esetNR)
 phospho.vals.full <- exprs(esetNR)
@@ -30,7 +38,7 @@ phospho.vals.gene <- ensp.id.map[phospho.vals.ensp, "gene.name"]
 
 rownames(phospho.vals) <- paste(phospho.vals.gene, phospho.vals.pos, sep="_")
 
-reg.sites <- read.delim("data/reg_sites.tsv", as.is=TRUE)
+reg.sites <- read.delim("data/psiteplus-reg-sites.tsv", as.is=TRUE)
 reg.sites$MOD_RSD <- sub("^[STY]", "", reg.sites$MOD_RSD)
 reg.sites$MOD_RSD <- sub("-p$", "", reg.sites$MOD_RSD)
 rownames(reg.sites) <- paste(reg.sites$GENE, reg.sites$MOD_RSD, sep="_")
@@ -54,6 +62,8 @@ kin2s <- c()
 p.vals <- c()
 cors <- c()
 mean.cors <- c()
+dcgs <- c()
+signed.dcgs <- c()
 for (i in 1:nrow(kin.pairs)){
     kin1 <- kin.pairs[i, 1]
     kin2 <- kin.pairs[i, 2]
@@ -114,8 +124,8 @@ for (i in 1:nrow(kin.pairs)){
             ## z-transformation of Spearman's rho
             cor.est <- sqrt((length(shared.conds)-3)/1.06)*atanh(ct$estimate)
             if (!is.infinite(p.value)){ ## && p.value > best.p.value){
-                pair.p.vals <- c(pair.p.vals, p.value*kin1.phosfun*kin2.phosfun)
-                pair.cors <- c(pair.cors, cor.est*kin1.phosfun*kin2.phosfun)
+                pair.p.vals <- c(pair.p.vals, p.value)
+                pair.cors <- c(pair.cors, cor.est)
                 pair.weights <- c(pair.weights, kin1.phosfun*kin2.phosfun)
             }
         }
@@ -125,10 +135,23 @@ for (i in 1:nrow(kin.pairs)){
         cor.est <- NA
         mean.cor <- NA
     }else{
-        p.val <- max(pair.p.vals, na.rm=TRUE)
-        j <- which.max(pair.p.vals)
+        p.val <- max(pair.p.vals*pair.weights, na.rm=TRUE)
+        j <- which.max(pair.p.vals*pair.weights)
         cor.est <- pair.cors[j]*pair.weights[j]
         mean.cor <- weighted.mean(pair.cors, w=pair.weights, na.rm=TRUE)
+        dcg <- calc.dcg(pair.weights[order(pair.p.vals, decreasing=TRUE)])
+        idcg <- dcg/calc.dcg(pair.weights[order(pair.weights, decreasing=TRUE)])
+        signed.weights <- pair.cors * pair.weights
+        signed.dcg <- calc.dcg(signed.weights[order(pair.p.vals, decreasing=TRUE)])
+        signed.dcg <- signed.dcg * max(pair.weights) * max(pair.p.vals)
+        if (signed.dcg < 0){
+            signed.idcg <- signed.dcg/calc.dcg(signed.weights[order(signed.weights)])
+            signed.idcg <- signed.idcg * min(signed.weights) * max(pair.p.vals)
+        }else{
+            signed.idcg <- signed.dcg/calc.dcg(signed.weights[order(signed.weights,
+                                                                    decreasing=TRUE)])
+            signed.idcg <- signed.idcg * max(signed.weights) * max(pair.p.vals)
+        }
     }
     if (is.null(p.val)){
         p.val <- NA
@@ -140,6 +163,8 @@ for (i in 1:nrow(kin.pairs)){
     p.vals <- c(p.vals, p.val)
     cors <- c(cors, cor.est)
     mean.cors <- c(mean.cors, mean.cor)
+    dcgs <- c(dcgs, idcg)
+    signed.dcgs <- c(signed.dcgs, signed.idcg)
 }
 
 results <- data.frame(node1=kin1s, node2=kin2s, reg.site.cor.p=p.vals)
@@ -157,46 +182,58 @@ write.table(cor.mean.results[order(cor.mean.results$node1),],
             "out/reg-site-mean-cor-sign.tsv", quote=FALSE,
             row.names=FALSE, col.names=TRUE, sep="\t")
 
-message("Done with cor, starting cor^2")
-
-## kin.cor <- acast(results, node1 ~ node2)
-kin.cor <- matrix(p.vals, nrow=length(all.kins))
-rownames(kin.cor) <- all.kins
-colnames(kin.cor) <- all.kins
-
-kin1s <- c()
-kin2s <- c()
-p.vals <- c()
-for (i in 1:nrow(kin.pairs)){
-    kin1 <- kin.pairs[i, 1]
-    kin2 <- kin.pairs[i, 2]
-    if (kin1 == kin2){
-        kin1s <- c(kin1s, kin1)
-        kin2s <- c(kin2s, kin2)
-        p.vals <- c(p.vals, NA)
-        next
-    }
-    kin1.cor.pairs <- which(!is.na(kin.cor[kin1,]))
-    kin2.cor.pairs <- which(!is.na(kin.cor[kin2,]))
-    shared.pairs <- intersect(kin1.cor.pairs, kin2.cor.pairs)
-    if (length(shared.pairs) < 3){
-        p.value <- NA
-    }else{
-        kin1.cor <- kin.cor[kin1,]
-        kin2.cor <- kin.cor[kin2,]
-        ct <- cor.test(kin1.cor, kin2.cor, method="spearman",
-                       use="pairwise.complete.obs")
-        p.value <- -log10(ct$p.value)
-        if (is.infinite(p.value))
-            p.value <- NA
-    }
-    kin1s <- c(kin1s, kin1)
-    kin2s <- c(kin2s, kin2)
-    p.vals <- c(p.vals, p.value)
-}
-
-results <- data.frame(node1=kin1s, node2=kin2s, reg.site.cor2.p=p.vals)
-results$reg.site.cor2.p <- results$reg.site.cor2.p/max(results$reg.site.cor2.p, na.rm=TRUE)
-
-write.table(results[order(results$node1),], "out/reg-site-cor2.tsv", quote=FALSE,
+cor.dcg.results <- data.frame(node1=kin1s, node2=kin2s, reg.site.dcg=dcgs)
+write.table(cor.dcg.results[order(cor.dcg.results$node1),],
+            "out/reg-site-cor-dcg.tsv", quote=FALSE,
             row.names=FALSE, col.names=TRUE, sep="\t")
+
+cor.signed.dcg.results <- data.frame(node1=kin1s, node2=kin2s,
+                                     reg.site.signed.dcg=dcgs)
+write.table(cor.signed.dcg.results[order(cor.signed.dcg.results$node1),],
+            "out/reg-site-cor-dcg-signed.tsv", quote=FALSE,
+            row.names=FALSE, col.names=TRUE, sep="\t")
+
+
+## message("Done with cor, starting cor^2")
+
+## ## kin.cor <- acast(results, node1 ~ node2)
+## kin.cor <- matrix(p.vals, nrow=length(all.kins))
+## rownames(kin.cor) <- all.kins
+## colnames(kin.cor) <- all.kins
+
+## kin1s <- c()
+## kin2s <- c()
+## p.vals <- c()
+## for (i in 1:nrow(kin.pairs)){
+##     kin1 <- kin.pairs[i, 1]
+##     kin2 <- kin.pairs[i, 2]
+##     if (kin1 == kin2){
+##         kin1s <- c(kin1s, kin1)
+##         kin2s <- c(kin2s, kin2)
+##         p.vals <- c(p.vals, NA)
+##         next
+##     }
+##     kin1.cor.pairs <- which(!is.na(kin.cor[kin1,]))
+##     kin2.cor.pairs <- which(!is.na(kin.cor[kin2,]))
+##     shared.pairs <- intersect(kin1.cor.pairs, kin2.cor.pairs)
+##     if (length(shared.pairs) < 3){
+##         p.value <- NA
+##     }else{
+##         kin1.cor <- kin.cor[kin1,]
+##         kin2.cor <- kin.cor[kin2,]
+##         ct <- cor.test(kin1.cor, kin2.cor, method="spearman",
+##                        use="pairwise.complete.obs")
+##         p.value <- -log10(ct$p.value)
+##         if (is.infinite(p.value))
+##             p.value <- NA
+##     }
+##     kin1s <- c(kin1s, kin1)
+##     kin2s <- c(kin2s, kin2)
+##     p.vals <- c(p.vals, p.value)
+## }
+
+## results <- data.frame(node1=kin1s, node2=kin2s, reg.site.cor2.p=p.vals)
+## results$reg.site.cor2.p <- results$reg.site.cor2.p/max(results$reg.site.cor2.p, na.rm=TRUE)
+
+## write.table(results[order(results$node1),], "out/reg-site-cor2.tsv", quote=FALSE,
+##             row.names=FALSE, col.names=TRUE, sep="\t")

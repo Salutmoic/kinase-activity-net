@@ -1,7 +1,7 @@
 ## phos stores kinase activiteis acorss conditions (Ochoa et al. 2016)
 kinome = read.delim("data/human-kinome.txt", as.is=TRUE)
 
-ksub = read.delim("data/human_kinase_table.tsv", as.is=TRUE)
+ksub = read.delim("data/psiteplus-kinase-substrates.tsv", as.is=TRUE)
 
 kinases = kinome[,1]
 
@@ -54,5 +54,5 @@ colnames(overlap) = c("kinase1", "no.substrates1", "kinase2", "no.substrates2",
 ## overlap.sub = overlap.sub[which(as.numeric(overlap.sub[,2])  > 10 & as.numeric(overlap.sub[,4]) > 10), ]
 
 ## overlap.sub = overlap.sub[order(as.numeric(overlap.sub[,6]),decreasing = TRUE),]
-write.table(overlap, "data/kinase_substrate_overlap.tsv", sep = "\t",
+write.table(overlap, "data/psiteplus-kinase-substrate-overlap.tsv", sep = "\t",
             quote=FALSE, row.names=FALSE, col.names=TRUE)

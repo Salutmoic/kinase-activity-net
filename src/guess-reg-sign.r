@@ -14,9 +14,11 @@ kin.act <- log.wKSEA.kinase_condition.clean
 cond.anno <- pData(esetNR)
 phospho.anno <- fData(esetNR)
 phospho.vals.full <- exprs(esetNR)
-kin.sub.tbl <- read.delim("data/human_kinase_table.tsv", as.is=TRUE, sep="\t")
+kin.sub.tbl <- read.delim("data/psiteplus-kinase-substrates.tsv", as.is=TRUE,
+                          sep="\t")
 kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
-kin.overlap <- read.delim("data/kinase_substrate_overlap.tsv", as.is=TRUE)
+kin.overlap <- read.delim("data/psiteplus-kinase-substrate-overlap.tsv",
+                          as.is=TRUE)
 
 cptac.start <- 1604
 cptac.end <- 1711
@@ -42,8 +44,9 @@ phospho.vals.gene <- ensp.id.map[phospho.vals.ensp, "gene.name"]
 
 rownames(phospho.vals) <- paste(phospho.vals.gene, phospho.vals.pos, sep="_")
 
-reg.sites <- read.delim("data/reg_sites.tsv", as.is=TRUE)
+reg.sites <- read.delim("data/psiteplus-reg-sites.tsv", as.is=TRUE)
 reg.sites$MOD_RSD <- sub("^[STY]", "", reg.sites$MOD_RSD)
+reg.sites$MOD_RSD <- sub("-p$", "", reg.sites$MOD_RSD)
 rownames(reg.sites) <- paste(reg.sites$GENE, reg.sites$MOD_RSD, sep="_")
 
 phosfun <- read.delim("data/phosfun.tsv", as.is=TRUE)
