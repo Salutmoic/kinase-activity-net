@@ -1,5 +1,3 @@
-load("data/log.wKSEA.kinase_condition.clean.Rdata")
-
 argv <- commandArgs(TRUE)
 if (length(argv) != 2){
     stop("USAGE: <script> KIN_SUB_TBL OUT_FILE")
