@@ -17,6 +17,8 @@ foldx <- read.delim("data/external/phosfun-features/feature_foldx",
                     as.is=TRUE, sep=",")
 hotspots <- read.delim("data/external/phosfun-features/feature_hotspots",
                        as.is=TRUE, sep=",")
+prot_length <- read.delim("data/external/phosfun-features/feature_proteinlength",
+                          as.is=TRUE, sep=",")
 pfam <- read.delim("data/human-pfam.tsv", as.is=TRUE, sep="\t")
 
 diso <- diso[c("acc", "position", "disopred_score")]
@@ -33,6 +35,9 @@ features <- merge(features, foldx,
 features <- merge(features, hotspots,
                   by.x=c("ACC_ID", "MOD_RSD"),
                   by.y=c("acc", "position"), all.x=TRUE, all.y=FALSE)
+features <- merge(features, prot_length,
+                  by.x=c("ACC_ID"), by.y=c("acc"),
+                  all.x=TRUE, all.y=FALSE)
 features$pos_in_domain <- apply(features, 1,
                                   function(row){
                                       kinase <- row[["GENE"]]
@@ -102,13 +107,17 @@ features$pfam <- as.factor(apply(features, 1,
 features$is_tyr_kin <- apply(features, 1,
                                function(row){
                                    kinase <- row[["GENE"]]
-                                   if (!(kinase %in% kin.domains$protein)){
+                                   if (!(kinase %in% pfam$protein)){
                                        return(NA)
                                    }
-                                   domains <- subset(kin.domains,
-                                                     protein==kinase)
+                                   domains <- subset(pfam, protein==kinase)
                                    return ("Pkinase_Tyr" %in% domains$domain)
                                })
+features$pos_perc <- sapply(1:nrow(features),
+                              function(i){
+                                  as.integer(features[i, "MOD_RSD"])/features[i, "prot_length"]
+                              })
+
 features <- features[, c(3, 2, 4:ncol(features))]
 
 names(features)[1:2] <- c("kinase", "position")

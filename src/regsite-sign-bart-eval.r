@@ -1,8 +1,9 @@
 suppressPackageStartupMessages(library(data.table))
-options(java.parameters = "-Xmx32g")
+options(java.parameters = "-Xmx16g")
 suppressPackageStartupMessages(library(bartMachine))
 set_bart_machine_num_cores(24)
 suppressPackageStartupMessages(library(ROCR))
+source("src/rocr-helpers.r")
 
 get_pos_in_domain <- function(pos, dom_start, dom_end){
     if (pos < dom_start || pos > dom_end)
@@ -168,7 +169,12 @@ labels <- as.factor(sapply(1:nrow(sign_feats),
 preds <- preds[which(!is.na(labels)),]
 labels <- labels[which(!is.na(labels))]
 
-bart_init <- bartMachineCV(preds, labels,
+eval_rows <- c(which(labels=="down"), sample(which(labels=="up"), 56))
+labels_sub <- labels[eval_rows]
+preds_sub <- preds[eval_rows,]
+
+sink("/dev/null")
+bart_init <- bartMachineCV(preds_sub, labels_sub,
                            use_missing_data=TRUE,
                            use_missing_data_dummies_as_covars=TRUE,
                            replace_missing_data_with_x_j_bar=FALSE,
@@ -176,6 +182,7 @@ bart_init <- bartMachineCV(preds, labels,
                            prob_rule_class=0.5,
                            verbose=FALSE,
                            serialize=FALSE)
+sink()
 
 var_select <- var_selection_by_permute(bart_init)
 
@@ -196,52 +203,63 @@ dev.off()
 ##                  "exp3d_ala_ddG_effect", "disopred_score",
 ##                  "pos_in_domain", "pfam")
 final_feats <- c("log10_hotspot_pval_min", "disopred_score",
-                 "pos_in_domain", "pfam", "residue", "is_tyr_kin")
+                 "pos_in_domain", "pos_perc", "pfam", "residue",
+                 "is_tyr_kin")
 ## final_feats <- c("log10_hotspot_pval_min", "pos_in_domain", "pfam",
 ##                  "disopred_score")
-preds <- sign_feats[final_feats]
-rownames(preds) <- rownames(sign_feats)
+## preds <- sign_feats[final_feats]
+## rownames(preds) <- rownames(sign_feats)
 ## preds$region_uniprot <- as.factor(preds$region_uniprot)
 
 k <- 5
-val_n <- ceiling(nrow(preds)/k)
-train_n <- nrow(preds) - val_n
+n <- 5
 all_probs <- NULL
 all_labels <- NULL
-for (i in 1:k){
-    val_i <- (val_n*(i-1))+1
-    if (i < k){
-        val_rows <- val_i:(val_i + val_n - 1)
-    }else{
-        val_rows <- val_i:nrow(preds)
-    }
-    train_rows <- setdiff(1:nrow(preds), val_rows)
-    val_set <- preds[val_rows,]
-    val_labels <- labels[val_rows]
-    train_set <- preds[train_rows,]
-    train_labels <- labels[train_rows]
-    bart <- bartMachineCV(train_set,
-                          train_labels,
-                          use_missing_data=TRUE,
-                          use_missing_data_dummies_as_covars=TRUE,
-                          replace_missing_data_with_x_j_bar=FALSE,
-                          impute_missingness_with_x_j_bar_for_lm=FALSE,
-                          prob_rule_class=0.5,
-                          verbose=FALSE,
-                          serialize=FALSE)
-    val_preds <- 1.0-bart_machine_get_posterior(bart, val_set)$y_hat
-    if (is.null(all_probs)){
-        all_probs <- val_preds
-        all_labels <- val_labels
-    }else{
-        if (length(val_preds) < val_n){
-            num.na <- val_n - length(val_preds)
-            val_preds <- c(val_preds, rep(NA, num.na))
+for (j in 1:n){
+    eval_rows <- c(sample(which(labels=="down"), 50),
+                   sample(which(labels=="up"), 50))
+    eval_rows <- sample(eval_rows)
+    labels_sub <- labels[eval_rows]
+    preds <- sign_feats[eval_rows, final_feats]
+    val_n <- ceiling(nrow(preds)/k)
+    train_n <- nrow(preds) - val_n
+    for (i in 1:k){
+        val_i <- (val_n*(i-1))+1
+        if (i < k){
+            val_rows <- val_i:(val_i + val_n - 1)
+        }else{
+            val_rows <- val_i:nrow(preds)
         }
-        ## BART seems to be assigning P>cutoff to the first level, which is
-        ## "activates", whereas ROCR expects P<cutoff to be the first level
-        all_probs <- cbind(all_probs, val_preds)
-        all_labels <- cbind(all_labels, val_labels)
+        train_rows <- setdiff(1:nrow(preds), val_rows)
+        val_set <- preds[val_rows,]
+        val_labels <- labels_sub[val_rows]
+        train_set <- preds[train_rows,]
+        train_labels <- labels_sub[train_rows]
+        sink("/dev/null")
+        bart <- bartMachineCV(train_set,
+                              train_labels,
+                              use_missing_data=TRUE,
+                              use_missing_data_dummies_as_covars=TRUE,
+                              replace_missing_data_with_x_j_bar=FALSE,
+                              impute_missingness_with_x_j_bar_for_lm=FALSE,
+                              prob_rule_class=0.5,
+                              verbose=FALSE,
+                              serialize=FALSE)
+        val_preds <- 1.0-bart_machine_get_posterior(bart, val_set)$y_hat
+        sink()
+        if (is.null(all_probs)){
+            all_probs <- val_preds
+            all_labels <- val_labels
+        }else{
+            if (length(val_preds) < val_n){
+                num.na <- val_n - length(val_preds)
+                val_preds <- c(val_preds, rep(NA, num.na))
+            }
+            ## BART seems to be assigning P>cutoff to the first level, which is
+            ## "activates", whereas ROCR expects P<cutoff to be the first level
+            all_probs <- cbind(all_probs, val_preds)
+            all_labels <- cbind(all_labels, val_labels)
+        }
     }
 }
 
@@ -262,24 +280,12 @@ cutoff <- mean(fpr0.05s)
 
 rocr_balance <- performance(rocr_pred, measure="tpr", x.measure="tnr")
 
-max_mccs <- lapply(rocr_mcc@y.values, which.max)
-
-max_mcc_cutoffs <- lapply(1:length(max_mccs),
-                           function(i){
-                               rocr_mcc@x.values[[i]][max_mccs[[i]]]
-                           })
-max_mcc_cutoff <- mean(unlist(max_mcc_cutoffs))
-
-max_mcc_tnrs <- lapply(1:length(max_mccs),
-                           function(i){
-                               rocr_balance@x.values[[i]][max_mccs[[i]]]
-                           })
-max_mcc_tnr <- mean(unlist(max_mcc_tnrs))
-max_mcc_tprs <- lapply(1:length(max_mccs),
-                           function(i){
-                               rocr_balance@y.values[[i]][max_mccs[[i]]]
-                           })
-max_mcc_tpr <- mean(unlist(max_mcc_tprs))
+avg_mccs <- perf_vert_avg(rocr_mcc)
+max_mcc_cutoff <- avg_mccs@x.values[[1]][which.max(avg_mccs@y.values[[1]])]
+avg_balance <- perf_thresh_avg(rocr_balance)
+approx_max_mcc_cutoff_i <- which.min(abs(avg_balance@alpha.values[[1]]-max_mcc_cutoff))
+max_mcc_tnr <- avg_balance@x.values[[1]][approx_max_mcc_cutoff_i]
+max_mcc_tpr <- avg_balance@y.values[[1]][approx_max_mcc_cutoff_i]
 
 message(paste("FPR 0.05 cutoff: ", cutoff))
 pdf("img/regsite-sign-bart-eval.pdf")
@@ -310,7 +316,8 @@ legend("bottomleft",
 investigate_var_importance(bart)
 dev.off()
 
-bart <- bartMachineCV(preds, labels,
+sink("/dev/null")
+bart <- bartMachineCV(sign_feats[final_feats], labels,
                       use_missing_data=TRUE,
                       use_missing_data_dummies_as_covars=TRUE,
                       replace_missing_data_with_x_j_bar=FALSE,
@@ -318,12 +325,13 @@ bart <- bartMachineCV(preds, labels,
                       prob_rule_class=(1-max_mcc_cutoff),
                       verbose=FALSE,
                       serialize=FALSE)
+sink()
 
 phospho_feats <- read.delim("data/phosfun-features.tsv")
 
-new_preds <- predict(bart, phospho_feats[colnames(preds)],
+new_preds <- predict(bart, phospho_feats[final_feats],
                      type="class", prob_rule_class=(1-max_mcc_cutoff))
-new_probs <- 1.0-bart_machine_get_posterior(bart, phospho_feats[colnames(preds)])$y_hat
+new_probs <- 1.0-bart_machine_get_posterior(bart, phospho_feats[final_feats])$y_hat
 
 out_tbl <- data.frame(kinase=phospho_feats$kinase,
                       position=phospho_feats$position,
