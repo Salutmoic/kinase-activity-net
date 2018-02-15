@@ -14,8 +14,8 @@ bart_model_file <- argv[2]
 
 merged_pred <- read.delim(merged_pred_file, as.is=TRUE)
 names(merged_pred)[1:2] <- c("prot1", "prot2")
-## Remove missing data
-merged_pred <- merged_pred[complete.cases(merged_pred),]
+## ## Remove missing data
+## merged_pred <- merged_pred[complete.cases(merged_pred),]
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
 
 load(bart_model_file)
