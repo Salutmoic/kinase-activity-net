@@ -60,9 +60,10 @@ VAL_SET = $(OMNIPATH_VALSET) ## $(KEGG_VALSET) $(PSITE_PLUS_VALSET)
 # functionally related (e.g. in the same pathway) for a true negative.
 PROTEIN_GROUPING =  $(COMBINED_GROUPING) # $(COMBINED_GROUPING) $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
 
-MERGED_PRED_SOURCES = $(KINACT_FULL_ASSOC) $(REG_SITE_ASSOC)	\
-	$(KIN_KIN_SCORES)
-DIRECT_PRED_SOURCES = $(KIN_KIN_SCORES) $(INHIB_FX)
+MERGED_PRED_SOURCES = $(REG_SITE_ASSOC) $(KIN_KIN_SCORES)
+
+MERGED_SIGN_PRED_SOURCES = $(SIGN_GUESS) $(KINACT_FULL_ASSOC_SIGN)	\
+	$(REG_SITE_ASSOC_SIGN) $(SIGNED_PSSM)
 
 #####################
 ## External data sets
@@ -133,20 +134,20 @@ KINACT_ASSOC = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD).tsv
 KINACT_ASSOC2 = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2.tsv
 KINACT_FULL_ASSOC = $(OUTDIR)/kinact-full-cor.tsv
 KINACT_FULL_ASSOC2 = $(OUTDIR)/kinact-full-cor2.tsv
+KINACT_FULL_ASSOC_SIGN = $(OUTDIR)/kinact-full-cor-sign.tsv
 # Activity perturbation under inhibition
-INHIB_FX = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-inhib-fx.tsv
+INHIB_FX = $(OUTDIR)/kinase-inhib-fx.tsv
 # Regulatory site-based activity correlations
 REG_SITE_ASSOC = $(OUTDIR)/reg-site-cor.tsv
 REG_SITE_ASSOC2 = $(OUTDIR)/reg-site-cor2.tsv
-# Final, merged predictor
-PREDICTOR = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor.tsv
+REG_SITE_ASSOC_SIGN = $(OUTDIR)/reg-site-cor-sign.tsv
 # Human amino acid frequencies
 AA_FREQS = $(DATADIR)/aa-freqs.tsv
 # PSSM files
-KIN_KIN_SCORES = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-pssm.tsv
+KIN_KIN_SCORES = $(OUTDIR)/kinase-pssm.tsv
 KIN_KIN_SCORES_KINOME = $(OUTDIR)/human-kinome-pssm.tsv
 KIN_KNOWN_PSITE_SCORES = $(OUTDIR)/known_kinase_psite-score
-KIN_SCORE_DIST = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-pssm-dists.tsv
+KIN_SCORE_DIST = $(OUTDIR)/kinase-pssm-dists.tsv
 # PhosphositePlus derived files
 KIN_SUBSTR_TABLE = $(DATADIR)/reduced_kinase_table.tsv
 HUMAN_KINASE_TABLE = $(DATADIR)/human_kinase_table.tsv
@@ -169,25 +170,20 @@ GO_CELL_LOCATION = $(DATADIR)/go-cell-location.tsv
 # STRING (in the output directory for convenience of using it as a
 # predictor)
 STRING_ID_MAPPING = $(DATADIR)/string-id-map.tsv
-HUMAN_STRING_COEXP = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-coexp.tsv
-HUMAN_STRING_COEXP2 = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-coexp2.tsv
+HUMAN_STRING_COEXP = $(OUTDIR)/kinase-string-coexp.tsv
+HUMAN_STRING_COEXP2 = $(OUTDIR)/kinase-string-coexp2.tsv
 HUMAN_STRING_COEXP2_FULL = $(OUTDIR)/string-coexp2-full.tsv
-HUMAN_STRING_COOCC = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-coocc.tsv
-HUMAN_STRING_COOCC2 = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-coocc2.tsv
+HUMAN_STRING_COOCC = $(OUTDIR)/kinase-string-coocc.tsv
+HUMAN_STRING_COOCC2 = $(OUTDIR)/kinase-string-coocc2.tsv
 HUMAN_STRING_COOCC2_FULL = $(OUTDIR)/string-coocc2-full.tsv
-HUMAN_STRING_EXPER = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-string-exper.tsv
-HUMAN_STRING_COEXP_KINOME = $(OUTDIR)/human-kinome-string-coexp.tsv
-HUMAN_STRING_COEXP2_KINOME = $(OUTDIR)/human-kinome-string-coexp2.tsv
-HUMAN_STRING_EXPER_KINOME = $(OUTDIR)/human-kinome-string-exper.tsv
-HUMAN_STRING_COOCC_KINOME = $(OUTDIR)/human-kinome-string-coocc.tsv
-HUMAN_STRING_COOCC2_KINOME = $(OUTDIR)/human-kinome-string-coocc2.tsv
-HUMAN_STRING_EXPER_KINOME = $(OUTDIR)/human-kinome-string-exper.tsv
+HUMAN_STRING_EXPER = $(OUTDIR)/kinase-string-exper.tsv
 # Protein groupings
 COMBINED_GROUPING = $(DATADIR)/protein-groups.tsv
 # Human kinome
 HUMAN_KINOME = $(DATADIR)/human-kinome.txt
 # KINS_TO_USE = $(DATADIR)/kinases-to-use.txt
 KINS_TO_USE = $(HUMAN_KINOME)
+# KINS_TO_USE_DESCR = kinact-$TABLE_STRATEGY)
 # Kinase-domain phosphorylation hot spots
 HOTSPOTS = $(DATADIR)/kinase-phospho-hotspots.tsv
 # PhosFun predictions
@@ -206,9 +202,7 @@ OMNIPATH_VALSET = $(DATADIR)/validation-set-omnipath.tsv
 # Kinase beads activities
 KINASE_BEADS = $(DATADIR)/kinase-beads-activities.tsv
 # Merged predictor data
-MERGED_PRED = $(OUTDIR)/kinact-merged_full.tsv
-MERGED_PRED_KINOME = $(OUTDIR)/human-kinome-merged.tsv
-DIRECT_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-direct.tsv
+MERGED_PRED = $(OUTDIR)/kinase-merged-pred.tsv
 # Cancer datasets
 RNAI_DRIVE_ATARIS_DATA = $(DATADIR)/rnai-drive-ataris.tsv
 RNAI_DRIVE_RSA_DATA = $(DATADIR)/rnai-drive-rsa.tsv
@@ -217,10 +211,13 @@ CRISPR_DATA = $(DATADIR)/ceres-gene-effects.tsv
 CELLLINE_EXPR_DATA = $(DATADIR)/cell-line-expr.tsv
 CELLLINE_RNASEQ_DATA = $(DATADIR)/cell-line-rnaseq.tsv
 TUMOR_EXPR_DATA = $(DATADIR)/tumor-expr.tsv
-# Final predictor
-FINAL_PRED = $(OUTDIR)/kinact-$(TABLE_STRATEGY)-$(PRED_METHOD).tsv
 # Pfam data
 PFAM_DATA = $(DATADIR)/human-pfam.tsv
+# Sign predction
+SIGN_GUESS = $(OUTDIR)/kinase-reg-sign-guess.tsv
+SIGNED_PSSM = $(OUTDIR)/kinase-pssm-signed.tsv
+REGSITE_SIGN_PREDS = $(OUTDIR)/reg-site-bart-sign-preds.tsv
+MERGED_SIGN_PREDS = $(OUTDIR)/merged-sign.tsv
 
 #########
 ## Images
@@ -318,6 +315,8 @@ FORMAT_DRIVE_DATA_SCRIPT = $(SRCDIR)/format-drive-data.r
 INIT_OMNIPATH_SCRIPT = $(SRCDIR)/init-omnipath.py
 OMNIPATH_VAL_SCRIPT = $(SRCDIR)/gen-omnipath-valset.py
 OMNIPATH_PATH_REF_SCRIPT = $(SRCDIR)/make-omnipath-path-ref.py
+GUESS_SIGN_SCRIPT = $(SRCDIR)/guess-reg-sign.r
+SIGNED_PSSM_SCRIPT = $(SRCDIR)/pssm-signed.py
 
 # Don't delete intermediate files
 .SECONDARY:
@@ -454,7 +453,8 @@ $(KIN_SUBSTR_TABLE): $(HUMAN_KINASE_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_
 # Filter the PhosphoSitePlus site list to just those on kinases for
 # which we have kinase activities
 $(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_PREDS)
-	sed '1,3d' $< | awk -F"\t" -vOFS="\t" '{if ((NR == 1 || $$7 == "human") && $$5 !~ /^G/){print}}' >$@.tmp
+	sed '1,3d' $< | \
+		awk -F"\t" -vOFS="\t" '{if ((NR == 1 || $$7 == "human") && $$5 !~ /^G/){print}}' >$@.tmp
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
 	rm $@.tmp
 
@@ -787,12 +787,14 @@ $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 
 # Regulatory site-based activity predictions
 $(REG_SITE_ASSOC) \
-$(REG_SITE_ASSOC2): $(REG_SITES) $(REG_SITE_COR_SCRIPT)
+$(REG_SITE_ASSOC2) \
+$(REG_SITE_ASSOC_SIGN): $(REG_SITES) $(REG_SITE_COR_SCRIPT)
 	$(RSCRIPT) $(REG_SITE_COR_SCRIPT)
 
 # Full kinase-activity pairwise correlations
 $(KINACT_FULL_ASSOC) \
-$(KINACT_FULL_ASSOC2): $(KINACT_PREDS) $(KINACT_FULL_COR_SCRIPT)
+$(KINACT_FULL_ASSOC2) \
+$(KINACT_FULL_ASSOC_SIGN): $(KINACT_PREDS) $(KINACT_FULL_COR_SCRIPT)
 	$(RSCRIPT) $(KINACT_FULL_COR_SCRIPT) $(KINACT_PREDS)
 
 # Inhibitory effects
@@ -832,6 +834,23 @@ $(DIRECT_PRED): $(DIRECT_PRED_SOURCES) $(MERGE_SCRIPT)
 	$(RSCRIPT) $(MERGE_SCRIPT) $@.tmp $(filter-out $(MERGE_SCRIPT),$^)
 	awk -vOFS="\t" '{if ($$3 == "NA" && $$4 == "NA"){next}else{print}}' $@.tmp >$@
 	rm $@.tmp
+
+##################
+## Sign prediction
+
+$(SIGN_GUESS): $(REG_SITES) $(HUMAN_KINASE_TABLE) $(KIN_SUB_OVERLAP) \
+				$(HUMAN_KINOME) $(ENSEMBL_ID_MAPPING) $(PHOSFUN) \
+				$(KIN_COND_PAIRS) $(PSITE_DATA) $(KINACT_PREDS)
+	$(RSCRIPT) $(GUESS_REG_SIGN_SCRIPT) $(KINACT_PREDS)
+
+$(SIGNED_PSSM): $(REGSITE_SIGN_PREDS) $(KIN_SUBSTR_TABLE) $(AA_FREQS) \
+				$(PHOSPHOSITES) $(KINS_TO_USE) $(PHOSFUN) $(REG_SITES) \
+				$(SIGNED_PSSM_SCRIPT)
+	$(PYTHON) $(SIGNED_PSSM_SCRIPT) $(KINS_TO_USE) $@
+
+$(MERGED_SIGN_PRED): $(MERGED_SIGN_PRED_SOURCES) $(MERGE_SCRIPT)
+	$(RSCRIPT) $(MERGE_SCRIPT) $@.tmp $(filter-out $(MERGE_SCRIPT),$^)
+	awk -vOFS="\t" '{if ($$3 == "NA"){next}else{print}}' $@.tmp >$@
 
 #############
 ## Validation
