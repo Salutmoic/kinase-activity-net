@@ -22,9 +22,6 @@ names(regulon[[2]][[t]]) = tf[,2]
 
 }
 
-
-
-
 return(regulon)
 }
 
