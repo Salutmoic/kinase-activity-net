@@ -1,14 +1,13 @@
-
 tissue_spec = function(data,t){
 
-if( median(data) >= t){
-print(1)
-return(1)
+    if( median(data) >= t){
 
-}else{
-print(0)
-return(0)
-}
+        return(1)
+
+    }else{
+
+        return(0)
+    }
 
 }
 
