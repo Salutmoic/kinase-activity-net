@@ -22,9 +22,6 @@ names(regulon[[2]][[t]]) = tf[,2]
 
 }
 
-
-
-
 return(regulon)
 }
 
@@ -37,7 +34,6 @@ expr = data.matrix(expr[,2:ncol(expr)])
 expr = gene_expression_statistic(expr,method = 'scale')
 
 regulon = make_regulon(TFs)
-
 
 activity = SLEA(E = expr, genesets = regulon, method = 'VIPER')$NES
 
