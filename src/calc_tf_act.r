@@ -38,7 +38,7 @@ regulon = make_regulon(TFs)
 
 activity = SLEA(E = expr, genesets = regulon, method = 'VIPER')$NES
 
-write.table(activity,"TFs/tcga-TF-activities.tsv",quote = F, row.names = F, sep = "\t")
+write.table(activity,"TFs/tcga-TF-activities.tsv",quote = F, sep = "\t")
 
 
 
