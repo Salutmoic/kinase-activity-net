@@ -2,8 +2,8 @@ import os.path
 import sys
 import itertools
 import pssms
-from math import log2, log, exp
-
+from math import log2, log10, log, exp
+import random
 
 def read_phosphosites(psites_file):
     # returns dictionary with every known phosphosite found on each
@@ -11,19 +11,12 @@ def read_phosphosites(psites_file):
 
     psites = {}
     with open(psites_file) as f:
-        columns = f.readline()
-        columns = columns.split("\t")
-        seqind = columns.index("SITE_...7_AA")
-        posind = columns.index("MOD_RSD")
         for line in f:
-            line_spl = line.split("\t")
-            protein = line_spl[0]
-            motif_seq = line_spl[seqind].upper()
-            pos = line_spl[posind][1:-2]
+            protein, pos, res, motif_seq = line.strip().split("\t")
             if protein not in psites:
-                psites[protein] = [(pos, motif_seq)]
+                psites[protein] = [(pos, motif_seq, res)]
             else:
-                psites[protein].append((pos, motif_seq))
+                psites[protein].append((pos, motif_seq, res))
     return psites
 
 
@@ -102,8 +95,20 @@ def score_kin_pairs(ktable, kinases, aa_freqs, psites):
 
         # # Don't use any of the substrate sequences in calculating the
         # # PSSM to avoid circularity
-        kin_motif_seqs = [seq for (substrate, seq) in ktable[kin_a]
-                          if substrate != kin_b]
+        kin_motif_seqs = []
+        for substrate, pos, res, seq in ktable[kin_a]:
+            if substrate == kin_b:
+                continue
+            if substrate not in psites:
+                continue
+            for pos_b, seq_b, res_b in psites[substrate]:
+                if pos == pos_b:
+                    kin_motif_seqs.append(seq_b)
+                    break
+        # kin_motif_seqs = [seq for substrate, pos, res, seq in ktable[kin_a]
+        #                   if substrate != kin_b and
+        #                   substrate in psites and
+        #                   (pos, seq, res) in psites[substrate]]
         # If kin_b isn't a known substrate, check if we've already
         # calculated the full PSSM for kin_a and, if so, take it
         # rather than wasting time recalculating it.
@@ -123,19 +128,19 @@ def score_kin_pairs(ktable, kinases, aa_freqs, psites):
         # Take only tyrosine or serine/threonine motif sequences from
         # kin_b, depending on the specificity of kin_a.
         kin_a_is_tyr_kin = pssms.is_tyr_kinase(pssm)
-        sub_motif_seqs = [(pos, seq) for pos, seq in psites[kin_b]
-                          if ((kin_a_is_tyr_kin and seq[7] == 'Y') or
-                              (not kin_a_is_tyr_kin and seq[7] in ['S', 'T']))]
+        sub_motif_seqs = [(pos, seq, res) for pos, seq, res in psites[kin_b]
+                          if ((kin_a_is_tyr_kin and res == 'Y') or
+                              (not kin_a_is_tyr_kin and res in ['S', 'T']))]
         if not sub_motif_seqs:
             scores[(kin_a, kin_b)] = []
             continue
 
-        for pos, motif_seq in sub_motif_seqs:
+        for pos, motif_seq, res in sub_motif_seqs:
             score = pssms.score_motif_seq(motif_seq, pssm)
             if (kin_a, kin_b) in scores:
-                scores[(kin_a, kin_b)].append((pos, score))
+                scores[(kin_a, kin_b)].append((pos, res, score))
             else:
-                scores[(kin_a, kin_b)] = [(pos, score)]
+                scores[(kin_a, kin_b)] = [(pos, res, score)]
     return scores
 
 
@@ -145,24 +150,33 @@ def calc_dcg(scores):
 
 def regulation_score(pair, scores, phosfun, med_phosfun, reg_sites):
     # Rank the PSSM scores
-    scores.sort(key=lambda t: t[1], reverse=True)
+    scores.sort(key=lambda t: t[2], reverse=True)
     kin_b_reg_sites = reg_sites.get(pair[1])
     kin_b_phosfun = phosfun.get(pair[1])
     hs_scores = []
-    for pos, score in scores:
-        if kin_b_reg_sites and pos in kin_b_reg_sites:
-            hs_score = 1.0
-        elif kin_b_phosfun is None or pos not in kin_b_phosfun:
-            hs_score = med_phosfun
+    for pos, res, score in scores:
+        # if kin_b_reg_sites and pos in kin_b_reg_sites:
+        #     hs_score = 1.0
+        if kin_b_phosfun is None or pos not in kin_b_phosfun:
+            # rand_kin = random.choice(list(phosfun.keys()))
+            # rand_pos = random.choice(list(phosfun[rand_kin].keys()))
+            # hs_score = phosfun[rand_kin][rand_pos] # med_phosfun
+            sys.exit("\t".join([pair[1], pos]))
         else:
             hs_score = kin_b_phosfun[pos]
         hs_scores.append(hs_score)
+    if not hs_scores:
+        return ("NA", "NA")
+    if len(hs_scores) < 10:
+        return ("NA", max(hs_scores))
     # Discounted Cumulative Gain
     dcg = calc_dcg(hs_scores)
     # Ideal Discounted Cumulative Gain
     hs_scores.sort(reverse=True)
-    idcg = calc_dcg(hs_scores)
-    return (dcg/idcg)*max(hs_scores)
+    max_dcg = calc_dcg(hs_scores)
+    hs_scores.sort(reverse=False)
+    min_dcg = calc_dcg(hs_scores)
+    return ((dcg-min_dcg)/(max_dcg-min_dcg), max(hs_scores))
 
 
 def score_network(kinase_file, out_file):
@@ -170,20 +184,30 @@ def score_network(kinase_file, out_file):
 
     ktable = pssms.read_kin_sub_data("data/psiteplus-kinase-substrates.tsv")
     aa_freqs = pssms.read_aa_freqs("data/aa-freqs.tsv")
-    psites = read_phosphosites("data/psiteplus-phosphosites.tsv")
+    psites = read_phosphosites("data/pride-phosphosites.tsv")
     kinases = read_kinase_file(kinase_file)
-    phosfun, med_phosfun = read_phosfun_file("data/phosfun.tsv")
+    # phosfun, med_phosfun = read_phosfun_file("data/phosfun-alt.tsv")
+    phosfun_st, med_phosfun_st = read_phosfun_file("data/phosfun-ST.tsv")
+    phosfun_y, med_phosfun_y = read_phosfun_file("data/phosfun-Y.tsv")
     reg_sites = read_reg_sites_file("data/psiteplus-reg-sites.tsv")
     scores = score_kin_pairs(ktable, kinases, aa_freqs, psites)
     with open(out_file, "w") as v:
-        v.write("\t".join(["node1", "node2", "pssm.score"])+"\n")
+        v.write("\t".join(["node1", "node2", "max.pssm.score", "dcg",
+                           "max.func.score"])+"\n")
         for pair in scores:
             if not scores[pair]:
-                v.write("\t".join([pair[0], pair[1], "NA"])+"\n")
+                v.write("\t".join([pair[0], pair[1], "NA", "NA", "NA"])+"\n")
                 continue
-            max_score = max([score for pos, score in scores[pair]])
-            dcg = regulation_score(pair, scores[pair], phosfun, med_phosfun, reg_sites)
-            v.write("\t".join([pair[0], pair[1], str(dcg*max_score)])+"\n")
+            residues = set([res for pos, res, score in scores[pair]])
+            max_score = max([score for pos, res, score in scores[pair]])
+            if residues == set(['Y']):
+                dcg, max_func_score = regulation_score(
+                    pair, scores[pair], phosfun_y, med_phosfun_y, reg_sites)
+            else:
+                dcg, max_func_score  = regulation_score(
+                    pair, scores[pair], phosfun_st, med_phosfun_st, reg_sites)
+            v.write("\t".join([pair[0], pair[1], str(max_score), str(dcg),
+                               str(max_func_score)])+"\n")
 
 
 if __name__ == "__main__":
