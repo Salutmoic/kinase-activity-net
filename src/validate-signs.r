@@ -1,6 +1,6 @@
 library(ROCR)
 
-sign_preds <- read.delim("out/kinact-max-rows-pssm-signed.tsv", as.is=TRUE)
+sign_preds <- read.delim("out/kinase-pssm-signed.tsv", as.is=TRUE)
 rownames(sign_preds) <- paste(sign_preds$node1, sign_preds$node2, sep="_")
 val_set <- read.table("data/sign-validation-set-omnipath.tsv")
 names(val_set) <- c("node1",  "node2", "label")
@@ -46,12 +46,8 @@ max_mcc <- mean(unlist(lapply(perf_mcc@y.values, max, na.rm=TRUE)))
 
 
 pdf("img/pssm-sign-val.pdf")
-plot(perf_roc, spread.estimate="boxplot", avg="vertical",
-     main=paste0("mean AUC=", format(mean_auc, digits=2),
-                 ", S.E.M=", format(se_auc, digits=2), ")"))
-plot(perf_roc2, spread.estimate="boxplot", avg="vertical",
-     main=paste0("mean AUC=", format(mean_auc, digits=2),
-                 ", S.E.M=", format(se_auc, digits=2), ")"))
+plot(perf_roc, spread.estimate="boxplot", avg="vertical")
+plot(perf_roc2, spread.estimate="boxplot", avg="vertical")
 plot(perf_mcc, spread.estimate="stderror", avg="vertical")
 abline(v=0.0, col="blue", lty=2)
 dev.off()

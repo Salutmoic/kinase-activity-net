@@ -137,7 +137,7 @@ plot(rocr_roc, spread.estimate="boxplot", avg="vertical",
 abline(v=0.05, lty=2, col="blue")
 legend("bottomright", legend=paste0("FPR=0.05 -> ", cutoff), lty=2, col="blue")
 plot(rocr_prec, spread.estimate="boxplot", avg="vertical",
-     main=paste0("BART"))
+     main=paste0("BART"), ylim=c(0.5, 1.0))
 
 ## plot(rocr_roc, 
 ##      main=paste0("BART\n(mean AUC=", format(mean_auc, digits=2),

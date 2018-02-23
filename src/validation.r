@@ -184,6 +184,6 @@ plot(perf_roc, avg = "vertical", spread.estimate = "boxplot",
 ## Precision-recall curve
 perf_pr <- performance(pred, measure="prec", x.measure="rec")
 plot(perf_pr, avg="vertical", spread.estimate="boxplot",
-     main=paste(assoc_method, table_method, sep="\n"))
+     main=paste(assoc_method, table_method, sep="\n"),ylim=c(0.5, 1.0))
 
 dev.off()
