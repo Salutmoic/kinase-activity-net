@@ -12,38 +12,31 @@ for(i in 1:(length(kinases)-1)){
     m =nrow(overlap)
 
     for(j in (i+1):length(kinases)){
-        k1 = ksub[which(toupper(ksub$GENE) == toupper(as.character(kinases[i]))),]
-        k2 = ksub[which(toupper(ksub$GENE) == toupper(as.character(kinases[j]))),]
+        k1 = ksub[which(ksub$GENE == kinases[i]),]
+        k2 = ksub[which(ksub$GENE == kinases[j]),]
 
         ## paste modified residue to substrate name
-        subs1 = paste(k1$SUBSTRATE, k1$SUB_MOD_RSD)
-        subs2 = paste(k2$SUBSTRATE, k2$SUB_MOD_RSD)
+        subs1 = paste(k1$SUB_GENE, k1$SUB_MOD_RSD)
+        subs2 = paste(k2$SUB_GENE, k2$SUB_MOD_RSD)
 
         subs1 = unique(subs1)
         subs2 = unique(subs2)
 
-        inter = length(intersect(toupper(subs1),toupper(subs2)))
-
-        if(length(which(toupper(subs1) %in% toupper(subs2))) != inter){
-            break
+        inter = length(intersect(subs1, subs2))
+        if (length(subs1) == 0 || length(subs2) == 0){
+            perc.overlap <- 0.0
+        }else{
+            perc.overlap <- inter/min(length(subs1), length(subs2))
         }
 
-        row = c(as.character(kinases[i]), as.character(length(subs1)),
-                as.character(kinases[j]), as.character(length(subs2)),
-                as.character(inter), as.character(inter/(min(length(subs2),length(subs1)))))
+        row = c(kinases[i], length(subs1), kinases[j], length(subs2), inter,
+                perc.overlap)
         overlap = rbind(overlap, row)
-
-        ## print(c(i,j))
     }
 
     if(is.null(m)){
         m = 0
     }
-
-    ## if(nrow(overlap) != m + (length(kinases)-i)){
-    ##     break
-    ## }
-
 }
 
 colnames(overlap) = c("kinase1", "no.substrates1", "kinase2", "no.substrates2",

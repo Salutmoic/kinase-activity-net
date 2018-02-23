@@ -8,14 +8,24 @@ out.file <- argv[2]
 
 kinases <- read.table("data/human-kinome.txt", as.is=TRUE)[,1]
 
+psites = read.table("data/pride-phosphosites.tsv", as.is=TRUE, sep="\t")
+names(psites) <- c("protein", "position", "residue", "motif")
+pride.sites <- paste(psites$protein, psites$position, sep="-")
+
 psite.plus.tbl <- read.delim(psite.plus.file, as.is=TRUE, sep="\t")
 
 psite.plus.filt <- subset(psite.plus.tbl, GENE %in% kinases)
 
-if ("LT_LIT" %in% colnames(psite.plus.filt)){
-    psite.plus.filt$LT_LIT[which(is.na(psite.plus.filt$LT_LIT))] <- 0
-    psite.plus.filt$MS_LIT[which(is.na(psite.plus.filt$MS_LIT))] <- 0
-    psite.plus.filt <- subset(psite.plus.filt, LT_LIT+MS_LIT >= 5)
+if ("SUB_MOD_RSD" %in% colnames(psite.plus.filt)){
+    psp.pos <- sub("[STY]", "", psite.plus.filt$SUB_MOD_RSD)
+    psp.pos <- sub("-p", "", psp.pos)
+    psp.sites <- paste(psite.plus.filt$SUB_GENE, psp.pos, sep="-")
+    psite.plus.filt <- psite.plus.filt[which(psp.sites %in% pride.sites),]
+}else{
+    psp.pos <- sub("[STY]", "", psite.plus.filt$MOD_RSD)
+    psp.pos <- sub("-p", "", psp.pos)
+    psp.sites <- paste(psite.plus.filt$GENE, psp.pos, sep="-")
+    psite.plus.filt <- psite.plus.filt[which(psp.sites %in% pride.sites),]
 }
 
 write.table(psite.plus.filt, out.file, sep="\t", quote=FALSE,

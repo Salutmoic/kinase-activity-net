@@ -65,7 +65,7 @@ get.redundant.kins <- function(kin.overlap, kinase.sites, phospho.data,
     return(redundant.kins)
 }
 
-get.kinase.sites <- function(kin.sub.tbl, phospho.anno){
+get.kinase.sites <- function(kin.sub.tbl, phospho.anno, psites){
     kinases <- unique(kin.sub.tbl$GENE)
     kinase.sites <- list()
     for (kinase in kinases){
@@ -75,13 +75,16 @@ get.kinase.sites <- function(kin.sub.tbl, phospho.anno){
         kin.subs.ensp <- merge(phospho.anno, kin.subs,
                                by.x=c("gene_name", "positions"),
                                by.y=c("SUB_GENE", "SUB_MOD_RSD"))
-        if (is.null(kin.subs.ensp) || nrow(kin.subs.ensp) == 0){
+        kin.subs.sub <- merge(kin.subs.ensp, psites,
+                              by.x=c("gene_name", "positions"),
+                              by.y=c("protein", "position"))
+        if (is.null(kin.subs.sub) || nrow(kin.subs.sub) == 0){
             kinase.sites[[kinase]] <- NA
             next
         }
         ## Construct site IDs as they appear in the phospho data.
-        kin.ensp.sites <- paste(kin.subs.ensp$ensp,
-                                kin.subs.ensp$positions, "P", sep="_")
+        kin.ensp.sites <- paste(kin.subs.sub$ensp,
+                                kin.subs.sub$positions, "P", sep="_")
         kinase.sites[[kinase]] <- kin.ensp.sites
     }
     return(kinase.sites)
@@ -104,7 +107,8 @@ cond.do.ks <- function(phospho.data, kinase.sites){
         other.subs <- phospho.data[which(!(rownames(phospho.data) %in% kinase.sites[[kinase]]))]
         ks <- ks.test(kinase.subs, other.subs, alternative="two.sided")
         median.fc <- median(kinase.subs, na.rm=TRUE)
-        fc.sign <- sign(median.fc)
+        median.other.fc <- median(other.subs, na.rm=TRUE)
+        fc.sign <- sign(median.fc-median.other.fc)
         kinases.ks <- c(kinases.ks, -log10(ks$p.value)*fc.sign)
     }
     names(kinases.ks) <- names(kinase.sites)
@@ -173,8 +177,11 @@ if (!use.autophos){
     kin.sub.tbl <- subset(kin.sub.tbl, GENE != SUB_GENE)
 }
 
+psites <- read.table("data/pride-phosphosites.tsv", as.is=TRUE, sep="\t")
+names(psites) <- c("protein", "position", "residue", "motif")
+
 ## ## Get all the sites annotated as substrates for each kinase.
-kinase.sites <- get.kinase.sites(kin.sub.tbl, phospho.anno)
+kinase.sites <- get.kinase.sites(kin.sub.tbl, phospho.anno, psites)
 
 ## kin.overlap <- read.delim("data/psiteplus-kinase-substrate-overlap.tsv", as.is=TRUE)
 ## ## Remove redundant kinases

@@ -4,13 +4,14 @@ library(entropy)
 source("src/optimize-activity-table.r")
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 3){
-    stop("USAGE: <script> KINASE_LIST MIN_SITES OUT_FILE")
+if (length(argv) != 4){
+    stop("USAGE: <script> KINACT_PREDS KINASE_LIST MIN_SITES OUT_FILE")
 }
 
-kinase.list.file <- argv[1]
-min.sites <- as.integer(argv[2])
-out.file <- argv[3]
+kinact.file <- argv[1]
+kinase.list.file <- argv[2]
+min.sites <- as.integer(argv[3])
+out.file <- argv[4]
 
 kinase.list <- read.table(kinase.list.file, as.is=TRUE)$V1
 
@@ -19,7 +20,7 @@ kinase.conditions <- read.delim("data/external/kinase-condition-pairs.tsv",
 kinase.conditions <- subset(kinase.conditions, Regulation=="down")
 
 ## Load data
-load("data/log.wKSEA.kinase_condition.clean.Rdata")
+load(kinact.file)
 kin.act <- log.wKSEA.kinase_condition.clean
 load("data/external/esetNR.Rdata")
 cond.anno <- pData(esetNR)

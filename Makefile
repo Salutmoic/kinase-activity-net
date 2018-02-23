@@ -28,7 +28,7 @@ BINDIR = /nfs/research1/beltrao/software-rh7/bin
 #############
 ## Parameters
 
-KINACT_PREDS = $(KSEA_DATA)
+KINACT_PREDS = $(KS_DATA)
 KSEA_NUM_CONDS = 668
 KSEA_USE_AUTOPHOS ?= TRUE
 KS_NUM_CONDS = $(KSEA_NUM_CONDS)
@@ -50,7 +50,7 @@ DECONVOLUTION_A ?= 0.5
 # Eigenvalue Scaling parameter
 DECONVOLUTION_B ?= 0.99
 PRED_METHOD = log_reg
-USE_RAND_NEGS = FALSE
+USE_RAND_NEGS = TRUE
 DIRECTED = FALSE
 
 KEGG_VALSET ?= $(KEGG_ACT_VALSET)
@@ -60,9 +60,9 @@ VAL_SET = $(OMNIPATH_VALSET) ## $(KEGG_VALSET) $(PSITE_PLUS_VALSET)
 # functionally related (e.g. in the same pathway) for a true negative.
 PROTEIN_GROUPING =  $(COMBINED_GROUPING) # $(COMBINED_GROUPING) $(KEGG_PATH_REFERENCE) $(GO_CELL_LOCATION)
 
-MERGED_PRED_SOURCES = $(REG_SITE_ASSOC) $(KIN_KIN_SCORES)
+MERGED_PRED_SOURCES = $(REG_SITE_ASSOC) $(PSSM)
 
-MERGED_SIGN_PRED_SOURCES = $(SIGN_GUESS) $(KINACT_FULL_ASSOC_SIGN)	\
+MERGED_SIGN_PRED_SOURCES = $(KINACT_FULL_ASSOC_SIGN)	\
 	$(REG_SITE_ASSOC_SIGN) $(SIGNED_PSSM)
 
 #####################
@@ -144,11 +144,11 @@ REG_SITE_ASSOC_SIGN = $(OUTDIR)/reg-site-cor-sign.tsv
 # Human amino acid frequencies
 AA_FREQS = $(DATADIR)/aa-freqs.tsv
 # PSSM files
-KIN_KIN_SCORES = $(OUTDIR)/kinase-pssm.tsv
+PSSM = $(OUTDIR)/kinase-pssm.tsv
 KIN_SCORE_DIST = $(OUTDIR)/kinase-pssm-dists.tsv
 # PhosphositePlus derived files
 KIN_SUBSTR_TABLE = $(DATADIR)/psiteplus-kinase-substrates.tsv
-PHOSPHOSITES = $(DATADIR)/psiteplus-phosphosites.tsv
+PSP_PHOSPHOSITES = $(DATADIR)/psiteplus-phosphosites.tsv
 REG_SITES = $(DATADIR)/psiteplus-reg-sites.tsv
 KIN_SUB_OVERLAP = $(DATADIR)/psiteplus-kinase-substrate-overlap.tsv
 # Kegg-derived files
@@ -185,6 +185,10 @@ HOTSPOTS = $(DATADIR)/kinase-phospho-hotspots.tsv
 # PhosFun predictions
 PHOSFUN_FEATS = $(DATADIR)/phosfun-features.tsv
 PHOSFUN = $(DATADIR)/phosfun.tsv
+PHOSFUN_ST = $(DATADIR)/phosfun-ST.tsv
+PHOSFUN_Y = $(DATADIR)/phosfun-Y.tsv
+PRIDE_PHOSPHOSITES = $(DATADIR)/pride-phosphosites.tsv
+PHOSPHOSITES = $(PRIDE_PHOSPHOSITES)
 # Omnipath
 OMNIPATH_CACHE = $(CACHEDIR)/default_network.pickle
 OMNIPATH_PATH_REFERENCE = $(DATADIR)/omnipath-path-ref.tsv
@@ -213,7 +217,7 @@ PFAM_DATA = $(DATADIR)/human-pfam.tsv
 SIGN_GUESS = $(OUTDIR)/kinase-reg-sign-guess.tsv
 SIGNED_PSSM = $(OUTDIR)/kinase-pssm-signed.tsv
 REGSITE_SIGN_PREDS = $(OUTDIR)/reg-site-bart-sign-preds.tsv
-MERGED_SIGN_PREDS = $(OUTDIR)/merged-sign.tsv
+MERGED_SIGN_PRED = $(OUTDIR)/sign-merged-pred.tsv
 
 #########
 ## Images
@@ -230,23 +234,21 @@ endif
 endif
 ASSOC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)$(val_set).pdf
 ASSOC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)2$(val_set).pdf
-FULL_ASSOC_VAL_IMG = $(IMGDIR)/kinact-full-$(ASSOC_METHOD)$(val_set).pdf
+FULL_ASSOC_VAL_IMG = $(IMGDIR)/kinact-full-cor$(val_set).pdf
 FULL_ASSOC2_VAL_IMG = $(IMGDIR)/kinact-full-cor2$(val_set).pdf
-PSSM_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-pssm$(val_set).pdf
+PSSM_VAL_IMG = $(IMGDIR)/kinase-pssm$(val_set).pdf
 REG_SITE_ASSOC_VAL_IMG = $(IMGDIR)/reg-site-cor$(val_set).pdf
 REG_SITE_ASSOC2_VAL_IMG = $(IMGDIR)/reg-site-cor2$(val_set).pdf
-INHIB_FX_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-inhib-fx$(val_set).pdf
-STRING_COEXP_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp$(val_set).pdf
-STRING_COEXP2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coexp2$(val_set).pdf
-STRING_COOCC_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coocc$(val_set).pdf
-STRING_COOCC2_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-coocc2$(val_set).pdf
-STRING_EXPER_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-string-exper$(val_set).pdf
-PREDICTOR_VAL_IMG = $(IMGDIR)/kinact-$(TABLE_STRATEGY)-$(ASSOC_METHOD)-final-predictor$(val_set).pdf
-VAL_IMGS = $(ASSOC_VAL_IMG) $(ASSOC2_VAL_IMG) $(PSSM_VAL_IMG)	\
-	$(FULL_ASSOC_VAL_IMG) $(FULL_ASSOC2_VAL_IMG)				\
-	$(STRING_COEXP_VAL_IMG) $(STRING_COOCC_VAL_IMG)				\
-	$(STRING_EXPER_VAL_IMG) $(REG_SITE_ASSOC_VAL_IMG)			\
-	$(REG_SITE_ASSOC2_VAL_IMG) $(INHIB_FX_VAL_IMG)
+INHIB_FX_VAL_IMG = $(IMGDIR)/kinase-inhib-fx$(val_set).pdf
+STRING_COEXP_VAL_IMG = $(IMGDIR)/kinase-string-coexp$(val_set).pdf
+STRING_COEXP2_VAL_IMG = $(IMGDIR)/kinase-string-coexp2$(val_set).pdf
+STRING_COOCC_VAL_IMG = $(IMGDIR)/kinase-string-coocc$(val_set).pdf
+STRING_COOCC2_VAL_IMG = $(IMGDIR)/kinase-string-coocc2$(val_set).pdf
+STRING_EXPER_VAL_IMG = $(IMGDIR)/kinase-string-exper$(val_set).pdf
+VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(FULL_ASSOC_VAL_IMG)	\
+	$(STRING_COEXP_VAL_IMG) $(STRING_COOCC_VAL_IMG)					\
+	$(STRING_EXPER_VAL_IMG) $(REG_SITE_ASSOC_VAL_IMG)				\
+	$(INHIB_FX_VAL_IMG)
 
 ##################
 ## Program Options
@@ -311,8 +313,11 @@ FORMAT_DRIVE_DATA_SCRIPT = $(SRCDIR)/format-drive-data.r
 INIT_OMNIPATH_SCRIPT = $(SRCDIR)/init-omnipath.py
 OMNIPATH_VAL_SCRIPT = $(SRCDIR)/gen-omnipath-valset.py
 OMNIPATH_PATH_REF_SCRIPT = $(SRCDIR)/make-omnipath-path-ref.py
-GUESS_SIGN_SCRIPT = $(SRCDIR)/guess-reg-sign.r
+GUESS_REG_SIGN_SCRIPT = $(SRCDIR)/guess-reg-sign.r
 SIGNED_PSSM_SCRIPT = $(SRCDIR)/pssm-signed.py
+PHOSFUN_FEATS_SCRIPT = $(SRCDIR)/compile-phosfun-features.r
+TRANSFORM_PHOSFUN_SCRIPT = $(SRCDIR)/transform-phosfun.r
+PRIDE_PSITES_SCRIPT = $(SRCDIR)/get-pride-phosphosites.py
 
 # Don't delete intermediate files
 .SECONDARY:
@@ -321,8 +326,13 @@ SIGNED_PSSM_SCRIPT = $(SRCDIR)/pssm-signed.py
 ### Phony targets ###
 #####################
 
-.PHONY: final-predictor
-final-predictor: $(PREDICTOR)
+# Everything needed to get started with KSEA
+.PHONY: prelim
+prelim: $(KIN_SUBSTR_TABLE) $(PRIDE_PHOSPHOSITES)
+
+.PHONY: edge-predictors
+edge-predictors: $(KINACT_ASSOC) $(KINACT_ASSOC2) $(REG_SITE_ASSOC)	\
+	$(PSSM) $(KINACT_FULL_ASSOC) $(INHIB_FX)
 
 .PHONY: merge-predictors
 merge-predictors: $(MERGED_PRED)
@@ -331,7 +341,7 @@ merge-predictors: $(MERGED_PRED)
 assoc-results: $(KINACT_ASSOC) $(KINACT_ASSOC2)
 
 .PHONY: pssm
-pssm: $(KIN_KIN_SCORES) $(KIN_KNOWN_PSITE_SCORES) $(KIN_SCORE_DIST)
+pssm: $(PSSM) $(KIN_KNOWN_PSITE_SCORES) $(KIN_SCORE_DIST)
 
 .PHONY: data
 data: $(KINACT_PREDS) $(KINACT_DATA) $(IMP_KINACT_DATA) $(EGF_KINACT_DATA)
@@ -440,18 +450,22 @@ $(DATADIR)/%-discr.tsv: $(DATADIR)/%-imp.tsv $(DISCRETIZE_SCRIPT)
 # Filter the human kinase-substrates to just those for which we have
 # enough evidence
 $(KIN_SUBSTR_TABLE): $(FULL_KIN_SUBSTR_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) \
-		$(HUMAN_KINOME)
+		$(PRIDE_PHOSPHOSITES) $(HUMAN_KINOME)
 	sed '1,3d;4s|+/-|...|' $< | \
 		awk -F"\t" '{if (NR==1 || ($$4=="human" && $$9=="human")){print}}' >$@.tmp
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
+	rm $@.tmp
 
 # Filter the PhosphoSitePlus site list to just those on kinases for
 # which we have kinase activities
-$(PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_PREDS)
+$(PSP_PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_PREDS)
 	sed '1,3d' $< | \
 		awk -F"\t" -vOFS="\t" '{if ((NR == 1 || $$7 == "human") && $$5 !~ /^G/){print}}' >$@.tmp
-	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
+	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@.tmp2
 	rm $@.tmp
+	sed 's/\([STY]\)\([0-9][0-9]*\)[-p]*/\2\t\1/' $@.tmp2 | \
+		awk -vOFS="\t" -F"\t" '{if (NR > 1){print $$1, $$5, $$6, toupper($$11)}}' >$@
+	rm $@.tmp2
 
 # Further filter to just include reg sites on kinases for which we
 # have kinase activities
@@ -461,6 +475,7 @@ $(REG_SITES): $(FULL_REG_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) \
 		awk -F"\t" 'BEGIN{OFS="\t"}{if (NR==1 || $$7=="human" && $$8~/-p$$/){print}}' | \
 		sed 's/-p//' >$@.tmp
 	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
+	rm $@.tmp
 
 # Kinase-substrate overlap
 $(KIN_SUB_OVERLAP): $(KIN_SUBSTR_TABLE) $(KINACT_PREDS) $(KIN_SUB_OVERLAP_SCRIPT)
@@ -563,18 +578,6 @@ $(HUMAN_STRING_COEXP2): $(HUMAN_STRING_COEXP2_FULL) $(KINS_TO_USE)
 	rm $@.tmp
 	rm tmp/kinact-prots.txt
 
-$(HUMAN_STRING_COEXP_KINOME): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
-		$(HUMAN_KINOME) $(FORMAT_STRING_SCRIPT)
-	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
-		$(HUMAN_KINOME) 6 --all >$@.tmp
-	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
-	rm $@.tmp
-
-$(HUMAN_STRING_COEXP2_KINOME): $(HUMAN_STRING_COEXP2_FULL) $(HUMAN_KINOME)
-	$(ASSOCNET) --header-in --method=spearman $< | sed '1s/assoc/string.coexp.cor/' >$@.tmp
-	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp $(HUMAN_KINOME) $@
-	# rm $@.tmp
-
 # STRING cooccurrence
 $(HUMAN_STRING_COOCC): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINS_TO_USE) \
 		$(FORMAT_STRING_SCRIPT)
@@ -594,18 +597,6 @@ $(HUMAN_STRING_COOCC2): $(HUMAN_STRING_COOCC2_FULL) $(KINS_TO_USE)
 	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp $(KINS_TO_USE) $@
 	# rm $@.tmp
 	# rm tmp/kinact-prots.txt 
-
-$(HUMAN_STRING_COOCC_KINOME): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
-		$(HUMAN_KINOME) $(FORMAT_STRING_SCRIPT)
-	$(PYTHON) $(FORMAT_STRING_SCRIPT) $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) \
-		$(HUMAN_KINOME) 5 --all >$@.tmp
-	cat <(sed -n '1p' $@.tmp) <(sed '1d' $@.tmp | sort -k 1d,1 -k 2d,2) >$@
-	rm $@.tmp
-
-$(HUMAN_STRING_COOCC2_KINOME): $(HUMAN_STRING_COOCC2_FULL) $(HUMAN_KINOME)
-	$(ASSOCNET) --header-in --method=spearman $< | sed '1s/assoc/string.coexp.cor/' >$@.tmp
-	$(RSCRIPT) $(FILTER_BY_PROTLIST_SCRIPT) $@.tmp $(HUMAN_KINOME) $@
-	# rm $@.tmp
 
 # STRING experimental
 $(HUMAN_STRING_EXPER): $(HUMAN_STRING_RAW) $(STRING_ID_MAPPING) $(KINS_TO_USE) \
@@ -664,14 +655,48 @@ $(HOTSPOTS): $(HOTSPOTS_RAW) $(TYR_HOTSPOTS_RAW) $(ENSEMBL_ID_MAPPING)
 		sort -k1 | join -t'	' $(ENSEMBL_ID_MAPPING) - | cut -f2-5 >$@
 
 # PhosFun predictions
-$(PHOSFUN): $(PHOSFUN_ST_RAW) $(PHOSFUN_Y_RAW) $(UNIPROT_ID_MAPPING) $(HUMAN_KINOME)
+$(PHOSFUN): $(PHOSFUN_ST_RAW) $(PHOSFUN_Y_RAW) $(UNIPROT_ID_MAPPING) \
+		$(HUMAN_KINOME) $(TRANSFORM_PHOSFUN_SCRIPT)
 	cat <(sed '1d;s/[_,]/\t/g' $(PHOSFUN_ST_RAW)) \
 		<(sed '1d;s/[_,]/\t/g' $(PHOSFUN_Y_RAW)) | sort >$@.tmp
 	join -t'	' $@.tmp $(UNIPROT_ID_MAPPING) | \
 		awk -vOFS="\t" '{print $$4, $$2, $$3}' >$@.tmp2
 	rm $@.tmp
-	grep -f $(HUMAN_KINOME) $@.tmp2 | sort >$@
+	grep -f $(HUMAN_KINOME) $@.tmp2 | sort >$@.tmp3
 	rm $@.tmp2
+	$(RSCRIPT) $(TRANSFORM_PHOSFUN_SCRIPT) $@.tmp3 $@
+	rm $@.tmp3
+
+$(PHOSFUN_ST): $(PHOSFUN_ST_RAW) $(UNIPROT_ID_MAPPING) $(HUMAN_KINOME) \
+		$(TRANSFORM_PHOSFUN_SCRIPT)
+	sed '1d;s/[_,]/\t/g' $< | sort >$@.tmp
+	join -t'	' $@.tmp $(UNIPROT_ID_MAPPING) | \
+		awk -vOFS="\t" '{print $$4, $$2, $$3}' >$@.tmp2
+	rm $@.tmp
+	grep -f $(HUMAN_KINOME) $@.tmp2 | sort >$@.tmp3
+	rm $@.tmp2
+	$(RSCRIPT) $(TRANSFORM_PHOSFUN_SCRIPT) $@.tmp3 $@
+	rm $@.tmp3
+
+$(PHOSFUN_Y): $(PHOSFUN_Y_RAW) $(UNIPROT_ID_MAPPING) $(HUMAN_KINOME) \
+		$(TRANSFORM_PHOSFUN_SCRIPT)
+	sed '1d;s/[_,]/\t/g' $< | sort >$@.tmp
+	join -t'	' $@.tmp $(UNIPROT_ID_MAPPING) | \
+		awk -vOFS="\t" '{print $$4, $$2, $$3}' >$@.tmp2
+	rm $@.tmp
+	grep -f $(HUMAN_KINOME) $@.tmp2 | sort >$@.tmp3
+	rm $@.tmp2
+	$(RSCRIPT) $(TRANSFORM_PHOSFUN_SCRIPT) $@.tmp3 $@
+	rm $@.tmp3
+
+$(PHOSFUN_FEATS): $(PHOSFUN_FEATS_RAW) $(PHOSFUN_FEATS_SCRIPT) $(PHOSPHOSITES) \
+		$(PFAM_DATA)
+	$(RSCRIPT) $(PHOSFUN_FEATS_SCRIPT)
+
+$(PRIDE_PHOSPHOSITES): $(PHOSFUN_FEATS_RAW) $(HUMAN_PROTEOME) $(HUMAN_KINOME) \
+		$(PRIDE_PSITES_SCRIPT)
+	$(PYTHON) $(PRIDE_PSITES_SCRIPT) $(HUMAN_PROTEOME) $(PHOSFUN_FEATS_RAW) \
+		$(HUMAN_KINOME) | sort >$@
 
 # RNAi data
 $(RNAI_DRIVE_ATARIS_DATA): $(RNAI_DRIVE_ATARIS_DATA_RAW) $(HUMAN_KINOME) \
@@ -773,7 +798,7 @@ $(OUTDIR)/%-lmpred.tsv: $(DATADIR)/%-imp.tsv $(OUTDIR)/%-pssm.tsv $(LM_PRED_SCRI
 
 # Pairwise correlations, taking into account perturbations
 $(OUTDIR)/%-paircor.tsv: $(DATADIR)/%-imp.tsv $(PAIR_COR_SCRIPT) \
-		$(KIN_INVIVO_CONDS) $(OUTDIR)
+		$(KIN_INVIVO_CONDS) $(OUTDIR) $(OPTIMIZE_KINACT_TBL_SCRIPT)
 	$(RSCRIPT) $(PAIR_COR_SCRIPT) $< $@
 
 # Filter out indirect associations
@@ -783,19 +808,22 @@ $(OUTDIR)/%-filter.tsv: $(OUTDIR)/%.tsv
 # Regulatory site-based activity predictions
 $(REG_SITE_ASSOC) \
 $(REG_SITE_ASSOC2) \
-$(REG_SITE_ASSOC_SIGN): $(REG_SITES) $(REG_SITE_COR_SCRIPT)
+$(REG_SITE_ASSOC_SIGN): $(REG_SITES) $(REG_SITE_COR_SCRIPT) $(ENSEMBL_ID_MAPPING)\
+		$(HUMAN_KINOME) $(PSITE_DATA) $(PHOSFUN) $(KIN_COND_PAIRS)
 	$(RSCRIPT) $(REG_SITE_COR_SCRIPT)
 
 # Full kinase-activity pairwise correlations
 $(KINACT_FULL_ASSOC) \
 $(KINACT_FULL_ASSOC2) \
-$(KINACT_FULL_ASSOC_SIGN): $(KINACT_PREDS) $(KINACT_FULL_COR_SCRIPT)
+$(KINACT_FULL_ASSOC_SIGN): $(KINACT_PREDS) $(KINACT_FULL_COR_SCRIPT) $(PSITE_DATA) \
+		$(KIN_SUBSTR_TABLE) $(KIN_SUB_OVERLAP) $(OPTIMIZE_KINACT_TBL_SCRIPT) \
+		$(KIN_COND_PAIRS)
 	$(RSCRIPT) $(KINACT_FULL_COR_SCRIPT) $(KINACT_PREDS)
 
 # Inhibitory effects
 $(INHIB_FX): $(KINACT_PREDS) $(KINS_TO_USE) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP) \
-		$(INHIB_FX_SCRIPT) $(OPTIMIZE_KINACT_TBL_SCRIPT)
-	$(RSCRIPT) $(INHIB_FX_SCRIPT) $(KINS_TO_USE) $(KSEA_MIN_SITES) $@
+		$(INHIB_FX_SCRIPT) $(OPTIMIZE_KINACT_TBL_SCRIPT) $(KINACT_PREDS)
+	$(RSCRIPT) $(INHIB_FX_SCRIPT) $(KINACT_PREDS) $(KINS_TO_USE) $(KSEA_MIN_SITES) $@
 
 ###############################
 ## Kinase-substrate predictions
@@ -803,13 +831,8 @@ $(INHIB_FX): $(KINACT_PREDS) $(KINS_TO_USE) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP)
 # Calculate kinase-substrate PSSM scores
 $(OUTDIR)/%-pssm.tsv: $(AA_FREQS) $(PSSM_SCRIPT) $(KIN_SUBSTR_TABLE)	\
 					$(PHOSPHOSITES) $(KINS_TO_USE) $(PSSM_LIB)			\
-					$(PHOSFUN)
+					$(PHOSFUN_ST) $(PHOSFUN_Y)
 	$(PYTHON) $(PSSM_SCRIPT) $(KINS_TO_USE) $@
-
-$(KIN_KIN_SCORES_KINOME): $(AA_FREQS) $(PSSM_SCRIPT)		\
-					$(KIN_SUBSTR_TABLE) $(PHOSPHOSITES)		\
-					$(HUMAN_KINOME) $(PSSM_LIB) $(PHOSFUN)
-	$(PYTHON) $(PSSM_SCRIPT) $(HUMAN_KINOME) $@
 
 $(KIN_SCORE_DIST): $(AA_FREQS) $(PSSM_DIST_SCRIPT)					\
 					 $(KIN_SUBSTR_TABLE) $(KINACT_DATA) $(PSSM_LIB)
@@ -822,9 +845,6 @@ $(MERGED_PRED): $(MERGED_PRED_SOURCES) $(MERGE_SCRIPT)
 	$(RSCRIPT) $(MERGE_SCRIPT) $@.tmp $(filter-out $(MERGE_SCRIPT),$^)
 	awk -vOFS="\t" '{if ($$3 == "NA"){next}else{print}}' $@.tmp >$@
 
-$(MERGED_PRED_KINOME): $(MERGED_PRED_SOURCES_KINOME) $(MERGE_SCRIPT)
-	$(RSCRIPT) $(MERGE_SCRIPT) $@ $(filter-out $(MERGE_SCRIPT),$^)
-
 $(DIRECT_PRED): $(DIRECT_PRED_SOURCES) $(MERGE_SCRIPT)
 	$(RSCRIPT) $(MERGE_SCRIPT) $@.tmp $(filter-out $(MERGE_SCRIPT),$^)
 	awk -vOFS="\t" '{if ($$3 == "NA" && $$4 == "NA"){next}else{print}}' $@.tmp >$@
@@ -833,9 +853,10 @@ $(DIRECT_PRED): $(DIRECT_PRED_SOURCES) $(MERGE_SCRIPT)
 ##################
 ## Sign prediction
 
-$(SIGN_GUESS): $(REG_SITES) $(KIN_SUBSTR_TABLE) $(KIN_SUB_OVERLAP) \
-				$(HUMAN_KINOME) $(ENSEMBL_ID_MAPPING) $(PHOSFUN) \
-				$(KIN_COND_PAIRS) $(PSITE_DATA) $(KINACT_PREDS)
+$(SIGN_GUESS): $(REG_SITES) $(KIN_SUBSTR_TABLE) $(KIN_SUB_OVERLAP)	\
+				$(HUMAN_KINOME) $(ENSEMBL_ID_MAPPING) $(PHOSFUN)	\
+				$(KIN_COND_PAIRS) $(PSITE_DATA) $(KINACT_PREDS)		\
+				$(OPTIMIZE_KINACT_TBL_SCRIPT)
 	$(RSCRIPT) $(GUESS_REG_SIGN_SCRIPT) $(KINACT_PREDS)
 
 $(SIGNED_PSSM): $(REGSITE_SIGN_PREDS) $(KIN_SUBSTR_TABLE) $(AA_FREQS) \
@@ -854,11 +875,11 @@ $(IMGDIR)/%-val.pdf: $(OUTDIR)/%.tsv $(VAL_SET) $(NEG_VALSET) $(IMGDIR) \
 		$(VAL_SCRIPT)
 	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^) FALSE FALSE
 
-$(IMGDIR)/%-val-rand-negs.pdf: $(OUTDIR)/%.tsv $(KEGG_PHOS_ACT_VALSET) \
+$(IMGDIR)/%-val-rand-negs.pdf: $(OUTDIR)/%.tsv $(VAL_SET) \
 		$(NEG_VALSET) $(IMGDIR) $(VAL_SCRIPT)
 	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^) TRUE FALSE
 
-$(IMGDIR)/%-val-direct.pdf: $(OUTDIR)/%.tsv $(KEGG_PHOS_ACT_VALSET) \
+$(IMGDIR)/%-val-direct.pdf: $(OUTDIR)/%.tsv $(VAL_SET) \
 		$(NEG_VALSET) $(IMGDIR) $(VAL_SCRIPT)
 	$(RSCRIPT) $(VAL_SCRIPT) $(wordlist 1,3,$^) FALSE TRUE
 

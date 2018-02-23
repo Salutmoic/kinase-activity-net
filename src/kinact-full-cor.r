@@ -132,38 +132,38 @@ write.table(cor.est.results[order(cor.est.results$node1),],
             "out/kinact-full-cor-sign.tsv", quote=FALSE,
             row.names=FALSE, col.names=TRUE, sep="\t")
 
-## kin.cor <- acast(results, node1 ~ node2)
-kin.cor <- matrix(p.vals*sign(cors), nrow=length(all.kins))
-rownames(kin.cor) <- all.kins
-colnames(kin.cor) <- all.kins
+## ## kin.cor <- acast(results, node1 ~ node2)
+## kin.cor <- matrix(p.vals*sign(cors), nrow=length(all.kins))
+## rownames(kin.cor) <- all.kins
+## colnames(kin.cor) <- all.kins
 
-kin1s <- c()
-kin2s <- c()
-p.vals <- c()
-for (i in 1:nrow(kin.pairs)){
-    kin1 <- kin.pairs[i, 1]
-    kin2 <- kin.pairs[i, 2]
-    kin1.cor.pairs <- which(!is.na(kin.cor[kin1,]))
-    kin2.cor.pairs <- which(!is.na(kin.cor[kin2,]))
-    shared.pairs <- intersect(kin1.cor.pairs, kin2.cor.pairs)
-    if (length(shared.pairs) < 3){
-        p.value <- NA
-    }else{
-        kin1.cor <- kin.cor[kin1,]
-        kin2.cor <- kin.cor[kin2,]
-        ct <- cor.test(kin1.cor, kin2.cor, method="spearman",
-                       use="pairwise.complete.obs")
-        p.value <- -log10(ct$p.value)
-        if (is.infinite(p.value))
-            p.value <- NA
-    }
-    kin1s <- c(kin1s, kin1)
-    kin2s <- c(kin2s, kin2)
-    p.vals <- c(p.vals, p.value)
-}
+## kin1s <- c()
+## kin2s <- c()
+## p.vals <- c()
+## for (i in 1:nrow(kin.pairs)){
+##     kin1 <- kin.pairs[i, 1]
+##     kin2 <- kin.pairs[i, 2]
+##     kin1.cor.pairs <- which(!is.na(kin.cor[kin1,]))
+##     kin2.cor.pairs <- which(!is.na(kin.cor[kin2,]))
+##     shared.pairs <- intersect(kin1.cor.pairs, kin2.cor.pairs)
+##     if (length(shared.pairs) < 3){
+##         p.value <- NA
+##     }else{
+##         kin1.cor <- kin.cor[kin1,]
+##         kin2.cor <- kin.cor[kin2,]
+##         ct <- cor.test(kin1.cor, kin2.cor, method="spearman",
+##                        use="pairwise.complete.obs")
+##         p.value <- -log10(ct$p.value)
+##         if (is.infinite(p.value))
+##             p.value <- NA
+##     }
+##     kin1s <- c(kin1s, kin1)
+##     kin2s <- c(kin2s, kin2)
+##     p.vals <- c(p.vals, p.value)
+## }
 
-results <- data.frame(node1=kin1s, node2=kin2s, kinact.cor2.p=p.vals)
-results$kinact.cor2.p <- results$kinact.cor2.p/max(results$kinact.cor2.p, na.rm=TRUE)
+## results <- data.frame(node1=kin1s, node2=kin2s, kinact.cor2.p=p.vals)
+## results$kinact.cor2.p <- results$kinact.cor2.p/max(results$kinact.cor2.p, na.rm=TRUE)
 
-write.table(results[order(results$node1),], "out/kinact-full-cor2.tsv", quote=FALSE,
-            row.names=FALSE, col.names=TRUE, sep="\t")
+## write.table(results[order(results$node1),], "out/kinact-full-cor2.tsv", quote=FALSE,
+##             row.names=FALSE, col.names=TRUE, sep="\t")

@@ -3,10 +3,10 @@ suppressMessages(library(reshape2))
 load("data/external/esetNR.Rdata")
 
 calc.dcg <- function(scores){
-    dcg <- sapply(1:length(scores),
-                  function(i){
-                      scores[i]/log2(i+1)
-                  })
+    dcg <- sum(sapply(1:length(scores),
+                      function(i){
+                          scores[i]/log2(i+1)
+                      }), na.rm=TRUE)
     return (dcg)
 }
 
@@ -21,6 +21,9 @@ cptac.conds <- paste(as.character(cptac.range), "290", sep="_")
 phospho.vals.sub <- phospho.vals.full[, -which(colnames(phospho.vals.full) %in% cptac.conds)]
 
 all.kins <- read.table("data/human-kinome.txt", as.is=TRUE)[,1]
+
+psites <- read.table("data/pride-phosphosites.tsv", as.is=TRUE, sep="\t")
+rownames(psites) <- paste(psites[,1], psites[,2], sep="_")
 
 ensp.id.map.full <- read.table("data/ensembl-id-map.tsv", as.is=TRUE)
 names(ensp.id.map.full) <- c("ensembl", "gene.name")
@@ -38,19 +41,24 @@ phospho.vals.gene <- ensp.id.map[phospho.vals.ensp, "gene.name"]
 
 rownames(phospho.vals) <- paste(phospho.vals.gene, phospho.vals.pos, sep="_")
 
-reg.sites <- read.delim("data/psiteplus-reg-sites.tsv", as.is=TRUE)
-reg.sites$MOD_RSD <- sub("^[STY]", "", reg.sites$MOD_RSD)
-reg.sites$MOD_RSD <- sub("-p$", "", reg.sites$MOD_RSD)
-rownames(reg.sites) <- paste(reg.sites$GENE, reg.sites$MOD_RSD, sep="_")
+good.sites <- which(rownames(phospho.vals) %in% rownames(psites))
+phospho.vals <- phospho.vals[good.sites,]
+phospho.vals.gene <- phospho.vals.gene[good.sites]
+
+
+## reg.sites <- read.delim("data/psiteplus-reg-sites.tsv", as.is=TRUE)
+## reg.sites$MOD_RSD <- sub("^[STY]", "", reg.sites$MOD_RSD)
+## reg.sites$MOD_RSD <- sub("-p$", "", reg.sites$MOD_RSD)
+## rownames(reg.sites) <- paste(reg.sites$GENE, reg.sites$MOD_RSD, sep="_")
 
 phosfun <- read.delim("data/phosfun.tsv", as.is=TRUE)
 names(phosfun) <- c("prot", "pos", "score")
 rownames(phosfun) <- paste(phosfun$prot, phosfun$pos, sep="_")
-for (site in rownames(phosfun)){
-    if (site %in% rownames(reg.sites))
-        phosfun[site, "score"] <- 1.0
-}
-med.phosfun <- median(phosfun$score)
+## for (site in rownames(phosfun)){
+##     if (site %in% rownames(reg.sites))
+##         phosfun[site, "score"] <- 1.0
+## }
+## med.phosfun <- median(phosfun$score)
 
 kinase.conditions <- read.delim("data/external/kinase-condition-pairs.tsv",
                                 as.is=TRUE)
@@ -74,6 +82,8 @@ for (i in 1:nrow(kin.pairs)){
         p.vals <- c(p.vals, NA)
         cors <- c(cors, NA)
         mean.cors <- c(mean.cors, NA)
+        dcgs <- c(dcgs, NA)
+        signed.dcgs <- c(signed.dcgs, NA)
         next
     }
     kin1.sites <- which(phospho.vals.gene == kin1)
@@ -108,16 +118,8 @@ for (i in 1:nrow(kin.pairs)){
             ## Get the functional score prediction for both sites
             kin1.phosfun.i <- rownames(phospho.vals)[kin1.site]
             kin2.phosfun.i <- rownames(phospho.vals)[kin2.site]
-            if (!(kin1.phosfun.i %in% rownames(phosfun))){
-                kin1.phosfun <- med.phosfun
-            }else{
-                kin1.phosfun <- phosfun[kin1.phosfun.i, "score"]
-            }
-            if (!(kin2.phosfun.i %in% rownames(phosfun))){
-                kin2.phosfun <- med.phosfun
-            }else{
-                kin2.phosfun <- phosfun[kin2.phosfun.i, "score"]
-            }
+            kin1.phosfun <- phosfun[kin1.phosfun.i, "score"]
+            kin2.phosfun <- phosfun[kin2.phosfun.i, "score"]
             ct <- cor.test(kin1.phospho, kin2.phospho, method="spearman",
                            use="pairwise.complete.obs")
             p.value <- -log10(ct$p.value)
@@ -134,29 +136,42 @@ for (i in 1:nrow(kin.pairs)){
         p.val <- NA
         cor.est <- NA
         mean.cor <- NA
+        idcg <- NA
+        signed.idcg <- NA
     }else{
         p.val <- max(pair.p.vals*pair.weights, na.rm=TRUE)
         j <- which.max(pair.p.vals*pair.weights)
         cor.est <- pair.cors[j]*pair.weights[j]
         mean.cor <- weighted.mean(pair.cors, w=pair.weights, na.rm=TRUE)
+        ## DCG
+        pair.p.vals <- pair.p.vals/max(pair.p.vals, na.rm=TRUE)
         dcg <- calc.dcg(pair.weights[order(pair.p.vals, decreasing=TRUE)])
-        idcg <- dcg/calc.dcg(pair.weights[order(pair.weights, decreasing=TRUE)])
+        max.dcg <- calc.dcg(pair.weights[order(pair.weights, decreasing=TRUE)])
+        min.dcg <- calc.dcg(pair.weights[order(pair.weights, decreasing=FALSE)])
+        idcg <- (dcg-min.dcg)/(max.dcg-min.dcg)
+        idcg <- idcg * max(pair.p.vals, na.rm=TRUE) * max(pair.weights, na.rm=TRUE)
         signed.weights <- pair.cors * pair.weights
         signed.dcg <- calc.dcg(signed.weights[order(pair.p.vals, decreasing=TRUE)])
-        signed.dcg <- signed.dcg * max(pair.weights) * max(pair.p.vals)
-        if (signed.dcg < 0){
-            signed.idcg <- signed.dcg/calc.dcg(signed.weights[order(signed.weights)])
-            signed.idcg <- signed.idcg * min(signed.weights) * max(pair.p.vals)
+        if (is.na(signed.dcg)){
+            signed.idcg <- NA
+        }else if (signed.dcg < 0){
+            best.signed.dcg <- calc.dcg(signed.weights[order(signed.weights)])
+            worst.signed.dcg <- calc.dcg(signed.weights[order(signed.weights, decreasing=TRUE)])
+            signed.idcg <- (signed.dcg-worst.signed.dcg)/(best.signed.dcg-worst.signed.dcg)
+            signed.idcg <- signed.idcg * min(signed.weights, na.rm=TRUE) * max(pair.p.vals, na.rm=TRUE)
         }else{
-            signed.idcg <- signed.dcg/calc.dcg(signed.weights[order(signed.weights,
-                                                                    decreasing=TRUE)])
-            signed.idcg <- signed.idcg * max(signed.weights) * max(pair.p.vals)
+            best.signed.dcg <- calc.dcg(signed.weights[order(signed.weights, decreasing=TRUE)])
+            worst.signed.dcg <- calc.dcg(signed.weights[order(signed.weights)])
+            signed.idcg <- (signed.dcg-worst.signed.dcg)/(best.signed.dcg-worst.signed.dcg)
+            signed.idcg <- signed.idcg * max(signed.weights, na.rm=TRUE) * max(pair.p.vals, na.rm=TRUE)
         }
     }
     if (is.null(p.val)){
         p.val <- NA
         cor.est <- NA
         mean.cor <- NA
+        idcg <- NA
+        signed.idcg <- NA
     }
     kin1s <- c(kin1s, kin1)
     kin2s <- c(kin2s, kin2)
