@@ -10,13 +10,15 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 from train_set import *
 from scipy import interp
+import matplotlib
+matplotlib.use('AGG')
 import matplotlib.pyplot as plt
 from itertools import cycle
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, average_precision_score, precision_recall_curve
 from sklearn.model_selection import StratifiedKFold
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.neural_network import MLPClassifier
-
+import random
 from sklearn.preprocessing import Imputer
   
 def find_centers(test,results):
@@ -61,6 +63,210 @@ def probability(c1,c2,test,results):
             p = dist(test[i],c1)/(dist(test[i],c2)+dist(test[i],c1))
             probability.append([p,1-p])
     return probability
+
+def plot_ROC(model, truePos,trueNeg,data,train_method):
+    
+    splits = StratifiedKFold(n_splits=5)
+    mean_fpr = np.linspace(0, 1, 100)
+    aucs= []
+    tprs = []
+    rcls = []
+    for k in range(50):
+        if train_method == "random":
+            traindict,outcomesdict = train_random(truePos,data)
+        else:
+            traindict,outcomesdict = train_prior(truePos,trueNeg,data)
+        keys = list(traindict.keys())
+        random.shuffle(keys)
+        train = []
+        outcomes = []
+        for key in keys:
+
+            train.append(traindict[key])
+            outcomes.append(outcomesdict[key])
+        min_max_scaler = preprocessing.MinMaxScaler()
+        train = np.asarray(train)
+        outcomes = np.asarray(outcomes)
+        min_max_scaler.fit(train)
+        train_scale = min_max_scaler.transform(train)
+        
+
+
+
+        i = 0
+        for train,test in splits.split(train_scale,outcomes):
+            probs = model.fit(train_scale[train],outcomes[train]).predict_proba(train_scale[test])
+            fpr, tpr, thresholds = roc_curve(outcomes[test],probs[:,1])
+            tprs.append(interp(mean_fpr, fpr, tpr))
+            tprs[-1][0] = 0.0
+            roc_auc = auc(fpr,tpr)
+            aucs.append(roc_auc)
+            plt.plot(fpr,tpr,lw =1, alpha = 0.3)
+            i +=1
+        plt.draw()
+    plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
+         label='random', alpha=.8)
+
+
+    mean_tpr = np.mean(tprs, axis=0)
+    mean_tpr[-1] = 1.0
+    mean_auc = auc(mean_fpr, mean_tpr)
+    std_auc = np.std(aucs)
+    plt.plot(mean_fpr, mean_tpr, color='b',
+         label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
+         lw=2, alpha=.8)
+
+    std_tpr = np.std(tprs, axis=0)
+    tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
+    tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
+    plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
+                 label=r'$\pm$ 1 std. dev.')
+    plt.xlim([-0.05, 1.05])
+    plt.ylim([-0.05, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.legend(loc="lower right")
+    
+    
+    plt.savefig("img/mldata/"+ method + "_unscale_" + train_method+'_'+'ROC'+'.pdf')
+    plt.gcf().clear()     
+
+def plot_PR(model, truePos,trueNeg,data,train_method):
+    rcls = []
+    prcs = []
+    aprcs = []
+    aucs = []
+    splits = StratifiedKFold(n_splits=5)
+
+    for k in range(50):
+        if train_method == "random":
+            traindict,outcomesdict = train_random(truePos,data)
+        else:
+            traindict,outcomesdict = train_prior(truePos,trueNeg,data)
+        keys = list(traindict.keys())
+        random.shuffle(keys)
+        train = []
+        outcomes = []
+        for key in keys:
+
+            train.append(traindict[key])
+            outcomes.append(outcomesdict[key])
+
+        min_max_scaler = preprocessing.MinMaxScaler()
+        train = np.asarray(train)
+        outcomes = np.asarray(outcomes)
+        min_max_scaler.fit(train)
+        train_scale = min_max_scaler.transform(train)
+        finval = []
+     
+        for train,test in splits.split(train_scale,outcomes):
+            y_test = outcomes[test]
+        
+            y_scores = model.fit(train_scale[train],outcomes[train]).predict_proba(train_scale[test])
+            # y_scores = [x[v] for x,v in zip(y_scores,y_test)]
+            y_scores = [x[1] for x in y_scores]
+         
+            precision, recall, _ = precision_recall_curve(y_test, y_scores)
+            prcs.append(precision)
+            print(precision)
+            rcls.append(recall)
+            finval.append(precision[0])   
+            aucs.append(auc( recall,precision)) 
+            plt.step(recall, precision, alpha=0.2,where='post')
+            aprcs.append(average_precision_score(y_test, y_scores))
+            plt.draw()
+    ap = np.median(aprcs)
+    aucm = np.median(aucs)
+    plt.xlabel('Recall')
+    plt.ylabel('Precision')
+    plt.ylim([0.0, 1.05])
+    plt.xlim([0.0, 1.0])
+    print(np.median(finval))
+    plt.savefig("img/mldata/"+ method + "_unscale_"+str(aucm)+"_" + train_method + '_Precision_Recall_curve'+'.pdf')
+    
+def predict(model,truePos,trueNeg,data,train_method):
+    
+    min_max_scaler = preprocessing.MinMaxScaler()
+    testdict = prediction_matrix(data)
+    test = list(testdict.values())
+    pairs = list(testdict.keys())
+    min_max_scaler.fit(test)
+
+    test_scale = min_max_scaler.transform(test)
+
+    predictions = {}    
+   
+    for k in range(50):
+        if train_method == "random":
+            traindict,outcomesdict = train_random(truePos,data)
+        else:
+            traindict,outcomesdict = train_prior(truePos,trueNeg,data)
+        keys = list(traindict.keys())
+        random.shuffle(keys)
+        train = []
+        outcomes = []
+        for key in keys:
+
+            train.append(traindict[key])
+            outcomes.append(outcomesdict[key])
+
+        min_max_scaler = preprocessing.MinMaxScaler()
+        train = np.asarray(train)
+        outcomes = np.asarray(outcomes)
+        min_max_scaler.fit(train)
+        train_scale = min_max_scaler.transform(train)
+        
+        probability = model.fit(train_scale,outcomes).predict_proba(test_scale)
+        
+        for i in range(len(pairs)):
+            
+            if pairs[i] in predictions:
+                predictions[pairs[i]].append(probability[i][1])
+            else:
+                predictions[pairs[i]] = [probability[i][1]]     
+            if k == 49:  
+                predictions[pairs[i]] = np.mean(predictions[pairs[i]])
+    return predictions
+
+def cross_val(model,method,truePos,trueNeg,data,train_method):
+    yvals = []
+    pvals = []
+      
+    splits = StratifiedKFold(n_splits=5)
+    for k in range(50):
+        if train_method == "random":
+            traindict,outcomesdict = train_random(truePos,data)
+        else:
+            traindict,outcomesdict = train_prior(truePos,trueNeg,data)
+
+        keys = list(traindict.keys())
+        random.shuffle(keys)
+        train = []
+        outcomes = []
+        for key in keys:
+       
+            train.append(traindict[key])
+            outcomes.append(outcomesdict[key])
+        min_max_scaler = preprocessing.MinMaxScaler()
+        train = np.asarray(train)
+        outcomes = np.asarray(outcomes) 
+        min_max_scaler.fit(train)
+        train_scale = min_max_scaler.transform(train)
+        for train,test in splits.split(train_scale,outcomes):
+            probs = model.fit(train_scale[train],outcomes[train]).predict_proba(train_scale[test])
+            y = outcomes[test]
+            pvals.append([p[1] for p in probs])
+            yvals.append(y)  
+   
+    print(len(pvals))
+    with open("mlres/"+method+"prob.tsv","w") as pfile:
+        for i in range(len(pvals)):
+            print([str(x) for x in pvals[i]])    
+            pfile.write("\t".join([str(x) for x in pvals[i]])+"\n")
+    with open("mlres/"+method+"yvals.tsv","w") as yfile:
+        for i in range(len(yvals)):
+            yfile.write("\t".join([str(x) for x in yvals[i]])+"\n")     
+    return
  
 if __name__ == "__main__":
 
@@ -80,12 +286,20 @@ if __name__ == "__main__":
     test_scale = min_max_scaler.transform(test)
 
     if train_method == "random":
-        traindict,outcomes = train_random(truePos,data)
+        traindict,outcomesdict = train_random(truePos,data)
     else:
-        traindict,outcomes = train_prior(truePos,trueNeg,data)
-    train = list(traindict.values())
+        traindict,outcomesdict = train_prior(truePos,trueNeg,data)
+
+    keys = list(traindict.keys())
+    random.shuffle(keys)
+    train = []
+    outcomes = []
+    for key in keys:
+       print(key)
+       train.append(traindict[key])
+       outcomes.append(outcomesdict[key])
     min_max_scaler.fit(train)
-    train_scale = min_max_scaler.transform(train)
+    train_scale = min_max_scaler.transform(train) 
 
     
     if method == "NB":
@@ -95,7 +309,7 @@ if __name__ == "__main__":
         model = svm.SVC(kernel = 'rbf',probability = True)
     
     if method == "boost":
-        model = AdaBoostClassifier(n_estimators=1000)     
+        model = AdaBoostClassifier(n_estimators=150)     
    
     if method == "kmeans":
         model = NearestCentroid()
@@ -117,73 +331,25 @@ if __name__ == "__main__":
        model =  MLPClassifier()       
 
     if method == "randfor":
-        model = RandomForestClassifier(n_estimators = 1000)
+        model = RandomForestClassifier(n_estimators = 150)
 
     if model != "kmeans":
         
         prediction = model.fit(train_scale,outcomes).predict(test_scale)
         probability = model.fit(train_scale,outcomes).predict_proba(test_scale)
     
-    #cross validate results 
-    splits = StratifiedKFold(n_splits=5)
-    mean_fpr = np.linspace(0, 1, 100)
-    aucs= []
-    tprs = []
-    # repeated cross validation, is this something along the lines of what you were thinking 
-    for k in range(50):
-        if train_method == "random":
-            traindict,outcomes = train_random(truePos,data)
-        else:
-            traindict,outcomes = train_prior(truePos,trueNeg,data)
-        train = np.asarray(list(traindict.values()))
-        print(train)
-        outcomes = np.asarray(outcomes)
-        min_max_scaler = preprocessing.MinMaxScaler()
-        min_max_scaler.fit(train)
-        train_scale = min_max_scaler.transform(train)
-        i = 0    
-        for train,test in splits.split(train_scale,outcomes):
-            print(train)
-            probs = model.fit(train_scale[train],outcomes[train]).predict_proba(train_scale[test])
-            fpr, tpr, thresholds = roc_curve(outcomes[test],probs[:,1])
-            tprs.append(interp(mean_fpr, fpr, tpr))
-            tprs[-1][0] = 0.0
-            roc_auc = auc(fpr,tpr)
-            aucs.append(roc_auc)
-            plt.plot(fpr,tpr,lw =1, alpha = 0.3)
-            i +=1
-   # plot the diagonal line rperesenting random "luck"
-    plt.plot([0, 1], [0, 1], linestyle='--', lw=2, color='r',
-         label='random', alpha=.8)
+    plot_ROC(model,truePos,trueNeg,data,train_method)
+    plot_PR(model, truePos,trueNeg,data,train_method)
 
-
-    mean_tpr = np.mean(tprs, axis=0)
-    mean_tpr[-1] = 1.0
-    mean_auc = auc(mean_fpr, mean_tpr)
-    std_auc = np.std(aucs)
-    plt.plot(mean_fpr, mean_tpr, color='b',
-         label=r'Mean ROC (AUC = %0.2f $\pm$ %0.2f)' % (mean_auc, std_auc),
-         lw=2, alpha=.8)
-
-    std_tpr = np.std(tprs, axis=0)
-    tprs_upper = np.minimum(mean_tpr + std_tpr, 1)
-    tprs_lower = np.maximum(mean_tpr - std_tpr, 0)
-    plt.fill_between(mean_fpr, tprs_lower, tprs_upper, color='grey', alpha=.2,
-                 label=r'$\pm$ 1 std. dev.')
-
-    plt.xlim([-0.05, 1.05])
-    plt.ylim([-0.05, 1.05])
-    plt.xlabel('False Positive Rate')
-    plt.ylabel('True Positive Rate')
-    plt.title(method + "_" + 'ROC')
-    plt.legend(loc="lower right")  
-    
-    plt.savefig("img/"+ method + "_unscale_" + train_method+'_'+'ROC.pdf')
-
-        
+    probs = predict(model,truePos,trueNeg,data,train_method)
+    cross_val(model,method,truePos,trueNeg,data,train_method) 
+    # repeated cross validation, is this something along the lines of what you were thinkin
+      
     with open(sys.argv[6],"w") as output:
         for i in range(len(testdict.keys())):
             s = str.join("\t",[str(x) for x in list(testdict.keys())[i]])
-            s = s + "\t"+ str(prediction[i]) +"\t"+ str(probability[i][1])
+            s = s + "\t"+ str(probs[list(testdict.keys())[i]])
 
             output.write(s+"\n")
+
+
