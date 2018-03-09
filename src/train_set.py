@@ -8,18 +8,18 @@ from random import *
 def pos_set(f,data):
     #returns a set of known positives
     pos = {}
-    ypos = []
+    ypos = {}
     datadict = prediction_matrix(data)
     
     with open(f,"r") as f1:
         first_line = f1.readline()
         for line in f1:
-            if 'NA' not in line:
+            if 'NA' not in line:            
                 line = line.split("\t")
                 line[1] = line[1].replace("\n","")
                 if (line[0],line[1]) in datadict:
                     pos[line[0],line[1]] = datadict[line[0],line[1]]
-    ypos = [1]*len(pos)
+                    ypos[line[0],line[1]] = 1
     return pos,ypos
 
 def train_random(f1,data):
@@ -39,32 +39,43 @@ def train_random(f1,data):
                 if keys[j] not in train:
                     o = 1
                     train[keys[j]] = datadict[keys[j]]
+                    y[keys[j]] = 0
         else:
             train[keys[i]] = datadict[keys[i]]
-    y = y + [0]*n
+            y[keys[i]] = 0 
 
     return train, y
+
+def fix(x):
+    if x == "NA":
+        return np.nan
+    else:
+        return float(x) 
 
 def train_prior(f1,f2,data):
     #uses known negatives as a negative set for training
     train, y = pos_set(f1,data)
     datadict = prediction_matrix(data)
+    print(len(datadict))
     n = len(y)
-
+    print(n)
     truenegs = []
 
     with open(f2,"r") as negs:
         first_line = negs.readline()
         for line in negs:
-            if 'NA' not in line:
-                line = line.split("\t")
+            
+            line = line.split("\t")
+            if (line[0],line[1].replace("\n","")) in datadict:
                 truenegs.append((line[0],line[1].replace("\n","")))
-
+     
+     
     samp = sample(range(len(truenegs)), n)
-
-    for i in samp:
+    print(len(samp))    
+    for i in samp:     
         train[truenegs[i]] = datadict[truenegs[i]]
-    y = y + [0]*n
+        y[truenegs[i]] = 0
+    print(len(train))
     return train, y
     
 def prediction_matrix(data):
@@ -75,5 +86,8 @@ def prediction_matrix(data):
         for line in d:
             if 'NA' not in line:
                 line = line.split("\t")
-                v[line[0],line[1]] = [float(x) for x in line[2:]]
+                line[len(line)-1] = line[len(line)-1].replace("\n","")
+              
+                v[line[0],line[1]] = [fix(x) for x in line[2:]]
+                
     return v
