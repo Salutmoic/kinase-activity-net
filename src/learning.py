@@ -128,7 +128,7 @@ def plot_ROC(model, truePos,trueNeg,data,train_method):
     plt.legend(loc="lower right")
     
     
-    plt.savefig("img/mldata/"+ method + "_unscale_" + train_method+'_'+'ROC'+'.pdf')
+    plt.savefig("img/mldata/"+ method + "_unscale_" + train_method+'_'+'ROC2'+'.pdf')
     plt.gcf().clear()     
 
 def plot_PR(model, truePos,trueNeg,data,train_method):
@@ -176,13 +176,15 @@ def plot_PR(model, truePos,trueNeg,data,train_method):
             aprcs.append(average_precision_score(y_test, y_scores))
             plt.draw()
     ap = np.median(aprcs)
-    aucm = np.median(aucs)
+    aucm = np.mean(aucs)
     plt.xlabel('Recall')
     plt.ylabel('Precision')
     plt.ylim([0.0, 1.05])
     plt.xlim([0.0, 1.0])
+    plt.plot(label='mean AUC =' + str(aucm) )
+    plt.legend([ 'average precision = ' + str(round(ap,2))],loc="lower right")
     print(np.median(finval))
-    plt.savefig("img/mldata/"+ method + "_unscale_"+str(aucm)+"_" + train_method + '_Precision_Recall_curve'+'.pdf')
+    plt.savefig("img/mldata/"+ method + "_unscale_"+"_" + train_method + '_Precision_Recall_curve2'+'.pdf')
     
 def predict(model,truePos,trueNeg,data,train_method):
     
