@@ -122,6 +122,15 @@ for (i in 1:nrow(kin.pairs)){
     cors <- c(cors, cor.est)
 }
 
+cors[is.infinite(cors) & cors < 0] <- min(cors[!is.infinite(cors) & !is.na(cors)])
+cors[is.infinite(cors) & cors > 0] <- max(cors[!is.infinite(cors) & !is.na(cors)])
+
+max.cor.est <- max(cors, na.rm=TRUE)
+min.cor.est <- min(cors, na.rm=TRUE)
+print(c(min.cor.est, max.cor.est))
+print(length(which(!is.na(cors))))
+cors <- (cors-min.cor.est)/(max.cor.est-min.cor.est)
+
 results <- data.frame(node1=kin1s, node2=kin2s, kinact.cor.p=p.vals)
 results$kinact.cor.p <- results$kinact.cor.p/max(results$kinact.cor.p, na.rm=TRUE)
 write.table(results[order(results$node1),], "out/kinact-full-cor.tsv", quote=FALSE,
