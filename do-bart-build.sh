@@ -11,15 +11,18 @@ NEG_VALSET=data/validation-set-negative.tsv
 
 mkdir -p $LOGDIR
 
-bsub -J bart-build-full \
-     -o ${LOGDIR}/bart-build-full.out -e ${LOGDIR}/bart-build-full.err \
+bsub -J bart-build-$(basename $MERGED_DATA .tsv) \
+     -o ${LOGDIR}/bart-build-$(basename $MERGED_DATA .tsv).out \
+     -e ${LOGDIR}/bart-build-$(basename $MERGED_DATA .tsv).err \
      -M $MEM  -R "rusage[mem=16000]" -n $CORES \
      Rscript src/bart-build.r $MERGED_DATA $VALSET $NEG_VALSET FALSE FALSE
-bsub -J bart-build-full-rand-negs \
-     -o ${LOGDIR}/bart-build-full-rand-negs.out -e ${LOGDIR}/bart-build-full-rand-negs.err \
+bsub -J bart-build-rand-negs-$(basename $MERGED_DATA .tsv) \
+     -o ${LOGDIR}/bart-build-rand-negs$(basename $MERGED_DATA .tsv).out \
+     -e ${LOGDIR}/bart-build-rand-negs$(basename $MERGED_DATA .tsv).err \
      -M $MEM  -R "rusage[mem=16000]" -n $CORES \
      Rscript src/bart-build.r $MERGED_DATA $VALSET $NEG_VALSET TRUE FALSE
-bsub -J bart-build-full-direct \
-     -o ${LOGDIR}/bart-build-full-direct.out -e ${LOGDIR}/bart-build-full-direct.err \
+bsub -J bart-build-direct-$(basename $MERGED_DATA .tsv) \
+     -o ${LOGDIR}/bart-build-direct-$(basename $MERGED_DATA .tsv).out \
+     -e ${LOGDIR}/bart-build-direct-$(basename $MERGED_DATA .tsv).err \
      -M $MEM  -R "rusage[mem=16000]" -n $CORES \
      Rscript src/bart-build.r $MERGED_DATA $VALSET $NEG_VALSET FALSE TRUE

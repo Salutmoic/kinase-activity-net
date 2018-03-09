@@ -14,8 +14,9 @@ mkdir -p $LOGDIR
 BART_MODELS="bart rand-negs-bart"
 
 for m in $BART_MODELS; do
-         bsub -J bart-predict-full-${m} \
-              -o ${LOGDIR}/bart-predict-full-${m}.out -e ${LOGDIR}/bart-predict-full-${m}.err \
+         bsub -J bart-predict-full-${m}-$(basename $MERGED_DATA .tsv) \
+              -o ${LOGDIR}/bart-predict-full-${m}-$(basename $MERGED_DATA .tsv).out \
+              -e ${LOGDIR}/bart-predict-full-${m}-$(basename $MERGED_DATA .tsv).err \
               -M $MEM  -R "rusage[mem=${MEM}]" -n $CORES \
-              Rscript src/bart-predict.r $MERGED_DATA out/kinase-merged-pred-${m}.Rdata
+              Rscript src/bart-predict.r $MERGED_DATA out/$(basename $MERGED_DATA .tsv)-${m}.Rdata
 done

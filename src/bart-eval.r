@@ -47,8 +47,8 @@ possible_false_intxns <- setdiff(possible_false_intxns, possible_true_intxns)
 sample_size <- round(0.8 * min(length(possible_false_intxns),
                                length(possible_true_intxns)))
 
-num_reps <- 10
-k <- 5
+num_reps <- 20
+k <- 3
 all_probs <- NULL
 all_labels <- NULL
 
@@ -63,8 +63,8 @@ for (n in 1:num_reps){
                 rep(FALSE, length(false_intxns)))
     rand.rows <- sample(1:nrow(preds))
     preds <- preds[rand.rows,]
-    labels <- labels[rand.rows]
-    val_n <- floor(nrow(preds)/k)
+    labels <- as.factor(labels[rand.rows])
+    val_n <- ceiling(nrow(preds)/k)
     train_n <- nrow(preds) - val_n
     rep_probs <- NULL
     rep_labels <- NULL
@@ -80,15 +80,13 @@ for (n in 1:num_reps){
         val_labels <- labels[val_rows]
         train_set <- preds[train_rows,]
         train_labels <- labels[train_rows]
-        val_labels <- as.factor(val_labels)
-        train_labels <- as.factor(train_labels)
         bart <- bartMachineCV(train_set,
                               train_labels,
                               use_missing_data=TRUE,
                               use_missing_data_dummies_as_covars=TRUE,
                               replace_missing_data_with_x_j_bar=FALSE,
                               impute_missingness_with_x_j_bar_for_lm=FALSE,
-                              prob_rule_class=0.0,
+                              prob_rule_class=0.5,
                               verbose=FALSE,
                               serialize=FALSE)
         ## val_preds <- bart_predict_for_test_data(bart, val_set, val_labels,
@@ -98,8 +96,15 @@ for (n in 1:num_reps){
             all_probs <- val_preds
             all_labels <- val_labels
         }else{
-            all_probs <- cbind(all_probs, val_preds)
-            all_labels <- cbind(all_labels, val_labels)
+            if (length(val_rows) < val_n){
+                num.na <- val_n - length(val_rows)
+                val_preds <- c(val_preds, rep(NA, num.na))
+                val_labels <- c(val_labels, rep(NA, num.na))
+                val_labels <- as.factor(val_labels)
+                levels(val_labels) <- levels(labels)
+            }
+            all_probs <- cbind.data.frame(all_probs, val_preds)
+            all_labels <- cbind.data.frame(all_labels, val_labels)
         }
     }
 }
@@ -112,13 +117,21 @@ mean_auc <- mean(unlist(rocr_auc@y.values), na.rm=TRUE)
 se_auc <- sd(unlist(rocr_auc@y.values), na.rm=TRUE)/sqrt(num_reps*k)
 
 fprs <- rocr_roc@x.values
-fpr0.05s <- unlist(lapply(fprs,
+fpr0.1s <- unlist(lapply(1:length(fprs),
                         function(f){
-                            fpr0.05 <-max(which(f<0.05))
-                            rocr_roc@alpha.values[[1]][fpr0.05]
+                            fpr0.1 <-max(which(fprs[[f]]<0.1))
+                            rocr_roc@alpha.values[[f]][fpr0.1]
                         }))
-cutoff <- mean(fpr0.05s)
-message(paste("FPR 0.05 cutoff: ", cutoff))
+fpr.cutoff <- mean(fpr0.1s)
+message(paste("FPR 0.1 cutoff: ", fpr.cutoff))
+precs <- rocr_prec@y.values
+prec0.9s <- unlist(lapply(1:length(precs),
+                        function(f){
+                            prec0.9 <-max(which(precs[[f]]>0.9))
+                            rocr_prec@alpha.values[[f]][prec0.9]
+                        }))
+prec.cutoff <- mean(prec0.9s)
+message(paste("Prec 0.9 cutoff: ", prec.cutoff))
 
 file_base <- strsplit(basename(merged_pred_file), split="\\.")[[1]][1]
 img_file <- paste0(file_base, "-bart")
@@ -131,13 +144,17 @@ if (directed){
 img_file <- paste0("img/", img_file, "-roc.pdf")
 
 pdf(img_file)
-plot(rocr_roc, spread.estimate="boxplot", avg="vertical",
-     main=paste0("BART\n(mean AUC=", format(mean_auc, digits=2),
-                 ", S.E.M=", format(se_auc, digits=2), ")"))
-abline(v=0.05, lty=2, col="blue")
-legend("bottomright", legend=paste0("FPR=0.05 -> ", cutoff), lty=2, col="blue")
-plot(rocr_prec, spread.estimate="boxplot", avg="vertical",
-     main=paste0("BART"), ylim=c(0.5, 1.0))
+plot(rocr_roc, spread.estimate="stderror", avg="threshold",
+     main=paste0("BART\n(mean AUC=", format(mean_auc, digits=3),
+                 ", S.E.M=", format(se_auc, digits=2), ")"), colorize=TRUE)
+abline(v=0.1, lty=2, col="blue")
+legend("bottomright", legend=paste0("FPR 0.1 -> ", format(fpr.cutoff, digits=3)),
+       lty=2, col="blue")
+plot(rocr_prec, spread.estimate="stderror", avg="threshold",
+     main=paste0("BART"), ylim=c(0.5, 1.0), colorize=TRUE)
+abline(h=0.9, lty=2, col="blue")
+legend("bottomleft", legend=paste0("Prec 0.9 -> ", format(prec.cutoff, digits=3)),
+       lty=2, col="blue")
 
 ## plot(rocr_roc, 
 ##      main=paste0("BART\n(mean AUC=", format(mean_auc, digits=2),

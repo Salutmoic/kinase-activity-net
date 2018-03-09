@@ -19,9 +19,10 @@ names(merged_pred)[1:2] <- c("prot1", "prot2")
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
 
 load(bart_model_file)
-
+head(merged_pred)
 ## preds <- 1.0-predict(bart, merged_pred[3:ncol(merged_pred)])
-preds <- 1.0-bart_machine_get_posterior(bart, merged_pred[3:ncol(merged_pred)])$y_hat
+preds <- 1.0-bart_machine_get_posterior(bart,
+                                        merged_pred[3:ncol(merged_pred)])$y_hat
 
 out_tbl <- data.frame(prot1=merged_pred$prot1,
                       prot2=merged_pred$prot2,

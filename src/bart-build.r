@@ -44,9 +44,9 @@ if (use_rand_negs){
 }
 
 num_negs <- min(length(possible_false_intxns),
-                3*length(true_intxns))
+                length(true_intxns))
 false_intxns <- sample(possible_false_intxns, num_negs)
-true_intxns <- possible_true_intxns
+true_intxns <- sample(true_intxns, num_negs)
 
 ## Put together the tables of predictions and TRUE/FALSE labels
 intxns <- c(true_intxns, false_intxns)
@@ -59,7 +59,7 @@ bart <- bartMachineCV(preds,
                       use_missing_data_dummies_as_covars=TRUE,
                       replace_missing_data_with_x_j_bar=FALSE,
                       impute_missingness_with_x_j_bar_for_lm=FALSE,
-                      prob_rule_class=0.0,
+                      prob_rule_class=0.5,
                       verbose=FALSE,
                       serialize=TRUE)
 
