@@ -2,7 +2,7 @@ import os.path
 import sys
 import itertools
 import pssms
-from math import log2, log, exp
+from math import log2, log, exp, copysign
 
 
 def read_phosphosites(psites_file):
@@ -11,19 +11,12 @@ def read_phosphosites(psites_file):
 
     psites = {}
     with open(psites_file) as f:
-        columns = f.readline()
-        columns = columns.split("\t")
-        seqind = columns.index("SITE_...7_AA")
-        posind = columns.index("MOD_RSD")
         for line in f:
-            line_spl = line.split("\t")
-            protein = line_spl[0]
-            motif_seq = line_spl[seqind].upper()
-            pos = line_spl[posind][1:-2]
+            protein, pos, res, motif_seq = line.strip().split("\t")
             if protein not in psites:
-                psites[protein] = [(pos, motif_seq)]
+                psites[protein] = [(pos, motif_seq, res)]
             else:
-                psites[protein].append((pos, motif_seq))
+                psites[protein].append((pos, motif_seq, res))
     return psites
 
 
@@ -104,6 +97,20 @@ def read_reg_sites_file(reg_sites_file):
     return reg_sites
 
 
+def read_pfam_file(pfam_file, kinases):
+    kin_types = dict()
+    with open(pfam_file) as h:
+        for line in h:
+            prot, dom, start, end = line.strip().split()
+            if prot not in kinases or dom not in ["Pkinase", "Pkinase_Tyr"]:
+                continue
+            if dom == "Pkinase":
+                kin_types[prot] = "ST"
+            else:
+                kin_types[prot] = "Y"
+    return kin_types
+                
+
 def score_kin_pairs(ktable, kinases, aa_freqs, psites):
     # loads a netwoek of kinase-> kinase interactions and scores them
     # with the pssm it returns a dictionary with kinasa A and kinase B
@@ -123,8 +130,20 @@ def score_kin_pairs(ktable, kinases, aa_freqs, psites):
 
         # # Don't use any of the substrate sequences in calculating the
         # # PSSM to avoid circularity
-        kin_motif_seqs = [seq for (substrate, seq) in ktable[kin_a]
-                          if substrate != kin_b]
+        kin_motif_seqs = []
+        for substrate, pos, res, seq in ktable[kin_a]:
+            if substrate == kin_b:
+                continue
+            if substrate not in psites:
+                continue
+            for pos_b, seq_b, res_b in psites[substrate]:
+                if pos == pos_b:
+                    kin_motif_seqs.append(seq_b)
+                    break
+        # kin_motif_seqs = [seq for substrate, pos, res, seq in ktable[kin_a]
+        #                   if substrate != kin_b and
+        #                   substrate in psites and
+        #                   (pos, seq, res) in psites[substrate]]
         # If kin_b isn't a known substrate, check if we've already
         # calculated the full PSSM for kin_a and, if so, take it
         # rather than wasting time recalculating it.
@@ -144,19 +163,19 @@ def score_kin_pairs(ktable, kinases, aa_freqs, psites):
         # Take only tyrosine or serine/threonine motif sequences from
         # kin_b, depending on the specificity of kin_a.
         kin_a_is_tyr_kin = pssms.is_tyr_kinase(pssm)
-        sub_motif_seqs = [(pos, seq) for pos, seq in psites[kin_b]
-                          if ((kin_a_is_tyr_kin and seq[7] == 'Y') or
-                              (not kin_a_is_tyr_kin and seq[7] in ['S', 'T']))]
+        sub_motif_seqs = [(pos, seq, res) for pos, seq, res in psites[kin_b]
+                          if ((kin_a_is_tyr_kin and res == 'Y') or
+                              (not kin_a_is_tyr_kin and res in ['S', 'T']))]
         if not sub_motif_seqs:
             scores[(kin_a, kin_b)] = []
             continue
 
-        for pos, motif_seq in sub_motif_seqs:
+        for pos, motif_seq, res in sub_motif_seqs:
             score = pssms.score_motif_seq(motif_seq, pssm)
             if (kin_a, kin_b) in scores:
-                scores[(kin_a, kin_b)].append((pos, score))
+                scores[(kin_a, kin_b)].append((pos, res, score))
             else:
-                scores[(kin_a, kin_b)] = [(pos, score)]
+                scores[(kin_a, kin_b)] = [(pos, res, score)]
     return scores
 
 
@@ -166,48 +185,48 @@ def calc_dcg(scores):
 
 def signed_regulation_score(pair, scores, phosfun, med_phosfun, reg_sites, signs):
     # Rank the PSSM scores
-    scores.sort(key=lambda t: t[1], reverse=True)
+    scores.sort(key=lambda t: t[2], reverse=True)
     kin_b_reg_sites = reg_sites.get(pair[1])
     kin_b_phosfun = phosfun.get(pair[1])
     kin_b_signs = signs.get(pair[1])
     hs_scores = []
     hs_signs = []
-    for pos, score in scores:
-        hs_score = None
-        if kin_b_reg_sites is not None and pos in kin_b_reg_sites:
-            hs_signs.append(kin_b_reg_sites[pos])
-            hs_scores.append(1.0)
-            continue
-        if kin_b_phosfun is not None and pos in kin_b_phosfun:
-            hs_score = kin_b_phosfun[pos]
-        else:
-            hs_score = med_phosfun
-        if kin_b_signs is not None and pos in kin_b_signs:
-            hs_sign = kin_b_signs[pos]
-        else:
-            hs_sign = 0
+    for pos, res, score in scores:
+        if kin_b_phosfun is None or pos not in kin_b_phosfun:
+            sys.exit("\t".join([pair[1], pos]))
+        hs_score = kin_b_phosfun[pos]
+        hs_sign = kin_b_signs[pos]
         hs_scores.append(hs_score)
         hs_signs.append(hs_sign)
-    combined = [sign * score for (sign, score) in zip(hs_signs, hs_scores)]
-    # Discounted Cumulative Gain
-    dcg = calc_dcg(combined)
-    # sign_dcg = calc_dcg(hs_signs)
-    # Ideal Discounted Cumulative Gain
-    # hs_signs = [sign for _,sign in sorted(zip(hs_scores, hs_signs),
-    #                                       key=lambda pair: pair[0],
-    #                                       reverse=True)]
-    # hs_scores.sort(reverse=True)
-    if dcg < 0:
-        combined.sort()
+    if abs(min(hs_signs)) > max(hs_signs):
+        site_score = min(hs_signs)
     else:
-        combined.sort(reverse=True)
-    idcg = calc_dcg(combined)
-    # sign_idcg = calc_dcg(hs_signs)
-    if idcg == 0.0:
-        return 0.0
+        site_score = max(hs_signs)
+    # Discounted Cumulative Gain
+    # signs = [copysign(1, x) for x in hs_signs]
+    # signed_func_scores = [sign * score for (sign, score) in zip(signs, hs_scores)]
+    signed_func_scores = [sign * score for (sign, score) in zip(hs_signs, hs_scores)]
+    if abs(min(signed_func_scores)) > max(signed_func_scores):
+        signed_func_score = min(signed_func_scores)
+    else:
+        signed_func_score = max(signed_func_scores)
+    dcg = calc_dcg(signed_func_scores)
     if dcg < 0:
-        return (dcg/idcg) * min(combined) # * (dcg/idcg) * max(hs_scores)
-    return (dcg/idcg) * max(combined) # * (dcg/idcg) * max(hs_scores)
+        signed_func_scores.sort()
+        best_dcg = calc_dcg(signed_func_scores)
+        signed_func_scores.sort(reverse=True)
+        worst_dcg = calc_dcg(signed_func_scores)
+        sign = -1
+    else:
+        signed_func_scores.sort()
+        worst_dcg = calc_dcg(signed_func_scores)
+        signed_func_scores.sort(reverse=True)
+        best_dcg = calc_dcg(signed_func_scores)
+        sign = 1
+    if best_dcg == worst_dcg:
+        return (0.0, site_score, signed_func_score)
+    idcg = sign*(dcg-worst_dcg)/(best_dcg-worst_dcg)
+    return (idcg, site_score, signed_func_score)
 
 
 def score_network(kinase_file, out_file):
@@ -215,22 +234,41 @@ def score_network(kinase_file, out_file):
 
     ktable = pssms.read_kin_sub_data("data/psiteplus-kinase-substrates.tsv")
     aa_freqs = pssms.read_aa_freqs("data/aa-freqs.tsv")
-    psites = read_phosphosites("data/psiteplus-phosphosites.tsv")
+    psites = read_phosphosites("data/pride-phosphosites.tsv")
     kinases = read_kinase_file(kinase_file)
-    phosfun, med_phosfun = read_phosfun_file("data/phosfun.tsv")
+    phosfun_st, med_phosfun_st = read_phosfun_file("data/phosfun-ST.tsv")
+    phosfun_y, med_phosfun_y = read_phosfun_file("data/phosfun-Y.tsv")
     signs = read_sign_file("out/reg-site-bart-sign-preds.tsv")
     reg_sites = read_reg_sites_file("data/psiteplus-reg-sites.tsv")
+    kin_types = read_pfam_file("data/human-pfam.tsv", kinases)
     scores = score_kin_pairs(ktable, kinases, aa_freqs, psites)
     with open(out_file, "w") as v:
-        v.write("\t".join(["node1", "node2", "pssm.score"])+"\n")
+        v.write("\t".join(["node1", "node2", "kinase.type", "sub.kinase.type",
+                           "max.pssm.score", "signed.dcg", "site.sign.score",
+                           "signed.func.score"])+"\n")
         for pair in scores:
+            if pair[0] not in kin_types:
+                kin_type = "NA"
+            else:
+                kin_type = kin_types[pair[0]]
+            if pair[1] not in kin_types:
+                sub_type = "NA"
+            else:
+                sub_type = kin_types[pair[1]]
             if not scores[pair]:
-                v.write("\t".join([pair[0], pair[1], "NA"])+"\n")
+                v.write("\t".join([pair[0], pair[1], kin_type, sub_type, "NA",
+                                   "NA", "NA", "NA"])+"\n")
                 continue
-            max_score = max([score for pos, score in scores[pair]])
-            dcg = signed_regulation_score(pair, scores[pair], phosfun,
-                                          med_phosfun, reg_sites, signs)
-            v.write("\t".join([pair[0], pair[1], str(dcg*max_score)])+"\n")
+            residues = set([res for pos, res, score in scores[pair]])
+            max_score = max([score for pos, res, score in scores[pair]])
+            if residues == set(['Y']):
+                dcg, site_score, signed_func_score = signed_regulation_score(
+                    pair, scores[pair], phosfun_y, med_phosfun_y, reg_sites, signs)
+            else:
+                dcg, site_score, signed_func_score = signed_regulation_score(
+                    pair, scores[pair], phosfun_st, med_phosfun_st, reg_sites, signs)
+            v.write("\t".join([pair[0], pair[1], kin_type, sub_type, str(max_score),
+                               str(dcg), str(site_score), str(signed_func_score)])+"\n")
 
 
 if __name__ == "__main__":

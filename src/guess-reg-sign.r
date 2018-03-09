@@ -44,19 +44,19 @@ phospho.vals.gene <- ensp.id.map[phospho.vals.ensp, "gene.name"]
 
 rownames(phospho.vals) <- paste(phospho.vals.gene, phospho.vals.pos, sep="_")
 
-reg.sites <- read.delim("data/psiteplus-reg-sites.tsv", as.is=TRUE)
-reg.sites$MOD_RSD <- sub("^[STY]", "", reg.sites$MOD_RSD)
-reg.sites$MOD_RSD <- sub("-p$", "", reg.sites$MOD_RSD)
-rownames(reg.sites) <- paste(reg.sites$GENE, reg.sites$MOD_RSD, sep="_")
+## reg.sites <- read.delim("data/psiteplus-reg-sites.tsv", as.is=TRUE)
+## reg.sites$MOD_RSD <- sub("^[STY]", "", reg.sites$MOD_RSD)
+## reg.sites$MOD_RSD <- sub("-p$", "", reg.sites$MOD_RSD)
+## rownames(reg.sites) <- paste(reg.sites$GENE, reg.sites$MOD_RSD, sep="_")
 
 phosfun <- read.delim("data/phosfun.tsv", as.is=TRUE)
 names(phosfun) <- c("prot", "pos", "score")
 rownames(phosfun) <- paste(phosfun$prot, phosfun$pos, sep="_")
-for (site in rownames(phosfun)){
-    if (site %in% rownames(reg.sites))
-        phosfun[site, "score"] <- 1.0
-}
-med.phosfun <- median(phosfun$score)
+## for (site in rownames(phosfun)){
+##     if (site %in% rownames(reg.sites))
+##         phosfun[site, "score"] <- 1.0
+## }
+## med.phosfun <- median(phosfun$score)
 
 kin.overlap.sub <- kin.overlap
 good.kins <- unique(c(kin.overlap.sub$kinase1, kin.overlap.sub$kinase2))
