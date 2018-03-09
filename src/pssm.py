@@ -4,6 +4,7 @@ import itertools
 import pssms
 from math import log2, log10, log, exp
 import random
+from statistics import mean
 
 def read_phosphosites(psites_file):
     # returns dictionary with every known phosphosite found on each
@@ -75,6 +76,20 @@ def read_reg_sites_file(reg_sites_file):
                 reg_sites[protein].append(pos)
     return reg_sites
 
+
+def read_pfam_file(pfam_file, kinases):
+    kin_types = dict()
+    with open(pfam_file) as h:
+        for line in h:
+            prot, dom, start, end = line.strip().split()
+            if prot not in kinases or dom not in ["Pkinase", "Pkinase_Tyr"]:
+                continue
+            if dom == "Pkinase":
+                kin_types[prot] = "ST"
+            else:
+                kin_types[prot] = "Y"
+    return kin_types
+                
 
 def score_kin_pairs(ktable, kinases, aa_freqs, psites):
     # loads a netwoek of kinase-> kinase interactions and scores them
@@ -155,15 +170,9 @@ def regulation_score(pair, scores, phosfun, med_phosfun, reg_sites):
     kin_b_phosfun = phosfun.get(pair[1])
     hs_scores = []
     for pos, res, score in scores:
-        # if kin_b_reg_sites and pos in kin_b_reg_sites:
-        #     hs_score = 1.0
         if kin_b_phosfun is None or pos not in kin_b_phosfun:
-            # rand_kin = random.choice(list(phosfun.keys()))
-            # rand_pos = random.choice(list(phosfun[rand_kin].keys()))
-            # hs_score = phosfun[rand_kin][rand_pos] # med_phosfun
             sys.exit("\t".join([pair[1], pos]))
-        else:
-            hs_score = kin_b_phosfun[pos]
+        hs_score = kin_b_phosfun[pos]
         hs_scores.append(hs_score)
     if not hs_scores:
         return ("NA", "NA")
@@ -190,13 +199,23 @@ def score_network(kinase_file, out_file):
     phosfun_st, med_phosfun_st = read_phosfun_file("data/phosfun-ST.tsv")
     phosfun_y, med_phosfun_y = read_phosfun_file("data/phosfun-Y.tsv")
     reg_sites = read_reg_sites_file("data/psiteplus-reg-sites.tsv")
+    kin_types = read_pfam_file("data/human-pfam.tsv", kinases)
     scores = score_kin_pairs(ktable, kinases, aa_freqs, psites)
     with open(out_file, "w") as v:
-        v.write("\t".join(["node1", "node2", "max.pssm.score", "dcg",
-                           "max.func.score"])+"\n")
+        v.write("\t".join(["node1", "node2", "kinase.type", "sub.kinase.type",
+                           "max.pssm.score", "dcg", "max.func.score"])+"\n")
         for pair in scores:
+            if pair[0] not in kin_types:
+                kin_type = "NA"
+            else:
+                kin_type = kin_types[pair[0]]
+            if pair[1] not in kin_types:
+                sub_type = "NA"
+            else:
+                sub_type = kin_types[pair[1]]
             if not scores[pair]:
-                v.write("\t".join([pair[0], pair[1], "NA", "NA", "NA"])+"\n")
+                v.write("\t".join([pair[0], pair[1], kin_type, sub_type,
+                                   "NA", "NA", "NA"])+"\n")
                 continue
             residues = set([res for pos, res, score in scores[pair]])
             max_score = max([score for pos, res, score in scores[pair]])
@@ -206,8 +225,8 @@ def score_network(kinase_file, out_file):
             else:
                 dcg, max_func_score  = regulation_score(
                     pair, scores[pair], phosfun_st, med_phosfun_st, reg_sites)
-            v.write("\t".join([pair[0], pair[1], str(max_score), str(dcg),
-                               str(max_func_score)])+"\n")
+            v.write("\t".join([pair[0], pair[1], kin_type, sub_type,
+                               str(max_score), str(dcg), str(max_func_score)])+"\n")
 
 
 if __name__ == "__main__":
