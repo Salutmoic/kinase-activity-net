@@ -2,7 +2,7 @@ import os.path
 import sys
 import itertools
 import pssms
-from math import log2, log10, log, exp
+from math import log2, log10, log, exp, inf, isinf
 import random
 from statistics import mean
 
@@ -159,6 +159,38 @@ def score_kin_pairs(ktable, kinases, aa_freqs, psites):
     return scores
 
 
+def normalize_scores(scores):
+    scores_minmax = dict()
+    for pair in scores:
+        kin = pair[0]
+        if kin not in scores_minmax:
+            scores_minmax[kin] = [inf, -inf]
+        if not scores[pair]:
+            continue
+        for pos, res, score in scores[pair]:
+            if score < scores_minmax[kin][0]:
+                scores_minmax[kin][0] = score
+            if score > scores_minmax[kin][1]:
+                scores_minmax[kin][1] = score
+    norm_scores = scores
+    for pair in norm_scores:
+        if not norm_scores[pair]:
+            continue
+        kin_min = scores_minmax[kin][0]
+        kin_max = scores_minmax[kin][1]
+        if isinf(kin_min) or isinf(kin_max):
+            continue
+        pair_norm_scores = []
+        for pos, res, score in scores[pair]:
+            if kin_min == kin_max:
+                norm_score = 1.0
+            else:
+                norm_score = (score-kin_min)/(kin_max-kin_min)
+            pair_norm_scores.append((pos, res, norm_score))
+        norm_scores[pair] = pair_norm_scores
+    return norm_scores
+
+
 def calc_dcg(scores):
     return sum([score/log2(n+2) for n, score in enumerate(scores)])
 
@@ -201,6 +233,7 @@ def score_network(kinase_file, out_file):
     reg_sites = read_reg_sites_file("data/psiteplus-reg-sites.tsv")
     kin_types = read_pfam_file("data/human-pfam.tsv", kinases)
     scores = score_kin_pairs(ktable, kinases, aa_freqs, psites)
+    norm_scores = normalize_scores(scores)    
     with open(out_file, "w") as v:
         v.write("\t".join(["node1", "node2", "kinase.type", "sub.kinase.type",
                            "max.pssm.score", "dcg", "max.func.score"])+"\n")
