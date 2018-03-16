@@ -1,5 +1,6 @@
 find_cutoff = function(pos,neg){
-
+#Here I find, for each kinase, the cutoff which separates reg from non-reg
+#Still very simplistic, find cutoff where true positives are still overrepresented
 cutoff = 0.99
 pos = pos[order(pos,decreasing = T)]
 
@@ -60,7 +61,7 @@ x=density(as.numeric(pos.set))
 y = density(as.numeric(neg.set))
 
 pdf(paste("img/comp-curves/",kinase,"-",colnames(pred.file)[j],"-prediction-curves.pdf"))
-
+#plot curves to visually assess separation between groups
 hy =max(c(range(y[[2]])[2],range(x[[2]])[2])) 
 hx = max(c(range(y[[1]])[2],range(x[[1]])[2])) 
 lx = min(c(range(y[[1]])[1],range(x[[1]])[1])) 
