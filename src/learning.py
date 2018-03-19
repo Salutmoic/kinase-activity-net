@@ -20,6 +20,7 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.neural_network import MLPClassifier
 import random
 from sklearn.preprocessing import Imputer
+from sklearn.ensemble import VotingClassifier
   
 def find_centers(test,results):
 #works with nearestneighbour this function finds the centers of
@@ -299,7 +300,9 @@ if __name__ == "__main__":
     for key in keys:
        print(key)
        train.append(traindict[key])
+       print(outcomesdict[key])
        outcomes.append(outcomesdict[key])
+      
     min_max_scaler.fit(train)
     train_scale = min_max_scaler.transform(train) 
 
@@ -334,24 +337,43 @@ if __name__ == "__main__":
 
     if method == "randfor":
         model = RandomForestClassifier(n_estimators = 150)
+    
+    if method == "vote":
+        model1 = RandomForestClassifier(n_estimators = 150)
+        model2 = AdaBoostClassifier(n_estimators=150) 
+        model3 =   MLPClassifier(max_iter = 1000)
+        model4 = linear_model.LogisticRegression(C =0.05,max_iter = 1000)
+        model5 = model = svm.SVC(kernel = 'rbf',probability = True,C = 0.05)
+        ensmodel = [('rf',model1),('ab',model2),('nl',model3),('lg',model4),('svm',model5)]
+        model =  VotingClassifier(ensmodel,voting = 'soft')
+        preds = model.fit(train_scale,outcomes).predict_proba(test_scale)
+        with open(sys.argv[6],"w") as output:
+            for i in range(len(testdict.keys())):
+                s = str.join("\t",[str(x) for x in list(testdict.keys())[i]])
+                s = s + "\t"+ str(preds[i][1])
 
-    if model != "kmeans":
-        
+                output.write(s+"\n")
+
+ 
+    if method != "kmeans" and method != 'vote':
+        print("here")        
         prediction = model.fit(train_scale,outcomes).predict(test_scale)
         probability = model.fit(train_scale,outcomes).predict_proba(test_scale)
     
-    plot_ROC(model,truePos,trueNeg,data,train_method)
-    plot_PR(model, truePos,trueNeg,data,train_method)
+     
+        plot_ROC(model,truePos,trueNeg,data,train_method)
+        plot_PR(model, truePos,trueNeg,data,train_method)
 
-    probs = predict(model,truePos,trueNeg,data,train_method)
-    cross_val(model,method,truePos,trueNeg,data,train_method) 
+        probs = predict(model,truePos,trueNeg,data,train_method)
+        cross_val(model,method,truePos,trueNeg,data,train_method) 
+    
     # repeated cross validation, is this something along the lines of what you were thinkin
       
-    with open(sys.argv[6],"w") as output:
-        for i in range(len(testdict.keys())):
-            s = str.join("\t",[str(x) for x in list(testdict.keys())[i]])
-            s = s + "\t"+ str(probs[list(testdict.keys())[i]])
+        with open(sys.argv[6],"w") as output:
+            for i in range(len(testdict.keys())):
+                s = str.join("\t",[str(x) for x in list(testdict.keys())[i]])
+                s = s + "\t"+ str(probs[list(testdict.keys())[i]])
 
-            output.write(s+"\n")
+                output.write(s+"\n")
 
 
