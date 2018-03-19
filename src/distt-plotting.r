@@ -38,7 +38,7 @@ calc.prob = function(x,pos,neg){
        }else{
            variance =pospar$variance$sigmasq[i]
        }
-       pprob = pprob + dnorm(x,pospar$mean[i],sqrt(variance))*negpar$pro[i]
+       pprob = pprob + dnorm(x,pospar$mean[i],sqrt(variance))*pospar$pro[i]
     }
  
     nprob = 0
@@ -119,6 +119,7 @@ for(kinase in kinases){
 	}
 }
 
+filt.pairs = paste(pred.filt[,1],pred.filt[,2])
 print(table(filt.pairs %in% pos.pairs))
 print(dim(pred.filt))
 
