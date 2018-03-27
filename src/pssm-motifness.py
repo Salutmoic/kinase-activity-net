@@ -7,8 +7,7 @@ AMINO_ACIDS = {"G": 0, "A": 1, "V": 2, "L": 3, "I": 4, "P": 5, "F": 6, "Y": 7, "
 
 def shannon_entropy(pssm):
     dim = pssm.shape
-    print(pssm)
-    print(dim)
+    
     entropy = [0]*dim[1]
     for i in range(dim[1]):
         for j in range(dim[0]):
@@ -20,9 +19,11 @@ def shannon_entropy(pssm):
     return entropy
 
 def column_entropy(pssm):
-    if pssm.all() ==  0:
+
+    if np.all(pssm==0):
         return(-1)
     entropies = shannon_entropy(pssm)
+    print(entropies)
     return np.mean(entropies)
 
 def pssm_prop(seqs):
@@ -69,14 +70,14 @@ if __name__ == "__main__":
         if pssm is not None:
             
             print(kinase)
-            print(pssm)
+           
             pssm_min = np.min(pssm, axis=0)
             pssm_max = np.max(pssm, axis=0)
             pssm_div[kinase] = sum( pssm_max)/sum( pssm_min)
     
     with open("out/pssm-motifness-score.tsv","w") as f:
         for kinase in pssm_div:
-            print(kinase)
+            
             f.write(kinase + "\t"+ str(pssm_div[kinase]) + "\n")
     f.close()        
 	
