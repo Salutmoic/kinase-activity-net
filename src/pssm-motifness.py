@@ -21,7 +21,7 @@ def shannon_entropy(pssm):
 def column_entropy(pssm):
 
     if np.all(pssm==0):
-        return(-1)
+        return(-100)
     entropies = shannon_entropy(pssm)
     print(entropies)
     return np.mean(entropies)
