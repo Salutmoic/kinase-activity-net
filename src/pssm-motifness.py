@@ -6,6 +6,7 @@ from math import log
 AMINO_ACIDS = {"G": 0, "A": 1, "V": 2, "L": 3, "I": 4, "P": 5, "F": 6, "Y": 7, "W": 8, "S": 9, "T": 10, "C": 11, "M": 12, "N": 13, "Q": 14,"K": 15, "R": 16, "H": 17, "D": 18, "E": 19}
 
 def shannon_entropy(pssm):
+    
     dim = pssm.shape
     
     entropy = [0]*dim[1]
@@ -13,13 +14,17 @@ def shannon_entropy(pssm):
         for j in range(dim[0]):
             if(pssm[j,i]) == 0:
                 continue
+            if i == 7:
+                continue
             print(pssm[j,i])
-            entropy[i] = entropy[i] + pssm[j,i]*log(pssm[j,i],2)
+            print(pssm[j,i])
+            entropy[i] = entropy[i] + 2**pssm[j,i]*pssm[j,i]
     entropy[i] = (-1)*entropy[i]
     return entropy
 
 def column_entropy(pssm):
-
+    if pssm is None:
+        return(-100)
     if np.all(pssm==0):
         return(-100)
     entropies = shannon_entropy(pssm)
@@ -65,7 +70,7 @@ if __name__ == "__main__":
  
         pssm = pssms.calc_pssm(kin_motif_seqs, aa_freqs)
         naivepssm = pssm_prop(kin_motif_seqs)
-        entropies[kinase] = column_entropy(naivepssm)
+        entropies[kinase] = column_entropy(pssm)
 		
         if pssm is not None:
             
@@ -73,7 +78,7 @@ if __name__ == "__main__":
            
             pssm_min = np.min(pssm, axis=0)
             pssm_max = np.max(pssm, axis=0)
-            pssm_div[kinase] = sum( pssm_max)/sum( pssm_min)
+            pssm_div[kinase] = sum( pssm_max)-sum( pssm_min)
     
     with open("out/pssm-motifness-score.tsv","w") as f:
         for kinase in pssm_div:
