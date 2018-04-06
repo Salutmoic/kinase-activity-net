@@ -29,7 +29,7 @@ BINDIR = /nfs/research1/beltrao/software-rh7/bin
 ## Parameters
 
 KINACT_PREDS = $(KS_DATA)
-KSEA_NUM_CONDS = 668
+KSEA_NUM_CONDS = 588
 KSEA_USE_AUTOPHOS ?= TRUE
 KS_NUM_CONDS = $(KSEA_NUM_CONDS)
 KSEA_USE_AUTOPHOS ?= $(KSEA_USE_AUTOPHOS)
@@ -479,7 +479,7 @@ $(REG_SITES): $(FULL_REG_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) \
 	rm $@.tmp
 
 # Kinase-substrate overlap
-$(KIN_SUB_OVERLAP): $(KIN_SUBSTR_TABLE) $(KINACT_PREDS) $(KIN_SUB_OVERLAP_SCRIPT)
+$(KIN_SUB_OVERLAP): $(KIN_SUBSTR_TABLE) $(KIN_SUB_OVERLAP_SCRIPT) $(HUMAN_KINOME)
 	$(RSCRIPT) $(KIN_SUB_OVERLAP_SCRIPT)
 
 # Combine PhosphositePlus kinase-substrate and regulatory sites tables

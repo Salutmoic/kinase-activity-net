@@ -1,6 +1,6 @@
 #!/bin/bash
 
-NUM_CONDS=668
+NUM_CONDS=588
 LOGDIR=log/ks
 USE_AUTOPHOS=TRUE
 TMPDIR=tmp/ks-autophos

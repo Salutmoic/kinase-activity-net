@@ -13,7 +13,7 @@ rownames(psites) <- paste(psites[,1], psites[,2], sep="-")
 
 phosfun <- phosfun[which(rownames(phosfun) %in% rownames(psites)),]
 
-phosfun[,3] <- log(phosfun[,3])
+phosfun[,3] <- log10(phosfun[,3])
 phosfun[,3] <- (phosfun[,3]-min(phosfun[,3]))/(max(phosfun[,3])-min(phosfun[,3]))
 
 write.table(phosfun, out_file, sep="\t", quote=FALSE, row.names=FALSE,

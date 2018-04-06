@@ -36,7 +36,7 @@ reg.sites$MOD_RSD <- sub("^[STY]", "", reg.sites$MOD_RSD)
 reg.sites$MOD_RSD <- sub("-p$", "", reg.sites$MOD_RSD)
 rownames(reg.sites) <- paste(reg.sites$GENE, reg.sites$MOD_RSD, sep="_")
 
-phosfun <- read.delim("data/phosfun.tsv", as.is=TRUE)
+phosfun <- read.table("data/phosfun.tsv", as.is=TRUE)
 names(phosfun) <- c("prot", "pos", "score")
 rownames(phosfun) <- paste(phosfun$prot, phosfun$pos, sep="_")
 for (site in rownames(phosfun)){

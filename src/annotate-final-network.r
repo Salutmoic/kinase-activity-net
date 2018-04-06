@@ -57,7 +57,7 @@ erk_akt1_kins <- c("BRAF", "MAP2K1", "MAPK1", "MTOR", "PDPK1", "AKT1", "GSK3B",
                    "RPS6KB1")
 erk_akt1_tbl <- subset(final_tbl, prot1 %in% erk_akt1_kins &
                                   prot2 %in% erk_akt1_kins &
-                                  bart.pred > 0.8)
+                                  bart.pred > 0.65)
 
 summ_tbl_a <- final_tbl %>% group_by(prot1) %>%
     summarise(min.score.out=min(bart.pred, na.rm=TRUE),
@@ -71,21 +71,23 @@ summ_tbl_b <- final_tbl %>% group_by(prot2) %>%
               max.score.in=max(bart.pred, na.rm=TRUE))
 summ_tbl <- merge(summ_tbl_a, summ_tbl_b, by.x="prot1", by.y="prot2")
 
-if (grepl("no-dcg", reg_preds_file)){
-    dcg_fn_mod <- "-no-dcg"
+file_base <- strsplit(basename(reg_preds_file), split="\\.")[[1]][1]
+pred_ver <- sub("kinase-merged-pred-", "", sub("-bart-preds", "", file_base))
+if (pred_ver != "kinase-merged-pred"){
+    fn_mod <- paste0("-", pred_ver)
 }else{
-    dcg_fn_mod <- ""
+    fn_mod <- ""
 }
 
 write.table(final_tbl,
-            paste0("out/full-annotated-predictor", dcg_fn_mod, ".tsv"),
+            paste0("out/full-annotated-predictor", fn_mod, ".tsv"),
             sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
-write.table(subset(final_tbl, bart.pred>0.9),
-            paste0("out/full-annotated-predictor", dcg_fn_mod, "-hiconf.tsv"),
+write.table(subset(final_tbl, bart.pred>0.65),
+            paste0("out/full-annotated-predictor", fn_mod, "-hiconf.tsv"),
             sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
 write.table(erk_akt1_tbl,
-            paste0("out/full-annotated-predictor", dcg_fn_mod, "-erk-akt1.tsv"),
+            paste0("out/full-annotated-predictor", fn_mod, "-erk-akt1.tsv"),
             sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)
 write.table(summ_tbl,
-            paste0("out/full-annotated-predictor", dcg_fn_mod, "-summary.tsv"),
+            paste0("out/full-annotated-predictor", fn_mod, "-summary.tsv"),
             sep="\t", quote=FALSE, col.names=TRUE, row.names=FALSE)

@@ -9,6 +9,8 @@ started <- FALSE
 for (f in argv[2:length(argv)]){
     if (!started){
         merged.dat <- read.delim(f, as.is=TRUE)
+        col1 <- colnames(merged.dat)[1]
+        col2 <- colnames(merged.dat)[2]
         started <- TRUE
         meth.match <- regexpr("([a-z0-9]*)\\.tsv", f, perl=TRUE)
         old.meth <- substring(f, attr(meth.match, "capture.start"),
@@ -23,8 +25,8 @@ for (f in argv[2:length(argv)]){
     ##                   + attr(meth.match, "capture.length")-1)
     new.meth <- gsub("-", ".", strsplit(basename(f), split="\\.")[[1]][1])
     merged.dat <- merge(merged.dat, new.dat,
-                        by.x=c("node1", "node2"),
-                        by.y=c("node1", "node2"),
+                        by.x=c(col1, col2),
+                        by.y=c(col1, col2),
                         suffixes=c(paste0(".", old.meth), paste0(".", new.meth)),
                         all=TRUE)
     old.meth <- new.meth
