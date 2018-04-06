@@ -36,10 +36,13 @@ kin.overlap <- read.delim("data/psiteplus-kinase-substrate-overlap.tsv",
 ## the paper (which got published later). I would recommend you to use the
 ## ones from the supplementary material of the paper marked as ³supp² and
 ## avoid the ones from CPTAC database (³1604_290² to ³1711_290²).
-cptac.start <- 1604
-cptac.end <- 1711
-cptac.range <- 1604:1711
-cptac.conds <- paste(as.character(cptac.range), "290", sep="_")
+## cptac.290.range <- 1604:1711
+## cptac.292.range <- 1781:1860
+## cptac.290.conds <- paste(as.character(cptac.290.range), "290", sep="_")
+## cptac.292.conds <- paste(as.character(cptac.292.range), "292", sep="_")
+## cptac.conds <- c(cptac.290.conds, cptac.292.conds)
+cptac.pubs <- c("176", "177")
+cptac.conds <- rownames(subset(cond.anno, publication %in% cptac.pubs & experiment_id != "291"))
 phospho.vals <- phospho.vals[, -which(colnames(phospho.vals) %in% cptac.conds)]
 
 ## Only choose kinases that have at least 10 substrates

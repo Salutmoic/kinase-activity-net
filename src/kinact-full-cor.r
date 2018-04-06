@@ -25,11 +25,12 @@ kin.overlap <- read.delim("data/psiteplus-kinase-substrate-overlap.tsv",
 ## the paper (which got published later). I would recommend you to use the
 ## ones from the supplementary material of the paper marked as ³supp² and
 ## avoid the ones from CPTAC database (³1604_290² to ³1711_290²).
-cptac.start <- 1604
-cptac.end <- 1711
-cptac.range <- 1604:1711
-cptac.conds <- paste(as.character(cptac.range), "290", sep="_")
+cptac.pubs <- c("176", "177")
+cptac.conds <- rownames(subset(cond.anno, publication %in% cptac.pubs & experiment_id != "291"))
 phospho.vals <- phospho.vals[, -which(colnames(phospho.vals) %in% cptac.conds)]
+## cptac.exps <-  c("290", "292")
+## cptac.conds <- rownames(subset(cond.anno, experiment_id %in% cptac.exps))
+## phospho.vals <- phospho.vals[, -which(colnames(phospho.vals) %in% cptac.conds)]
 
 min.sites <- 3
 
@@ -127,12 +128,15 @@ cors[is.infinite(cors) & cors > 0] <- max(cors[!is.infinite(cors) & !is.na(cors)
 
 max.cor.est <- max(cors, na.rm=TRUE)
 min.cor.est <- min(cors, na.rm=TRUE)
-print(c(min.cor.est, max.cor.est))
-print(length(which(!is.na(cors))))
 cors <- (cors-min.cor.est)/(max.cor.est-min.cor.est)
 
 results <- data.frame(node1=kin1s, node2=kin2s, kinact.cor.p=p.vals)
-results$kinact.cor.p <- results$kinact.cor.p/max(results$kinact.cor.p, na.rm=TRUE)
+min.p <- min(results$kinact.cor.p[which(results$kinact.cor.p>0)], na.rm=TRUE)
+results$kinact.cor.p[which(results$kinact.cor.p==0)] <- min.p
+results$kinact.cor.p <- log(results$kinact.cor.p)
+min.p <- min(results$kinact.cor.p, na.rm=TRUE)
+max.p <- max(results$kinact.cor.p, na.rm=TRUE)
+results$kinact.cor.p <- (results$kinact.cor.p-min.p)/(max.p-min.p)
 write.table(results[order(results$node1),], "out/kinact-full-cor.tsv", quote=FALSE,
             row.names=FALSE, col.names=TRUE, sep="\t")
 

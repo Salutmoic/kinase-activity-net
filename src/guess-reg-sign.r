@@ -1,5 +1,6 @@
 suppressMessages(library(Biobase))
 suppressMessages(library(reshape2))
+suppressMessages(library(preprocessCore))
 source("src/optimize-activity-table.r")
 
 argv <- commandArgs(TRUE)
@@ -20,13 +21,19 @@ kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
 kin.overlap <- read.delim("data/psiteplus-kinase-substrate-overlap.tsv",
                           as.is=TRUE)
 
-cptac.start <- 1604
-cptac.end <- 1711
-cptac.range <- 1604:1711
-cptac.conds <- paste(as.character(cptac.range), "290", sep="_")
+## cptac.290.range <- 1604:1711
+## cptac.292.range <- 1781:1860
+## cptac.290.conds <- paste(as.character(cptac.290.range), "290", sep="_")
+## cptac.292.conds <- paste(as.character(cptac.292.range), "292", sep="_")
+## cptac.conds <- c(cptac.290.conds, cptac.292.conds)
+cptac.pubs <- c("176", "177")
+cptac.conds <- rownames(subset(cond.anno, publication %in% cptac.pubs & experiment_id != "291"))
 phospho.vals.sub <- phospho.vals.full[, -which(colnames(phospho.vals.full) %in% cptac.conds)]
 
 all.kins <- read.table("data/human-kinome.txt", as.is=TRUE)[,1]
+
+psites <- read.table("data/pride-phosphosites.tsv", as.is=TRUE, sep="\t")
+rownames(psites) <- paste(psites[,1], psites[,2], sep="_")
 
 ensp.id.map.full <- read.table("data/ensembl-id-map.tsv", as.is=TRUE)
 names(ensp.id.map.full) <- c("ensembl", "gene.name")
@@ -44,12 +51,21 @@ phospho.vals.gene <- ensp.id.map[phospho.vals.ensp, "gene.name"]
 
 rownames(phospho.vals) <- paste(phospho.vals.gene, phospho.vals.pos, sep="_")
 
+good.sites <- which(rownames(phospho.vals) %in% rownames(psites))
+phospho.vals <- phospho.vals[good.sites,]
+phospho.vals.gene <- phospho.vals.gene[good.sites]
+
+phospho.vals.norm <- normalize.quantiles(phospho.vals)
+rownames(phospho.vals.norm) <- rownames(phospho.vals)
+colnames(phospho.vals.norm) <- colnames(phospho.vals)
+phospho.vals <- phospho.vals.norm
+
 ## reg.sites <- read.delim("data/psiteplus-reg-sites.tsv", as.is=TRUE)
 ## reg.sites$MOD_RSD <- sub("^[STY]", "", reg.sites$MOD_RSD)
 ## reg.sites$MOD_RSD <- sub("-p$", "", reg.sites$MOD_RSD)
 ## rownames(reg.sites) <- paste(reg.sites$GENE, reg.sites$MOD_RSD, sep="_")
 
-phosfun <- read.delim("data/phosfun.tsv", as.is=TRUE)
+phosfun <- read.table("data/phosfun.tsv", as.is=TRUE)
 names(phosfun) <- c("prot", "pos", "score")
 rownames(phosfun) <- paste(phosfun$prot, phosfun$pos, sep="_")
 ## for (site in rownames(phosfun)){

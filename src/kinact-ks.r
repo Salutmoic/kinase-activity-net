@@ -1,4 +1,5 @@
 suppressMessages(library(Biobase))
+suppressMessages(library(preprocessCore))
 
 percent.na <- function(x){
     if (is.null(x) || is.na(length(x)))
@@ -134,28 +135,39 @@ phospho.anno <- fData(esetNR)
 phospho.vals <- exprs(esetNR)
 
 ## Remove CPTAC datasets
-cptac.start <- 1604
-cptac.end <- 1711
-cptac.range <- 1604:1711
-cptac.conds <- paste(as.character(cptac.range), "290", sep="_")
-phospho.vals <- phospho.vals[, -which(colnames(phospho.vals) %in% cptac.conds)]
+cptac.exps <-  c("290", "292")
+cptac.conds <- rownames(subset(cond.anno, experiment_id %in% cptac.exps))
+phospho.vals.sub <- phospho.vals[, -which(colnames(phospho.vals) %in% cptac.conds)]
 
-## all.kins <- read.table("data/human-kinome.txt", as.is=TRUE)[,1]
-## ensp.id.map.full <- read.table("data/ensembl-id-map.tsv", as.is=TRUE)
-## names(ensp.id.map.full) <- c("ensembl", "gene.name")
-## ensp.id.map <- subset(ensp.id.map.full, gene.name %in% all.kins)
-## rownames(ensp.id.map) <- ensp.id.map$ensembl
+all.kins <- read.table("data/human-kinome.txt", as.is=TRUE)[,1]
 
-## phospho.vals.sub.ensp <- unlist(lapply(strsplit(rownames(phospho.vals.sub), split="_"),
-##                                        function(foo) foo[1]))
-## phospho.vals.sub.gene <- ensp.id.map[phospho.vals.sub.ensp, "gene.name"]
-## phospho.vals <- phospho.vals.sub[which(phospho.vals.sub.ensp %in% ensp.id.map$ensembl),]
-## phospho.vals.ensp <- unlist(lapply(strsplit(rownames(phospho.vals), split="_"),
-##                                    function(foo) foo[1]))
-## phospho.vals.pos <- unlist(lapply(strsplit(rownames(phospho.vals), split="_"),
-##                                   function(foo) foo[2]))
-## phospho.vals.gene <- ensp.id.map[phospho.vals.ensp, "gene.name"]
-## rownames(phospho.vals) <- paste(phospho.vals.gene, phospho.vals.pos, sep="_")
+psites <- read.table("data/pride-phosphosites.tsv", as.is=TRUE, sep="\t")
+rownames(psites) <- paste(psites[,1], psites[,2], sep="_")
+
+ensp.id.map.full <- read.table("data/ensembl-id-map.tsv", as.is=TRUE)
+names(ensp.id.map.full) <- c("ensembl", "gene.name")
+ensp.id.map <- subset(ensp.id.map.full, gene.name %in% all.kins)
+rownames(ensp.id.map) <- ensp.id.map$ensembl
+
+phospho.vals.ensp <- unlist(lapply(strsplit(rownames(phospho.vals.sub), split="_"),
+                                   function(foo) foo[1]))
+phospho.vals <- phospho.vals.sub[which(phospho.vals.ensp %in% ensp.id.map$ensembl),]
+phospho.vals.ensp <- unlist(lapply(strsplit(rownames(phospho.vals), split="_"),
+                                   function(foo) foo[1]))
+phospho.vals.pos <- unlist(lapply(strsplit(rownames(phospho.vals), split="_"),
+                                  function(foo) foo[2]))
+phospho.vals.gene <- ensp.id.map[phospho.vals.ensp, "gene.name"]
+
+site.names <- paste(phospho.vals.gene, phospho.vals.pos, sep="_")
+
+good.sites <- which(site.names %in% rownames(psites))
+phospho.vals <- phospho.vals[good.sites,]
+phospho.vals.gene <- phospho.vals.gene[good.sites]
+
+phospho.vals.norm <- normalize.quantiles(phospho.vals)
+rownames(phospho.vals.norm) <- rownames(phospho.vals)
+colnames(phospho.vals.norm) <- colnames(phospho.vals)
+phospho.vals <- phospho.vals.norm
 
 if (cond.num > ncol(phospho.vals)){
     stop(paste("Invalid condition number.  Max # =", ncol(phospho.vals)))
