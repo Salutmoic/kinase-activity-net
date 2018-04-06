@@ -1,4 +1,5 @@
 suppressMessages(library(ROCR))
+source("src/rocr-helpers.r")
 
 argv <- commandArgs(TRUE)
 if (length(argv) != 5){
@@ -165,15 +166,52 @@ pdf(out_img)
 par(cex = 1.25, cex.main = 0.8)
 
 ## ROC curve w/ AUC info
+alpha <- 0.9
+
 perf_roc <- performance(pred, measure = "tpr", x.measure = "fpr")
 perf_auc <- performance(pred, "auc")
 mean_auc <- mean(unlist(perf_auc@y.values))
 se_auc <- sd(unlist(perf_auc@y.values)) / sqrt(n)
+perf_f <- performance(pred, "f", alpha=alpha)
+min_prec <- 0.5
+min_prec_f_val <- 1/(alpha*(1/min_prec)+(1-alpha))
+## perf_f@y.values <- lapply(perf_f@y.values,
+##                                function(vals) vals/min_prec_f_val - 1.0)
+avg_fs <- perf_vert_avg(perf_f)
+max_f <- max(avg_fs@y.values[[1]])
+recs <- seq(0.05, 1.0, length.out=100)
+precs <- (alpha*min_prec_f_val)/(1.0-((1.0-alpha)*min_prec_f_val)/recs)
+val_precs <- which(precs <= 1.0 & precs >= min_prec)
+precs <- precs[val_precs]
+recs <- recs[val_precs]
 message(assoc_method)
 message(paste("Mean AUC =", format(mean_auc, digits = 2)))
 message(paste("S.E.M. =", format(se_auc, digits = 2)))
+message(paste("Max F-score =", format(max_f, digits = 2)))
 message(paste("n =", n))
 message(paste("sample size =", sample_size))
+
+
+intxns <- c(possible_true_intxns, possible_false_intxns)
+preds <- pred_score[intxns, "pred_score"]
+labels <- c(rep(TRUE, length(possible_true_intxns)),
+            rep(FALSE, length(possible_false_intxns)))
+pred_full <- prediction(preds, labels)
+perf_f_full <- performance(pred_full, "f", alpha=alpha)
+perf_prec_full <- performance(pred_full, "prec", x.measure="rec")
+min_prec <- length(possible_true_intxns)/(length(possible_true_intxns)+length(possible_false_intxns))
+min_prec_f_val <- 1/(alpha*(1/min_prec)+(1-alpha))
+print(c(min_prec, min_prec_f_val))
+## perf_f_full@y.values[[1]] <- perf_f_full@y.values[[1]]/min_prec_f_val - 1.0
+max_f_full <- max(perf_f_full@y.values[[1]], na.rm=TRUE)
+recs_full <- seq(0.05, 1.0, length.out=100)
+precs_full <- (alpha*min_prec_f_val)/(1.0-((1.0-alpha)*min_prec_f_val)/recs)
+val_precs_full <- which(precs_full <= 1.0 & precs_full >= min_prec)
+precs_full <- precs_full[val_precs_full]
+recs_full <- recs_full[val_precs_full]
+message(paste("Full predictor max F-score =",
+              format(max_f_full, digits = 2)))
+plot(density(preds))
 plot(perf_roc, avg = "vertical", spread.estimate = "boxplot",
      main = paste(assoc_method,
                   table_method,
@@ -183,7 +221,12 @@ plot(perf_roc, avg = "vertical", spread.estimate = "boxplot",
                   sep = "\n"))
 ## Precision-recall curve
 perf_pr <- performance(pred, measure="prec", x.measure="rec")
-plot(perf_pr, avg="vertical", spread.estimate="boxplot",
-     main=paste(assoc_method, table_method, sep="\n"),ylim=c(0.5, 1.0))
-
+plot(perf_pr, avg="threshold", spread.estimate="stderror", colorize=TRUE,
+     ylim=c(0.0, 1.0), lwd=2)
+lines(recs, precs, lty=2, col="grey", lwd=1.5)
+plot(perf_f, avg="vertical", spread.estimate="boxplot", lwd=2)
+plot(perf_prec_full, avg="threshold", spread.estimate="stderror", colorize=TRUE,
+     lwd=2, ylim=c(0.0, 1.0))
+lines(recs_full, precs_full, lty=2, col="grey", lwd=2)
+plot(perf_f_full, lwd=2)
 dev.off()
