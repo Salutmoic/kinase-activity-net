@@ -1,12 +1,12 @@
 suppressPackageStartupMessages(library(data.table))
-options(java.parameters = "-Xmx24g")
+options(java.parameters = "-Xmx48g")
 suppressPackageStartupMessages(library(bartMachine))
 set_bart_machine_num_cores(24)
 suppressPackageStartupMessages(library(ROCR))
 
 argv <- commandArgs(TRUE)
-if (length(argv) != 5){
-    stop("USAGE: <script> MERGED_PREDS VAL_SET NEG_VAL_SET RAND_NEGS DIRECTED")
+if (length(argv) != 6){
+    stop("USAGE: <script> MERGED_PREDS VAL_SET NEG_VAL_SET RAND_NEGS DIRECTED N")
 }
 
 merged_pred_file <- argv[1]
@@ -14,6 +14,9 @@ val_set_file <- argv[2]
 neg_val_set_file <- argv[3]
 use_rand_negs <- as.logical(argv[4])
 directed <- as.logical(argv[5])
+n <- as.integer(sub("^\\\\", "", argv[6]))
+
+set.seed(n)
 
 if (use_rand_negs && directed)
     stop("Select either RAND_NEGS or DIRECTED")
@@ -43,8 +46,20 @@ if (use_rand_negs){
     possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
 }
 
-num_negs <- min(length(possible_false_intxns),
-                length(true_intxns))
+num_negs <- min(length(possible_false_intxns), length(true_intxns))
+
+file_base <- strsplit(merged_pred_file, split="\\.")[[1]][1]
+if (use_rand_negs){
+    file_base <- paste0(file_base, "-rand-negs")
+}
+if (directed){
+    file_base <- paste0(file_base, "-directed")
+}
+
+if (!dir.exists(file_base)){
+    dir.create(file_base)
+}
+
 false_intxns <- sample(possible_false_intxns, num_negs)
 true_intxns <- sample(true_intxns, num_negs)
 
@@ -62,21 +77,11 @@ bart <- bartMachineCV(preds,
                       prob_rule_class=0.5,
                       verbose=FALSE,
                       serialize=TRUE)
-
-file_base <- strsplit(merged_pred_file, split="\\.")[[1]][1]
-if (use_rand_negs){
-    file_base <- paste0(file_base, "-rand-negs")
-}
-if (directed){
-    file_base <- paste0(file_base, "-directed")
-}
-save(bart, file=paste0(file_base, "-bart.Rdata"))
-
-file_base <- basename(file_base)
-img_file <- paste0("img/", file_base, "-info.pdf")
-
-pdf(img_file)
+save(bart, file=paste0(file_base, "/", sub("out/", "", file_base), "-bart-", n, ".Rdata"))
 ## check_bart_error_assumptions(bart)
+img_file_base <- basename(file_base)
+img_file <- paste0("img/", img_file_base, "-info.pdf")
+pdf(img_file)
 investigate_var_importance(bart, type="splits")
 investigate_var_importance(bart, type="trees")
 cov_importance_test(bart, plot=TRUE)
