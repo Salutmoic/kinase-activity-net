@@ -9,8 +9,11 @@ def read_network(path):
     with open(path,"r") as f:
         head = f.readline()
         head = head.split("\t")
+        head[len(head)-1] = head[len(head)-1].replace("\n","")
+        print(head)
         inda = head.index('SymbolA')
         indb = head.index('SymbolB')
+        
         i = 0        
         for line in f:          
             edge = line.split("\t") 
@@ -113,7 +116,7 @@ if __name__ == "__main__":
         avg_dist[kinase] = dists 
     pruned_network = prune_network(pred_network,avg_dist,bg_dists)             
     
-    with open(sys.argv[3], "w") as f:
+    with open(sys.argv[4], "w") as f:
         for kinase in pruned_network:
             for substrate in pruned_network[kinase]:
                 f.write(kinase+"\t"+substrate + "\n")                  	
