@@ -89,7 +89,7 @@ def read_pfam_file(pfam_file, kinases):
             else:
                 kin_types[prot] = "Y"
     return kin_types
-                
+
 
 def score_kin_pairs(ktable, kinases, aa_freqs, psites):
     # loads a netwoek of kinase-> kinase interactions and scores them
@@ -239,11 +239,17 @@ def score_network(kinase_file, out_file):
                            "max.pssm.score", "dcg", "max.func.score"])+"\n")
         for pair in scores:
             if pair[0] not in kin_types:
-                kin_type = "NA"
+                if pair[0] == "MTOR":
+                    kin_type = "ST"
+                else:
+                    kin_type = "NA"
             else:
                 kin_type = kin_types[pair[0]]
             if pair[1] not in kin_types:
-                sub_type = "NA"
+                if pair[1] == "MTOR":
+                    sub_type = "ST"
+                else:
+                    sub_type = "NA"
             else:
                 sub_type = kin_types[pair[1]]
             if not scores[pair]:
