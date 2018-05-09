@@ -20,6 +20,9 @@ bart.final <- data.frame(prot1=bart.preds$prot1,
                          bart.pred.sd=sd.preds,
                          bart.pred.se=se.preds)
 
+bart.final[bart.final$prot1==bart.final$prot2,
+           c("bart.pred.mean", "bart.pred.median", "bart.pred.sd",
+             "bart.pred.se")] <- NA
 
 file.base <- strsplit(basename(bart.preds.file), split="\\.")[[1]][1]
 
@@ -28,7 +31,9 @@ pdf(paste0("img/", file.base, "-bart-pred-dists.pdf"))
 ##                "MAPK1-AKT1", "AKT1-MAPK1", sample(rownames(bart.final), 10))){
 for (edge in sample(rownames(bart.final), 10)){
     edge.preds <- t(bart.preds[edge, 3:ncol(bart.preds)])
-    plot(density(edge.preds, from=0, to=1),
+    if (all(is.na(edge.preds)))
+        next
+    plot(density(edge.preds, from=0, to=1, na.rm=TRUE),
          xlim=c(0, 1), main=edge, xlab="BART edge probability")
 }
 dev.off()
