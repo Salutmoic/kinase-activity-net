@@ -110,6 +110,9 @@ possible_true_intxns <- intersect(possible_true_intxns, rownames(pred_score))
 
 if (use_rand_negs){
     possible_false_intxns <- rownames(pred_score)
+    ## foo <- expand.grid(true_intxns_tbl[,1], true_intxns_tbl[,2], stringsAsFactors=FALSE)
+    ## possible_false_intxns <- paste(foo[,1], foo[,2], sep="-")
+    ## possible_false_intxns <- intersect(possible_false_intxns, rownames(pred_score))
 }else if (directed){
     rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
     possible_false_intxns <- rev_true_intxns
@@ -192,6 +195,7 @@ message(paste("n =", n))
 message(paste("sample size =", sample_size))
 
 
+possible_false_intxns <- setdiff(rownames(pred_score), possible_true_intxns)
 intxns <- c(possible_true_intxns, possible_false_intxns)
 preds <- pred_score[intxns, "pred_score"]
 labels <- c(rep(TRUE, length(possible_true_intxns)),
@@ -204,13 +208,16 @@ min_prec_f_val <- 1/(alpha*(1/min_prec)+(1-alpha))
 print(c(min_prec, min_prec_f_val))
 ## perf_f_full@y.values[[1]] <- perf_f_full@y.values[[1]]/min_prec_f_val - 1.0
 max_f_full <- max(perf_f_full@y.values[[1]], na.rm=TRUE)
+max_f_full_cutoff <- perf_f_full@x.values[[1]][which.max(perf_f_full@y.values[[1]])]
 recs_full <- seq(0.05, 1.0, length.out=100)
 precs_full <- (alpha*min_prec_f_val)/(1.0-((1.0-alpha)*min_prec_f_val)/recs)
 val_precs_full <- which(precs_full <= 1.0 & precs_full >= min_prec)
 precs_full <- precs_full[val_precs_full]
 recs_full <- recs_full[val_precs_full]
 message(paste("Full predictor max F-score =",
-              format(max_f_full, digits = 2)))
+              format(max_f_full, digits = 2),
+              "at",
+              format(max_f_full_cutoff, digits = 2)))
 plot(density(preds))
 plot(perf_roc, avg = "vertical", spread.estimate = "boxplot",
      main = paste(assoc_method,
