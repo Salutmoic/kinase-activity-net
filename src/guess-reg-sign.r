@@ -26,9 +26,10 @@ kin.overlap <- read.delim("data/psiteplus-kinase-substrate-overlap.tsv",
 ## cptac.290.conds <- paste(as.character(cptac.290.range), "290", sep="_")
 ## cptac.292.conds <- paste(as.character(cptac.292.range), "292", sep="_")
 ## cptac.conds <- c(cptac.290.conds, cptac.292.conds)
-cptac.pubs <- c("176", "177")
-cptac.conds <- rownames(subset(cond.anno, publication %in% cptac.pubs & experiment_id != "291"))
-phospho.vals.sub <- phospho.vals.full[, -which(colnames(phospho.vals.full) %in% cptac.conds)]
+## cptac.pubs <- c("176", "177")
+## cptac.conds <- rownames(subset(cond.anno, publication %in% cptac.pubs & experiment_id != "291"))
+cptac.conds <- rownames(subset(cond.anno, experiment_id == "293"))
+phospho.vals.sub <- phospho.vals.full[, which(colnames(phospho.vals.full) %in% cptac.conds)]
 
 all.kins <- read.table("data/human-kinome.txt", as.is=TRUE)[,1]
 
@@ -89,16 +90,16 @@ kin.act <- filter.act.preds(kin.act, phospho.anno, phospho.vals, kin.sub.tbl,
 
 ## We look for "empty" rows here...not really empty, but anything
 ## that's practically empty (>90% missing values).
-empty.rows <- rownames(kin.act)[which(apply(kin.act, 1,
-                                            function(tbl.row){
-                                                percent.na(tbl.row)>0.9
-                                            }))]
-kin.act <- kin.act[setdiff(rownames(kin.act), empty.rows),]
-empty.cols <- colnames(kin.act)[which(apply(kin.act, 2,
-                                            function(tbl.col){
-                                                percent.na(tbl.col)>0.9
-                                            }))]
-kin.act <- kin.act[,setdiff(colnames(kin.act), empty.cols)]
+## empty.rows <- rownames(kin.act)[which(apply(kin.act, 1,
+##                                             function(tbl.row){
+##                                                 percent.na(tbl.row)>0.9
+##                                             }))]
+## kin.act <- kin.act[setdiff(rownames(kin.act), empty.rows),]
+## empty.cols <- colnames(kin.act)[which(apply(kin.act, 2,
+##                                             function(tbl.col){
+##                                                 percent.na(tbl.col)>0.9
+##                                             }))]
+## kin.act <- kin.act[,setdiff(colnames(kin.act), empty.cols)]
 
 ## Filter out conditions where a supposedly inhibited kinase has
 ## positive or unchanged activity
@@ -113,6 +114,7 @@ kinase.conditions <- read.delim("data/external/kinase-condition-pairs.tsv",
 
 ## Remove experimental conditions
 kin.act.filt <- kin.act.filt[,setdiff(colnames(kin.act.filt), kinase.conditions$Condition)]
+kin.act.filt <- kin.act.filt[,intersect(colnames(phospho.vals), colnames(kin.act.filt))]
 phospho.vals <- phospho.vals[,colnames(kin.act.filt)]
 
 p.vals <- c()
