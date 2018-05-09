@@ -29,6 +29,13 @@ preds <- 1.0-bart_machine_get_posterior(bart,
 out_tbl <- data.frame(prot1=merged_pred$prot1,
                       prot2=merged_pred$prot2,
                       bart.pred=preds)
+
+bad_rows <- which(apply(merged_pred[,3:ncol(merged_pred)], 1,
+                        function(row){
+                            all(is.na(row))
+                        }))
+out_tbl[bad_rows, "bart.pred"] <- NA
+
 colnames(out_tbl)[3] <- paste0("bart.pred.", n)
 
 write.table(out_tbl,
