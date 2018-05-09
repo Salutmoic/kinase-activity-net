@@ -327,6 +327,7 @@ sink()
 
 new_preds <- predict(bart, phosfun_feat[final_feats],
                      type="class", prob_rule_class=(1-max_mcc_cutoff))
+
 new_probs <- 1.0-bart_machine_get_posterior(bart, phosfun_feat[final_feats])$y_hat
 
 out_tbl <- data.frame(kinase=phosfun_feat$gene,
@@ -334,7 +335,7 @@ out_tbl <- data.frame(kinase=phosfun_feat$gene,
                       prob.act=(new_probs-max_mcc_cutoff))
 out_tbl <- out_tbl[order(out_tbl$kinase, out_tbl$position),]
 
-out_tbl$prob.act <- (out_tbl$prob.act-min(out_tbl$prob.act)/(max(out_tbl$prob.act)-min(out_tbl$prob.act))
+## out_tbl$prob.act <- (out_tbl$prob.act-min(out_tbl$prob.act)/(max(out_tbl$prob.act)-min(out_tbl$prob.act))
 
 write.table(out_tbl, "out/reg-site-bart-sign-preds.tsv", quote=FALSE,
             row.names=FALSE, col.names=TRUE, sep="\t")

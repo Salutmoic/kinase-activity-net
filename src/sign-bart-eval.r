@@ -23,6 +23,13 @@ edge_pred <- read.delim(edge_pred_file, as.is=TRUE)
 sign_guess <- read.delim(sign_guess_file, as.is=TRUE)
 rownames(sign_guess) <- sign_guess$kinase
 
+good_rows <- which(apply(merged_pred[,3:ncol(merged_pred)], 1,
+                        function(row){
+                            any(!is.na(row))
+                        }))
+merged_pred <- merged_pred[good_rows,]
+merged_pred <- subset(merged_pred, prot1 != prot2)
+
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
 
 ## Temporary fix:
@@ -32,10 +39,11 @@ if (any(is.infinite(merged_pred$reg.site.cor.est))){
     merged_pred$reg.site.cor.est[inf.reg.site.cor] <- max.noninf.reg.site.cor*sign(merged_pred$reg.site.cor.est[inf.reg.site.cor])
 }
 
-edge_pred_m <- acast(edge_pred, prot1 ~ prot2, value.var="bart.pred")
+edge_pred_m <- acast(edge_pred, prot1 ~ prot2, value.var="bart.pred.mean")
 edge_pred_m <- edge_pred_m[,rownames(edge_pred_m)]
-reg_site_cor_m <- acast(merged_pred, prot1 ~ prot2, value.var="reg.site.cor.est")
+reg_site_cor_m <- acast(merged_pred, prot1 ~ prot2, value.var="cor.est.293")
 good_kins <- intersect(rownames(reg_site_cor_m), rownames(edge_pred_m))
+good_kins <- intersect(colnames(reg_site_cor_m), good_kins)
 reg_site_cor_m <- reg_site_cor_m[good_kins, good_kins]
 
 reg_site_cor_med <- sapply(rownames(reg_site_cor_m),
@@ -112,10 +120,12 @@ var_select <- var_selection_by_permute(bart_init)
 var_select$important_vars_local_names
 
 ## final_feats <- colnames(preds)
-final_feats <- c("signed.dcg", "signed.func.score", "kinase.type",
-                 "sub.kinase.type")
-## final_feats <- c("signed.dcg", "signed.func.score", "kinact.cor.est",
-##                  "kinase.type", "sub.kinase.type")
+## final_feats <- c("signed.dcg", "signed.func.score", "kinase.type",
+##                  "sub.kinase.type")
+## final_feats <- c("signed.dcg", "signed.func.score", "kinact.cor.est.293",
+##                  "kinase.type", "sub.kinase.type", "cor.est.293")
+final_feats <- c("signed.dcg", "signed.func.score",
+                 "kinase.type", "sub.kinase.type", "cor.est.293")
 ## final_feats <- init_feats
 
 k <- 3
@@ -248,31 +258,43 @@ dev.off()
 
 samp_size = min(nrow(subset(val_set_tbl, V3=="inhibits")),
                 nrow(subset(val_set_tbl, V3=="activates")))
-random_pairs <- c(sample(rownames(subset(val_set_tbl, V3=="inhibits")),
-                         samp_size),
-                  sample(rownames(subset(val_set_tbl, V3=="activates")),
-                         min(2*samp_size,
-                             nrow(subset(val_set_tbl, V3=="activates")))))
-random_pairs <- sample(random_pairs)
-preds <- merged_pred[random_pairs, init_feats]
-labels <- val_set_tbl[random_pairs, 3]
 
-bart <- bartMachineCV(preds, labels,
-                      use_missing_data=TRUE,
-                      use_missing_data_dummies_as_covars=TRUE,
-                      replace_missing_data_with_x_j_bar=FALSE,
-                      impute_missingness_with_x_j_bar_for_lm=FALSE,
-                      prob_rule_class=0.5,
-                      verbose=FALSE,
-                      serialize=FALSE)
+n <- 20
+prob_tbl <- NULL
+for (i in 1:n){
+    print(i)
+    random_pairs <- c(sample(rownames(subset(val_set_tbl, V3=="inhibits")),
+                             samp_size),
+                      sample(rownames(subset(val_set_tbl, V3=="activates")),
+                             samp_size))
+    random_pairs <- sample(random_pairs)
+    preds <- merged_pred[random_pairs, init_feats]
+    labels <- val_set_tbl[random_pairs, 3]
+    bart <- bartMachineCV(preds, labels,
+                          use_missing_data=TRUE,
+                          use_missing_data_dummies_as_covars=TRUE,
+                          replace_missing_data_with_x_j_bar=FALSE,
+                          impute_missingness_with_x_j_bar_for_lm=FALSE,
+                          prob_rule_class=0.5,
+                          verbose=FALSE,
+                          serialize=FALSE)
+    ## new_preds <- predict(bart, merged_pred[colnames(preds)],
+    ##                      type="class", prob_rule_class=0.5)
+    new_probs <- bart_machine_get_posterior(bart, merged_pred[colnames(preds)])$y_hat
+    if (is.null(prob_tbl)){
+        prob_tbl <- new_probs
+    }else{
+        prob_tbl <- cbind(prob_tbl, new_probs)
+    }
+}
 
-new_preds <- predict(bart, merged_pred[colnames(preds)],
-                     type="class", prob_rule_class=0.5)
-new_probs <- bart_machine_get_posterior(bart, merged_pred[colnames(preds)])$y_hat
+prob_means <- apply(prob_tbl, 1, mean, na.rm=TRUE)
+prob_sd <- apply(prob_tbl, 1, sd, na.rm=TRUE)
 
 out_tbl <- data.frame(prot1=merged_pred$prot1,
                       prot2=merged_pred$prot2,
-                      prob.act=new_probs)
+                      prob.act.mean=prob_means
+                      prob.act.sd=prob_sd)
 out_tbl <- out_tbl[order(out_tbl$prot1, out_tbl$prot2),]
 
 out_file <- paste0(file_base, "-bart-sign-preds")
