@@ -97,6 +97,8 @@ kin1s <- c()
 kin2s <- c()
 results <- NULL
 p.vals <- c()
+cors <- c()
+mean.cors <- c()
 for (i in 1:nrow(kin.pairs)){
     kin1 <- kin.pairs[i, 1]
     kin2 <- kin.pairs[i, 2]
@@ -105,6 +107,8 @@ for (i in 1:nrow(kin.pairs)){
         kin1s <- c(kin1s, kin1)
         kin2s <- c(kin2s, kin2)
         p.vals <- c(p.vals, NA)
+        cors <- c(cors, NA)
+        mean.cors <- c(mean.cors, NA)
         next
     }
     kin1.all.sites <- which(phospho.vals.gene == kin1)
@@ -124,6 +128,8 @@ for (i in 1:nrow(kin.pairs)){
         kin1s <- c(kin1s, kin1)
         kin2s <- c(kin2s, kin2)
         p.vals <- c(p.vals, NA)
+        cors <- c(cors, NA)
+        mean.cors <- c(mean.cors, NA)
         next
     }
     kin2.sites <- kin2.all.sites[which(kin2.good.sites)]
@@ -168,23 +174,35 @@ for (i in 1:nrow(kin.pairs)){
             ct <- cor.test(kin1.phospho, kin2.phospho, method="spearman",
                            use="pairwise.complete.obs")
             p.value <- -log10(ct$p.value)
+            ## z-transformation of Spearman's rho
+            cor.est <- sqrt((length(shared.conds)-3)/1.06)*atanh(ct$estimate)
             if (!is.infinite(p.value)){ ## && p.value > best.p.value){
                 pair.p.vals <- c(pair.p.vals, p.value)
+                pair.cors <- c(pair.cors, cor.est)
                 pair.weights <- c(pair.weights, kin1.phosfun*kin2.phosfun)
             }
         }
     }
     if (length(pair.p.vals) == 0){
         p.val <- NA
+        cor.est <- NA
+        mean.cor <- NA
     }else{
         p.val <- max(pair.p.vals*pair.weights, na.rm=TRUE)
+        j <- which.max(pair.p.vals*pair.weights)
+        cor.est <- pair.cors[j]*pair.weights[j]
+        mean.cor <- weighted.mean(pair.cors, w=pair.weights, na.rm=TRUE)
     }
     if (is.null(p.val)){
         p.val <- NA
+        cor.est <- NA
+        mean.cor <- NA
     }
     kin1s <- c(kin1s, kin1)
     kin2s <- c(kin2s, kin2)
     p.vals <- c(p.vals, p.val)
+    cors <- c(cors, cor.est)
+    mean.cors <- c(mean.cors, mean.cor)
 }
 results <- data.frame(node1=kin1s, node2=kin2s, reg.site.cor.p=p.vals)
 results$reg.site.cor.p <- normalize.p.vals(results$reg.site.cor.p)
@@ -192,8 +210,20 @@ if (all(is.na(results$reg.site.cor.p))){
     stop("No results")
 }
 colnames(results)[ncol(results)] <- paste0("cor.p.", experiment.id)
-
 write.table(results[order(results$node1),],
             paste0("out/reg-site-cor-by-exp/reg-site-cor-exp-", experiment.id, ".tsv"),
             quote=FALSE, row.names=FALSE, col.names=TRUE, sep="\t")
 
+cor.est.results <- data.frame(node1=kin1s, node2=kin2s, reg.site.cor.est=cors)
+colnames(cor.est.results)[ncol(cor.est.results)] <- paste0("cor.est.", experiment.id)
+write.table(cor.est.results[order(cor.est.results$node1),],
+            paste0("out/reg-site-cor-by-exp/reg-site-cor-sign-exp-",
+                   experiment.id, ".tsv"),
+            quote=FALSE, row.names=FALSE, col.names=TRUE, sep="\t")
+
+cor.mean.results <- data.frame(node1=kin1s, node2=kin2s, reg.site.cor.mean=mean.cors)
+colnames(cor.mean.results)[ncol(cor.mean.results)] <- paste0("cor.mean.", experiment.id)
+write.table(cor.mean.results[order(cor.mean.results$node1),],
+            paste0("out/reg-site-cor-by-exp/reg-site-mean-cor-sign-exp-",
+                   experiment.id, ".tsv"),
+            quote=FALSE, row.names=FALSE, col.names=TRUE, sep="\t")

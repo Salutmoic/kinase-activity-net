@@ -80,7 +80,8 @@ bad.inhib.conds <- get.bad.inhib.conds(kin.act.exp)
 kin.act.exp <- kin.act.exp[,setdiff(colnames(kin.act.exp), bad.inhib.conds)]
 
 ## Filter out kinases that have overall low activity predictions.
-kin.act.filt <- filter.low.activity(kin.act.exp)
+## kin.act.filt <- filter.low.activity(kin.act.exp)
+kin.act.filt <- kin.act.exp
 
 kinase.conditions <- read.delim("data/external/kinase-condition-pairs.tsv",
                                 as.is=TRUE)
@@ -91,6 +92,7 @@ kin.pairs <- expand.grid(all.kins, all.kins, stringsAsFactors=FALSE)
 kin1s <- c()
 kin2s <- c()
 p.vals <- c()
+cors <- c()
 for (i in 1:nrow(kin.pairs)){
     kin1 <- kin.pairs[i, 1]
     kin2 <- kin.pairs[i, 2]
@@ -99,6 +101,7 @@ for (i in 1:nrow(kin.pairs)){
         kin1s <- c(kin1s, kin1)
         kin2s <- c(kin2s, kin2)
         p.vals <- c(p.vals, NA)
+        cors <- c(cors, NA)
         next
     }
     kin2.conds <- kinase.conditions[which(kinase.conditions$Kinase==kin2),
@@ -114,18 +117,22 @@ for (i in 1:nrow(kin.pairs)){
     shared.conds <- intersect(kin1.meas.conds, kin2.meas.conds)
     if (length(shared.conds) < min.conds){
         p.value <- NA
+        cor.est <- NA
     }else{
         ct <- cor.test(kin1.act, kin2.act, method="spearman",
                        use="pairwise.complete.obs")
         p.value <- -log10(ct$p.value)
         ## z-transformation of Spearman's rho
+        cor.est <- sqrt((length(shared.conds)-3)/1.06)*atanh(ct$estimate)
         if (is.infinite(p.value)){
             p.value <- NA
+            cor.est <- NA
         }
     }
     kin1s <- c(kin1s, kin1)
     kin2s <- c(kin2s, kin2)
     p.vals <- c(p.vals, p.value)
+    cors <- c(cors, cor.est)
 }
 
 results <- data.frame(node1=kin1s, node2=kin2s, kinact.cor.p=p.vals)
@@ -134,9 +141,15 @@ if (all(is.na(results$kinact.cor.p))){
     stop("No results")
 }
 colnames(results)[ncol(results)] <- paste0("kinact.cor.p.", experiment.id)
-
 write.table(results[order(results$node1),],
             paste0("out/kinact-full-cor-by-exp/kinact-full-cor-exp-",
                    experiment.id, ".tsv"),
             quote=FALSE, row.names=FALSE, col.names=TRUE, sep="\t")
 
+cor.est.results <- data.frame(node1=kin1s, node2=kin2s, kinact.cor.est=cors)
+colnames(cor.est.results)[ncol(cor.est.results)] <- paste0("kinact.cor.est.",
+                                                           experiment.id)
+write.table(cor.est.results[order(cor.est.results$node1),],
+            paste0("out/kinact-full-cor-by-exp/kinact-full-cor-sign-exp-",
+                   experiment.id, ".tsv"),
+            quote=FALSE, row.names=FALSE, col.names=TRUE, sep="\t")
