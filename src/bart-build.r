@@ -25,6 +25,12 @@ merged_pred <- read.delim(merged_pred_file, as.is=TRUE)
 names(merged_pred)[1:2] <- c("prot1", "prot2")
 ## Remove missing data
 ## merged_pred <- merged_pred[complete.cases(merged_pred),]
+good_rows <- which(apply(merged_pred[,3:ncol(merged_pred)], 1,
+                        function(row){
+                            any(!is.na(row))
+                        }))
+merged_pred <- merged_pred[good_rows,]
+merged_pred <- subset(merged_pred, prot1 != prot2)
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
 
 true_intxns_tbl <- read.table(val_set_file, as.is = TRUE)
@@ -35,16 +41,23 @@ true_intxns <- intersect(possible_true_intxns, rownames(merged_pred))
 ## Generate some reverse true interactions to be mixed in as negatives
 if (use_rand_negs){
     possible_false_intxns <- rownames(merged_pred)
+    ## false_pairs <- expand.grid(unique(true_intxns_tbl[,1]),
+    ##                            unique(true_intxns_tbl[,2]),
+    ##                            stringsAsFactors=FALSE)
+    ## false_pairs <- false_pairs[which(false_pairs[,1]!=false_pairs[,2]),]
+    ## possible_false_intxns <- paste(false_pairs[, 1], false_pairs[, 2],
+    ##                               sep = "-")
 }else if (directed){
     rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
     possible_false_intxns <- rev_true_intxns
-    possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
 }else{
     false_intxns_tbl <- read.table(neg_val_set_file, as.is = TRUE)
     possible_false_intxns <- paste(false_intxns_tbl[, 1], false_intxns_tbl[, 2],
                                    sep = "-")
-    possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
 }
+
+possible_false_intxns <- setdiff(possible_false_intxns, true_intxns)
+possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
 
 num_negs <- min(length(possible_false_intxns), length(true_intxns))
 
