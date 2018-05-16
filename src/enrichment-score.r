@@ -1,5 +1,6 @@
 library(ggplot2)
 source("read-netw-files.r")
+#Smirnov koligorov to check if true positives ar overrepresented at the top
 
 kol.test = function(network,name,subset = ""){
 	if(subset != ""){
