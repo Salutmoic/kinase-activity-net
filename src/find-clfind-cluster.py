@@ -1,7 +1,7 @@
 from os import listdir
 from os.path import isfile, join
 import sys
-
+#parses CLFinder output directories and collects the results for further analysis
 def add_commun(clusts,f,no):
 	with open(f,"r") as v:
 		for line in v:
