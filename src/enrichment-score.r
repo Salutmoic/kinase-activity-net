@@ -1,6 +1,5 @@
 library(ggplot2)
 source("read-netw-files.r")
-#Smirnov koligorov to check if true positives ar overrepresented at the top
 
 kol.test = function(network,name,subset = ""){
 	if(subset != ""){
@@ -21,8 +20,8 @@ kol.test = function(network,name,subset = ""){
 kins = unique(network[,1])
 network.undir = network[-which(is.na(network$assoc.pred.mean)),c("prot1","prot2","assoc.pred.mean","assoc.is.true")]
 network.dir =network[-which(is.na(network$direct.pred.mean)),c("prot1","prot2","direct.pred.mean","direct.is.true")] 
-network.sign = network[-which(is.na(network$direct.pred.mean)),c("prot1","prot2","prob.act.mean","sign.is.correct")]
-
+network.sign = network[-which(is.na(network$prob.act.mean)),c("prot1","prot2","prob.act.mean","sign.is.correct")]
+network.sign= network.sign[-which(is.na(network.sign[,4])),]
 pdf("img/undir-netw-enrichment.pdf")
 
 ggplot(network.undir, aes(x=prot1, y=assoc.pred.mean, fill= assoc.is.true)) + geom_boxplot()
@@ -50,9 +49,10 @@ network.whole = rbind(network.undir,network.dir,network.sign)
 
 network.whole = cbind(network.whole,c(rep("undir",nrow(network.undir)),rep("dir",nrow(network.dir)),rep("signed",nrow(network.sign))))
 
+colnames(network.whole) = c("prot1","prot2","prediction","Is_TRUE","Network_type")
 pdf("img/whole-netw-enrichment.pdf")
 
-ggplot(network.whole, aes(x=network.whole[,5], y=network.whole[,3], fill= network.whole[,4])) + geom_boxplot()
+ggplot(network.whole, aes(x=Network_type, y=prediction, fill= Is_TRUE)) + geom_boxplot()
 
 dev.off()
 
