@@ -37,7 +37,7 @@ dev.off()
 
 pdf("img/sign-netw-enrichment.pdf")
 
-ggplot(network.sign, aes(x=prot1, y=prob.act.mean, fill= sign.is.true)) + geom_boxplot()
+ggplot(network.sign, aes(x=prot1, y=prob.act.mean, fill= sign.is.correct)) + geom_boxplot()
 
 dev.off()
 
