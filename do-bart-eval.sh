@@ -4,25 +4,23 @@ LOGDIR=log
 MEM=40000
 CORES=24
 
-MERGED_DATA=out/kinase-merged-pred.tsv
+MERGED_ASSOC_DATA=out/kinase-association-feats.tsv
+MERGED_DIRECT_DATA=out/kinase-direction-feats.tsv
 
-VALSET=data/validation-set-omnipath.tsv
+ASSOC_VALSET=data/assoc-validation-set-omnipath.tsv
+DIRECT_VALSET=data/direct-validation-set-omnipath.tsv
 NEG_VALSET=data/validation-set-negative.tsv
 
 mkdir -p $LOGDIR
 
-bsub -J bart-eval-$(basename $MERGED_DATA .tsv) \
-     -o ${LOGDIR}/bart-eval-$(basename $MERGED_DATA .tsv).out \
-     -e ${LOGDIR}/bart-eval-$(basename $MERGED_DATA .tsv).err \
+bsub -J bart-eval-$(basename $MERGED_ASSOC_DATA .tsv) \
+     -o ${LOGDIR}/bart-eval-$(basename $MERGED_ASSOC_DATA .tsv).out \
+     -e ${LOGDIR}/bart-eval-$(basename $MERGED_ASSOC_DATA .tsv).err \
      -M $MEM  -R "rusage[mem=${MEM}]" -n $CORES \
-     Rscript src/bart-eval.r $MERGED_DATA $VALSET $NEG_VALSET FALSE FALSE
-bsub -J bart-eval-rand-negs-$(basename $MERGED_DATA .tsv) \
-     -o ${LOGDIR}/bart-eval-rand-negs-$(basename $MERGED_DATA .tsv).out \
-     -e ${LOGDIR}/bart-eval-rand-negs-$(basename $MERGED_DATA .tsv).err \
+     Rscript src/bart-eval.r $MERGED_ASSOC_DATA $ASSOC_VALSET $NEG_VALSET TRUE FALSE
+
+bsub -J bart-eval-$(basename $MERGED_DIRECT_DATA .tsv) \
+     -o ${LOGDIR}/bart-eval-$(basename $MERGED_DIRECT_DATA .tsv).out \
+     -e ${LOGDIR}/bart-eval-$(basename $MERGED_DIRECT_DATA .tsv).err \
      -M $MEM  -R "rusage[mem=${MEM}]" -n $CORES \
-     Rscript src/bart-eval.r $MERGED_DATA $VALSET $NEG_VALSET TRUE FALSE
-bsub -J bart-eval-direct-$(basename $MERGED_DATA .tsv) \
-     -o ${LOGDIR}/bart-eval-direct-$(basename $MERGED_DATA .tsv).out \
-     -e ${LOGDIR}/bart-eval-direct-$(basename $MERGED_DATA .tsv).err \
-     -M $MEM  -R "rusage[mem=${MEM}]" -n $CORES \
-     Rscript src/bart-eval.r $MERGED_DATA $VALSET $NEG_VALSET FALSE TRUE
+     Rscript src/bart-eval.r $MERGED_DIRECT_DATA $DIRECT_VALSET $NEG_VALSET FALSE TRUE
