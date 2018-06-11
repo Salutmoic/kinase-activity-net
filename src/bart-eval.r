@@ -21,7 +21,16 @@ if (use_rand_negs && directed)
 merged_pred <- read.delim(merged_pred_file, as.is=TRUE)
 names(merged_pred)[1:2] <- c("prot1", "prot2")
 ## Remove missing data
-## merged_pred <- merged_pred[complete.cases(merged_pred),]
+if (directed){
+    merged_pred <- merged_pred[complete.cases(merged_pred),]
+}else{
+    good_rows <- which(apply(merged_pred[,3:ncol(merged_pred)], 1,
+                             function(row){
+                                 any(!is.na(row))
+                             }))
+    merged_pred <- merged_pred[good_rows,]
+}
+merged_pred <- subset(merged_pred, prot1 != prot2)
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
 
 true_intxns_tbl <- read.table(val_set_file, as.is = TRUE)
@@ -83,7 +92,7 @@ for (n in 1:num_reps){
         bart <- bartMachineCV(train_set,
                               train_labels,
                               use_missing_data=TRUE,
-                              use_missing_data_dummies_as_covars=TRUE,
+                              use_missing_data_dummies_as_covars=(!directed),
                               replace_missing_data_with_x_j_bar=FALSE,
                               impute_missingness_with_x_j_bar_for_lm=FALSE,
                               prob_rule_class=0.5,
@@ -144,17 +153,19 @@ if (directed){
 img_file <- paste0("img/", img_file, "-roc.pdf")
 
 pdf(img_file)
+par(cex = 1.25, cex.main = 0.8)
 plot(rocr_roc, spread.estimate="stderror", avg="threshold",
      main=paste0("BART\n(mean AUC=", format(mean_auc, digits=3),
-                 ", S.E.M=", format(se_auc, digits=2), ")"), colorize=TRUE)
-abline(v=0.1, lty=2, col="blue")
-legend("bottomright", legend=paste0("FPR 0.1 -> ", format(fpr.cutoff, digits=3)),
-       lty=2, col="blue")
+                 ", S.E.M=", format(se_auc, digits=2), ")"), colorize=TRUE,
+     lwd=2)
+## abline(v=0.1, lty=2, col="blue")
+## legend("bottomright", legend=paste0("FPR 0.1 -> ", format(fpr.cutoff, digits=3)),
+##        lty=2, col="blue")
 plot(rocr_prec, spread.estimate="stderror", avg="threshold",
-     main=paste0("BART"), ylim=c(0.5, 1.0), colorize=TRUE)
-abline(h=0.9, lty=2, col="blue")
-legend("bottomleft", legend=paste0("Prec 0.9 -> ", format(prec.cutoff, digits=3)),
-       lty=2, col="blue")
+     main=paste0("BART"), ylim=c(0.0, 1.0), colorize=TRUE, lwd=2)
+## abline(h=0.9, lty=2, col="blue")
+## legend("bottomleft", legend=paste0("Prec 0.9 -> ", format(prec.cutoff, digits=3)),
+##        lty=2, col="blue")
 
 ## plot(rocr_roc, 
 ##      main=paste0("BART\n(mean AUC=", format(mean_auc, digits=2),

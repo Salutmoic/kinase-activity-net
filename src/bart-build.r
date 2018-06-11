@@ -24,12 +24,15 @@ if (use_rand_negs && directed)
 merged_pred <- read.delim(merged_pred_file, as.is=TRUE)
 names(merged_pred)[1:2] <- c("prot1", "prot2")
 ## Remove missing data
-## merged_pred <- merged_pred[complete.cases(merged_pred),]
-good_rows <- which(apply(merged_pred[,3:ncol(merged_pred)], 1,
-                        function(row){
-                            any(!is.na(row))
-                        }))
-merged_pred <- merged_pred[good_rows,]
+if (directed){
+    merged_pred <- merged_pred[complete.cases(merged_pred),]
+}else{
+    good_rows <- which(apply(merged_pred[,3:ncol(merged_pred)], 1,
+                             function(row){
+                                 any(!is.na(row))
+                             }))
+    merged_pred <- merged_pred[good_rows,]
+}
 merged_pred <- subset(merged_pred, prot1 != prot2)
 rownames(merged_pred) <- paste(merged_pred$prot1, merged_pred$prot2, sep="-")
 
@@ -62,12 +65,6 @@ possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
 num_negs <- min(length(possible_false_intxns), length(true_intxns))
 
 file_base <- strsplit(merged_pred_file, split="\\.")[[1]][1]
-if (use_rand_negs){
-    file_base <- paste0(file_base, "-rand-negs")
-}
-if (directed){
-    file_base <- paste0(file_base, "-directed")
-}
 
 if (!dir.exists(file_base)){
     dir.create(file_base)
@@ -83,8 +80,8 @@ labels <- c(rep(TRUE, length(true_intxns)),
             rep(FALSE, length(false_intxns)))
 bart <- bartMachineCV(preds,
                       as.factor(labels),
-                      use_missing_data=TRUE,
-                      use_missing_data_dummies_as_covars=TRUE,
+                      use_missing_data=(!directed),
+                      use_missing_data_dummies_as_covars=(!directed),
                       replace_missing_data_with_x_j_bar=FALSE,
                       impute_missingness_with_x_j_bar_for_lm=FALSE,
                       prob_rule_class=0.5,
