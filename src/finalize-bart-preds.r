@@ -20,7 +20,7 @@ bart.final <- data.frame(prot1=bart.preds$prot1,
                          bart.pred.sd=sd.preds,
                          bart.pred.se=se.preds)
 
-bart.final[bart.final$prot1==bart.final$prot2,
+bart.final[as.character(bart.final$prot1)==as.character(bart.final$prot2),
            c("bart.pred.mean", "bart.pred.median", "bart.pred.sd",
              "bart.pred.se")] <- NA
 
