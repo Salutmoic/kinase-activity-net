@@ -43,7 +43,7 @@ ASSOC_METHODS = pcor pcor-filter scor scor-filter nfchisq mut_info	\
 ASSOC_METHOD ?= scor
 DISCR_METHOD ?= trunc 	# mclust.whole mclust.by.row manual trunc
 ASSOCNET_FILTER_METHOD ?= deconvolution
-ASSOCNET_FILTER_PRESCALE_METHOD ?= none
+ASSOCNET_FILTER_PRESCALE_METHOD ?= standard
 ASSOCNET_FILTER_POSTSCALE_METHOD ?= standard
 # Network density post-deconvolution
 DECONVOLUTION_A ?= 0.5
@@ -75,7 +75,7 @@ KIN_COND_PAIRS = $(EXT_DATADIR)/kinase-condition-pairs.tsv
 # tries to calculate which kinases are perturbed in each condition
 KIN_INVIVO_CONDS = $(EXT_DATADIR)/kinase_invivoconditions.csv 
 # PhosphositePlus data
-PHOSPHOSITE_PLUS_VERSION = 2017-09-08
+PHOSPHOSITE_PLUS_VERSION = 2018-05-01 # 2017-09-08
 FULL_KIN_SUBSTR_TABLE = $(EXT_DATADIR)/Kinase_Substrate_Dataset_$(PHOSPHOSITE_PLUS_VERSION)
 FULL_REG_SITES_TABLE = $(EXT_DATADIR)/Regulatory_sites_$(PHOSPHOSITE_PLUS_VERSION)
 FULL_PHOS_SITES_TABLE = $(EXT_DATADIR)/Phosphorylation_site_dataset_$(PHOSPHOSITE_PLUS_VERSION)
@@ -256,12 +256,12 @@ VAL_IMGS = $(ASSOC_VAL_IMG) $(PSSM_VAL_IMG) $(FULL_ASSOC_VAL_IMG)	\
 
 ASSOCNET_PARAMS = --unbiased-correlation --p-method=none
 ASSOCNET_FILTER_PARAMS = --method=$(ASSOCNET_FILTER_METHOD) \
-						--pre-scale-method=$(ASSOCNET_FILTER_PRESCALE_METHOD) \
-						--post-scale-method=$(ASSOCNET_FILTER_POSTSCALE_METHOD) \
-						--header-in --observed-only
+	 		--pre-scale-method=$(ASSOCNET_FILTER_PRESCALE_METHOD) \
+			--post-scale-method=$(ASSOCNET_FILTER_POSTSCALE_METHOD) \
+			--header-in --observed-only
 ifeq ($(ASSOCNET_FILTER_METHOD),deconvolution)
 ASSOCNET_FILTER_PARAMS += --deconvolution-a=$(DECONVOLUTION_A)	\
-						  --deconvolution-b=$(DECONVOLUTION_B)
+			  --deconvolution-b=$(DECONVOLUTION_B)
 endif
 
 ###########
@@ -830,6 +830,10 @@ $(KINACT_FULL_ASSOC_SIGN): $(KINACT_PREDS) $(KINACT_FULL_COR_SCRIPT) $(PSITE_DAT
 $(INHIB_FX): $(KINACT_PREDS) $(KINS_TO_USE) $(KIN_COND_PAIRS) $(KIN_SUB_OVERLAP) \
 		$(INHIB_FX_SCRIPT) $(OPTIMIZE_KINACT_TBL_SCRIPT) $(KINACT_PREDS)
 	$(RSCRIPT) $(INHIB_FX_SCRIPT) $(KINACT_PREDS) $(KINS_TO_USE) $(KSEA_MIN_SITES) $@
+
+# todo: make this more flexible
+out/rna-tissue-cor-filter.tsv: out/rna-tissue-cor.tsv
+	assocnet-filter --header-in --scale-diagonal -b 0.45 $< >$@
 
 ###############################
 ## Kinase-substrate predictions
