@@ -1,6 +1,6 @@
 declare -a meth=("Louvain" "greedy") 
 declare -a types=("adj" "other")
-ts=$(seq 0.6 0.5 0.98)
+ts=$(seq 0.6 0.05 0.98)
 
 
 for m in "${meth[@]}"
