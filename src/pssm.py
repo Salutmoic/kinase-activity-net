@@ -172,10 +172,11 @@ def normalize_scores(scores):
                 scores_minmax[kin][0] = score
             if score > scores_minmax[kin][1]:
                 scores_minmax[kin][1] = score
-    norm_scores = scores
-    for pair in norm_scores:
-        if not norm_scores[pair]:
+    norm_scores = dict()
+    for pair in scores:
+        if not scores[pair]:
             continue
+        kin = pair[0]
         kin_min = scores_minmax[kin][0]
         kin_max = scores_minmax[kin][1]
         if isinf(kin_min) or isinf(kin_max):
@@ -233,7 +234,8 @@ def score_network(kinase_file, out_file):
     reg_sites = read_reg_sites_file("data/psiteplus-reg-sites.tsv")
     kin_types = read_pfam_file("data/human-pfam.tsv", kinases)
     scores = score_kin_pairs(ktable, kinases, aa_freqs, psites)
-    norm_scores = normalize_scores(scores)    
+    norm_scores = normalize_scores(scores)
+    # scores = norm_scores
     with open(out_file, "w") as v:
         v.write("\t".join(["node1", "node2", "kinase.type", "sub.kinase.type",
                            "max.pssm.score", "dcg", "max.func.score"])+"\n")
