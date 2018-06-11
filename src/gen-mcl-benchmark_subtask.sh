@@ -5,6 +5,7 @@ BENCH_DIR=${1}/benchmark-${2}-clust
 MSI_DIR=${BENCH_DIR}/msi
 OUT_DIR=${BENCH_DIR}/out
 INFLATIONS=$(seq 1.2 0.2 10.0)
+SCALE=$(echo "1.0/(1.0-$3)" | bc -l)
 
 mkdir -p ${MSI_DIR}
 mkdir -p ${OUT_DIR}
@@ -16,7 +17,7 @@ TAB_FILE=${MSI_DIR}/$(basename $COR_TSV .tsv)_co${3}.tab
     --write-binary \
     -write-tab $TAB_FILE \
     -o $MSI_FILE \
-    -tf "gt(${3}),add(-${3})"
+    -tf "gt(${3}),add(-${3}),mul(${SCALE})"
 CO_OUT_DIR=${OUT_DIR}/co${3}
 mkdir -p ${CO_OUT_DIR}
 for i in $INFLATIONS; do
