@@ -14,6 +14,8 @@ feat_file <- argv[2]
 val_set_file <- argv[3]
 max_f_cutoff <- as.numeric(argv[4])
 
+file_base <- strsplit(basename(pred_file), split="\\.")[[1]][1]
+
 preds <- read.delim(pred_file, as.is=TRUE)
 feats <- read.delim(feat_file, as.is=TRUE)
 
@@ -31,9 +33,9 @@ deg_val_df <- deg_val_df %>%
     mutate(direction=gsub("\\.degree\\.val", "", direction)) %>%
     arrange(prot, direction)
 
-cutoffs <- c(max_f_cutoff, seq(0.9, 0.0, -0.1))
+cutoffs <- c(max_f_cutoff, seq(round(max_f_cutoff, digits=1), 0.0, -0.1))
 
-pdf("img/val-deg-vs-pred-deg.pdf", height=3.5, width=7)
+pdf(paste0("img/", file_base, "-val-deg-vs-pred-deg.pdf"), height=3.5, width=7)
 for (cutoff in cutoffs){
     pred_net <- subset(preds, bart.pred.mean > cutoff)
     out_deg_pred_df <- as.data.frame(table(pred_net$prot1))
@@ -80,7 +82,7 @@ preds$cite.class2 <- sapply(preds$prot2,
                                 kin.citations[kin, "cite.class"]
                             })
 
-pdf("img/val-cites-vs-pred-cites.pdf")
+pdf(paste0("img/", file_base, "-val-cites-vs-pred-cites.pdf"))
 for (cutoff in cutoffs){
     pred_net <- subset(preds, bart.pred.mean > cutoff)
     print(ggplot(pred_net, aes(x=cite.class1, y=cite.class2)) +
@@ -128,7 +130,7 @@ pred_vs_feats$cites2 <- sapply(pred_vs_feats$prot2,
                                    kin.citations[kin, "citations.filt"]
                                })
 
-pdf("img/citations-vs-pred.pdf")
+pdf(paste0("img/", file_base, "-citations-vs-pred.pdf"))
 ggplot(pred_vs_feats, aes(cite.class1, bart.pred.mean)) +
     geom_violin() +
     theme_bw() +
@@ -142,7 +144,7 @@ pred_vs_feats_sum <- pred_vs_feats %>%
     arrange(desc(mean.pred))
 pred_vs_feats_sum$prot1 <- factor(pred_vs_feats_sum$prot1,
                                   levels=unique(pred_vs_feats_sum$prot1))
-pdf("img/ranked-pred-scores.pdf", width=84)
+pdf(paste0("img/", file_base, "-ranked-pred-scores.pdf"), width=84)
 ggplot(pred_vs_feats_sum, aes(prot1, mean.pred, colour=log10(cites1))) +
     geom_pointrange(aes(ymin=(mean.pred-sd.pred), ymax=(mean.pred+sd.pred))) +
     scale_colour_gradient(low="#C6DBEF", high="#08306B") +
@@ -154,14 +156,14 @@ dev.off()
 pred_vs_feats_sum <- pred_vs_feats %>%
     group_by(prot1, cite.class1) %>%
     summarise(mean.pred=mean(bart.pred.mean, na.rm=TRUE))
-pdf("img/citations-vs-mean-pred.pdf")
+pdf(paste0("img/", file_base, "-citations-vs-mean-pred.pdf"))
 ggplot(pred_vs_feats_sum, aes(cite.class1, mean.pred)) +
     geom_violin() +
     theme_bw() +
     theme(axis.text.x=element_text(angle=45, hjust=1))
 dev.off()
 
-pdf("img/citations-vs-feats.pdf")
+pdf(paste0("img/", file_base, "-citations-vs-feats.pdf"))
 ggplot(pred_vs_feats, aes(cite.class1, feature.value)) +
     geom_violin() +
     facet_wrap(~feature, ncol=3) +
