@@ -116,6 +116,7 @@ if (use_rand_negs){
 }else if (directed){
     rev_true_intxns <- paste(true_intxns_tbl[, 2], true_intxns_tbl[, 1], sep = "-")
     possible_false_intxns <- rev_true_intxns
+    possible_false_intxns <- intersect(possible_false_intxns, rownames(pred_score))
 }else{
     false_intxns_tbl <- read.table(neg_val_set_file, as.is = TRUE)
     possible_false_intxns <- paste(false_intxns_tbl[, 1], false_intxns_tbl[, 2],
@@ -165,7 +166,7 @@ if (directed){
 }
 out_img <- paste0("img/", data_basename, ".pdf")
 
-pdf(out_img)
+pdf(out_img, title=data_basename)
 par(cex = 1.25, cex.main = 0.8)
 
 ## ROC curve w/ AUC info
