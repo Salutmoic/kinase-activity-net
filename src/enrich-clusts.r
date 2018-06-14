@@ -47,6 +47,7 @@ if(methods == "mcl"){
 
 kinome = read.delim("human-kinome.txt")
 id.map = read.delim("Entrez-ids.txt")
+id.map = id.map[which(id.map[,3] == "Homo sapiens"),]
 universe = convert(kinome[,1],id.map)
 path.tbl = c()
 
