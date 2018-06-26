@@ -9,7 +9,7 @@ convert = function(gene.list,id.map){
 
 find.paths= function(tbl,path.tbl,file,universe,id.map){
 
-	clusters = which(table(tbl[,2])>= 10)
+	clusters = names(table(tbl[,2]))[which(table(tbl[,2])>= 10)]
 	
 	tbl.sect = c()
 	for(cluster in clusters){
@@ -18,7 +18,14 @@ find.paths= function(tbl,path.tbl,file,universe,id.map){
 		entrez.genes = convert(genes,id.map)
 		x = enrichPathway(as.character(entrez.genes),pvalueCutoff=0.05,pAdjustMethod = "BH", readable=T,universe = as.character(universe))
 		paths = x$Description
-		tbl.sect =rbind(tbl.sect,cbind(rep(cluster,length(paths)),paths,rep(length(clusters),length(paths))))
+		ind = which(as.numeric(x$p.adjust) == min(as.numeric(x$p.adjust)))
+		if(length(ind) > 0){
+			no.genes = strsplit(x$GeneRatio[ind],"/")[[1]][1]
+		}else{
+			no.genes = NULL
+		}
+		
+		tbl.sect =rbind(tbl.sect,cbind(rep(cluster,length(paths)),paths,rep(length(clusters),length(paths)),rep(no.genes,length(paths)),rep(length(genes),length(paths))))
 		
 	}
 	
@@ -32,22 +39,31 @@ find.paths= function(tbl,path.tbl,file,universe,id.map){
 argv <- commandArgs(TRUE)
 methods = argv[1]
 
-if(methods == "louvain-greedy"){
-	dirs = list.dirs("clusters") 
+if(method == "louvain"){
+	dirs = list.dirs("clusters/louvain") 
 	dirs = dirs[2:length(dirs)]
 
 	print(dirs)
 }
 
-if(methods == "mcl"){
-	dirs = c("mcl/benchmark-assoc-net-clust","mcl/benchmark-assoc-pruned-clust","mcl/benchmark-assoc-net-to-cluster-clust")
+
+if(method == "greedy"){
+	dirs = list.dirs("clusters/greedy") 
+	dirs = dirs[2:length(dirs)]
+
+	print(dirs)
+}
+
+if(method == "mcl"){
+	dirs = list.dirs("clusters/mcl") 
 	
 }
 
 
-kinome = read.delim("human-kinome.txt")
+kinome = argv[2]
 id.map = read.delim("Entrez-ids.txt")
 id.map = id.map[which(id.map[,3] == "Homo sapiens"),]
+
 universe = convert(kinome[,1],id.map)
 path.tbl = c()
 
@@ -64,5 +80,6 @@ for(dir in dirs){
 	}
 }
 
-
-write.table(path.tbl,paste(methods,"pathway-enrichments.tsv",sep = ""),quote = F,sep = "\t",row.names = F)
+colnames(path.tbl) = c("file","cluster","pathways","no_clusters","no_genes_in_top_enriched","no_genes_in_cluster")
+print(head(path.tbl))
+write.table(path.tbl,paste(method,"pathway-enrichments.tsv",sep = ""),quote = F,sep = "\t",row.names = F)
