@@ -24,7 +24,7 @@ is.direct.edge <- function(pair, graph){
     return (length(path$vpath[[1]]) == 2)
 }
 
-cl <- makeCluster(31)
+cl <- makeCluster(15)
 clusterEvalQ(cl, library(igraph))
 direct.edges <- parApply(cl, combn(unique(network$prot1), 2), 2, is.direct.edge, graph)
 stopCluster(cl)
@@ -32,7 +32,7 @@ network.prune <- network[direct.edges,]
 
 file_base <- strsplit(network_file, split="\\.")[[1]][1]
 
-save(direct.edges, file=paste0("tmp/", basename(file_base), "-direct-edges.Rdata")
+save(direct.edges, file=paste0("tmp/", basename(file_base), "-direct-edges.Rdata"))
 write.table(network.prune, paste0(file_base, "-pruned.tsv"),
             quote=FALSE, sep="\t", row.names=FALSE, col.names=TRUE)
 
