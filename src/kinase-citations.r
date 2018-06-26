@@ -59,8 +59,8 @@ kin.dat$count.type <- factor(kin.dat$count.type,
                                       "num.phos.kins",
                                       "num.reg.sites"),
                              labels=c("substrates",
-                                      "substrate kinases",
-                                      "phosphorylating kinases",
+                                      "\"downstream\" substrate kinases",
+                                      "\"upstream\" phosphorylating kinases",
                                       "regulatory sites"))
 
 rel.dat$rel <- factor(rel.dat$rel,
@@ -68,14 +68,24 @@ rel.dat$rel <- factor(rel.dat$rel,
                       labels=c("phosphorylation relationships", "regulatory relationships"))
 
 pdf("img/kinase-citations-1.pdf", height=14, width=14)
-ggplot(kin.dat, aes(x=cite.class, y=count, color=count.type)) +
+## ggplot(kin.dat, aes(x=cite.class, y=count, color=count.type)) +
+##     geom_count(shape=19, alpha=0.8) +
+##     scale_size(range=c(1, 12)) +
+##     facet_wrap(~count.type, scales="free") +
+##     theme_bw(base_size=20) +
+##     theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1)) +
+##     xlab("number of publications linked to protein kinase") +
+##     ylab("number of annotated ...") +
+##     scale_y_continuous(breaks=pretty_breaks()) +
+##     guides(colour=FALSE) +
+##     labs(size="number of\nkinases")
+ggplot(kin.dat, aes(x=log10(num.cites.filt), y=count, color=count.type)) +
     geom_count(shape=19, alpha=0.8) +
-    scale_size(range=c(1, 12)) +
+    scale_size(range=c(2, 7), breaks=pretty_breaks()) +
     facet_wrap(~count.type, scales="free") +
     theme_bw(base_size=20) +
-    theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1)) +
-    xlab("number of publications linked to protein kinase") +
-    ylab("count") +
+    labs(x=expression(log[10](number~of~publications~linked~to~protein~kinase)),
+         y="number of annotated entities per kinase") +
     scale_y_continuous(breaks=pretty_breaks()) +
     guides(colour=FALSE) +
     labs(size="number of\nkinases")
@@ -93,6 +103,6 @@ ggplot(subset(rel.dat, kinase1!=kinase2), aes(x=cite.class1, y=cite.class2)) +
     theme(axis.text.x=element_text(angle=45, hjust=1, vjust=1),
           panel.grid.major = element_blank(),
           panel.grid.minor = element_blank()) +
-    xlab("number of publications (kinase)") +
-    ylab("number of publications (substrate kinase)")
+    xlab("number of publications linked to protein kinase") +
+    ylab("number of publications linked \n to \"downstream\" substrate kinase")
 dev.off()
