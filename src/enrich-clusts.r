@@ -37,7 +37,7 @@ find.paths= function(tbl,path.tbl,file,universe,id.map){
 }
 
 argv <- commandArgs(TRUE)
-methods = argv[1]
+method = argv[1]
 
 if(method == "louvain"){
 	dirs = list.dirs("clusters/louvain") 
@@ -49,18 +49,18 @@ if(method == "louvain"){
 
 if(method == "greedy"){
 	dirs = list.dirs("clusters/greedy") 
-	dirs = dirs[2:length(dirs)]
 
 	print(dirs)
 }
 
 if(method == "mcl"){
-	dirs = list.dirs("clusters/mcl") 
-	
+	dirs = list.dirs("clusters/mcl", recursive = F) 
+
+	print(dirs)
 }
 
 
-kinome = argv[2]
+kinome = read.delim(argv[2])
 id.map = read.delim("Entrez-ids.txt")
 id.map = id.map[which(id.map[,3] == "Homo sapiens"),]
 
