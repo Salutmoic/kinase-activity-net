@@ -75,7 +75,7 @@ get.kinase.sites <- function(kin.sub.tbl, phospho.anno){
         ## gene name and Ensembl Protein ID
         kin.subs.ensp <- merge(phospho.anno, kin.subs,
                                by.x=c("gene_name", "positions"),
-                               by.y=c("SUB_GENE", "SUB_MOD_RSD"))
+                               by.y=c("SUB_GENE", "position"))
         if (is.null(kin.subs.ensp) || nrow(kin.subs.ensp) == 0){
             kinase.sites[[kinase]] <- NA
             next
@@ -141,7 +141,7 @@ phospho.vals.sub <- phospho.vals[, -which(colnames(phospho.vals) %in% cptac.cond
 
 all.kins <- read.table("data/human-kinome.txt", as.is=TRUE)[,1]
 
-psites <- read.table("data/pride-phosphosites.tsv", as.is=TRUE, sep="\t")
+psites <- read.table("data/psiteplus-phosphosites.tsv", as.is=TRUE, sep="\t")
 rownames(psites) <- paste(psites[,1], psites[,2], sep="_")
 
 ensp.id.map.full <- read.table("data/ensembl-id-map.tsv", as.is=TRUE)
@@ -176,7 +176,7 @@ if (cond.num > ncol(phospho.vals)){
 ## Load kinase-substrate relationships
 kin.sub.tbl <- read.delim("data/psiteplus-kinase-substrates.tsv", as.is=TRUE,
                           sep="\t")
-kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
+## kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
 
 ## Remove all autophosphorylations, as in Ochoa et al 2016.  The
 ## suspicion is that autophosphorylation tends to be nonspecific and
