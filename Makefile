@@ -454,18 +454,17 @@ $(KIN_SUBSTR_TABLE): $(FULL_KIN_SUBSTR_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) \
 		$(PRIDE_PHOSPHOSITES) $(HUMAN_KINOME)
 	sed '1,3d;4s|+/-|...|' $< | \
 		awk -F"\t" '{if (NR==1 || ($$4=="human" && $$9=="human")){print}}' >$@.tmp
-	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
+	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@ TRUE
 	rm $@.tmp
 
 # Filter the PhosphoSitePlus site list to just those on kinases for
 # which we have kinase activities
 $(PSP_PHOSPHOSITES): $(FULL_PHOS_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) $(KINACT_PREDS)
 	sed '1,3d' $< | \
-		awk -F"\t" -vOFS="\t" '{if ((NR == 1 || $$7 == "human") && $$5 !~ /^G/){print}}' >$@.tmp
-	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@.tmp2
+		awk -F"\t" -vOFS="\t" '{if ((NR == 1 || ($$7 == "human" && $$2 !~ / iso/)) && $$5 !~ /^G/){print}}' >$@.tmp
+	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@.tmp2 FALSE
 	rm $@.tmp
-	sed 's/\([STY]\)\([0-9][0-9]*\)[-p]*/\2\t\1/' $@.tmp2 | \
-		awk -vOFS="\t" -F"\t" '{if (NR > 1){print $$1, $$5, $$6, toupper($$11)}}' >$@
+	awk -vOFS="\t" -F"\t" '{if (NR > 1){print $$1, $$6, $$5, toupper($$11)}}' $@.tmp2 | sort | uniq >$@
 	rm $@.tmp2
 
 # Further filter to just include reg sites on kinases for which we
@@ -475,7 +474,7 @@ $(REG_SITES): $(FULL_REG_SITES_TABLE) $(FILTER_PSITE_PLUS_SCRIPT) \
 	sed '1,3d' $< | \
 		awk -F"\t" 'BEGIN{OFS="\t"}{if (NR==1 || $$7=="human" && $$8~/-p$$/){print}}' | \
 		sed 's/-p//' >$@.tmp
-	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@
+	$(RSCRIPT) $(FILTER_PSITE_PLUS_SCRIPT) $@.tmp $@ TRUE
 	rm $@.tmp
 
 # Kinase-substrate overlap

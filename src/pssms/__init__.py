@@ -83,7 +83,8 @@ def read_kin_sub_data(kin_sub_file):
         columns = f.readline().split("\t")
         seq_col = columns.index("SITE_...7_AA")
         sub_col = columns.index("SUB_GENE")
-        rsd_col = columns.index("SUB_MOD_RSD")
+        res_col = columns.index("residue")
+        pos_col = columns.index("position")
         for line in f:
             line_spl = line.split("\t")
             kinase = line_spl[0]
@@ -91,9 +92,11 @@ def read_kin_sub_data(kin_sub_file):
                 ktable[kinase] = []
             motif_seq = line_spl[seq_col].upper()
             substrate = line_spl[sub_col]
-            rsd = line_spl[rsd_col].strip("-p")
-            res = rsd[0]
-            pos = rsd[1:]
+            res = line_spl[res_col]
+            pos = line_spl[pos_col]
+            # rsd = line_spl[rsd_col].strip("-p")
+            # res = rsd[0]
+            # pos = rsd[1:]
             if kinase == substrate:
                 continue
             ktable[kinase].append((substrate, pos, res, motif_seq))

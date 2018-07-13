@@ -102,14 +102,15 @@ def read_pfam_file(pfam_file, kinases):
     with open(pfam_file) as h:
         for line in h:
             prot, dom, start, end = line.strip().split()
-            if prot not in kinases or dom not in ["Pkinase", "Pkinase_Tyr"]:
+            if (prot not in kinases or dom not in
+                ["Pkinase", "Pkinase_Tyr", "PI3_PI4_kinase", "Alpha_kinase"]:
                 continue
-            if dom == "Pkinase":
+            if dom in ["Pkinase", "PI3_PI4_kinase", "Alpha_kinase"]:
                 kin_types[prot] = "ST"
             else:
                 kin_types[prot] = "Y"
     return kin_types
-                
+
 
 def score_kin_pairs(ktable, kinases, aa_freqs, psites):
     # loads a netwoek of kinase-> kinase interactions and scores them

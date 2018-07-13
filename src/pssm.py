@@ -82,9 +82,10 @@ def read_pfam_file(pfam_file, kinases):
     with open(pfam_file) as h:
         for line in h:
             prot, dom, start, end = line.strip().split()
-            if prot not in kinases or dom not in ["Pkinase", "Pkinase_Tyr"]:
+            if (prot not in kinases or dom not in
+                ["Pkinase", "Pkinase_Tyr", "PI3_PI4_kinase", "Alpha_kinase"]):
                 continue
-            if dom == "Pkinase":
+            if dom in ["Pkinase", "PI3_PI4_kinase", "Alpha_kinase"]:
                 kin_types[prot] = "ST"
             else:
                 kin_types[prot] = "Y"
@@ -104,7 +105,12 @@ def score_kin_pairs(ktable, kinases, aa_freqs, psites):
     for kin_a, kin_b in pairs:
         if (kin_a == kin_b
                 or kin_a not in ktable
+                or len(ktable[kin_a]) < 10
                 or kin_b not in psites):
+            # if kin_a not in ktable:
+            #     print("Skipping because no substrates for {0}".format(kin_a))
+            # if kin_b not in psites:
+            #     print("Skipping because no sites for {0}".format(kin_b))
             scores[(kin_a, kin_b)] = []
             continue
 
@@ -135,6 +141,7 @@ def score_kin_pairs(ktable, kinases, aa_freqs, psites):
             # substrates.
             pssm = pssms.calc_pssm(kin_motif_seqs, aa_freqs)
             if pssm is None:
+                # print("Skipping because no PSSM calculated for {0} - {1} motifs".format(kin_a, len(kin_motif_seqs)))
                 scores[(kin_a, kin_b)] = []
                 continue
             if len(kin_motif_seqs) == len(ktable[kin_a]):
@@ -204,12 +211,12 @@ def regulation_score(pair, scores, phosfun, med_phosfun, reg_sites):
     hs_scores = []
     for pos, res, score in scores:
         if kin_b_phosfun is None or pos not in kin_b_phosfun:
-            sys.exit("\t".join([pair[1], pos]))
+            continue
         hs_score = kin_b_phosfun[pos]
         hs_scores.append(hs_score)
     if not hs_scores:
         return ("NA", "NA")
-    if len(hs_scores) < 10:
+    if len(hs_scores) < 2:
         return ("NA", max(hs_scores))
     # Discounted Cumulative Gain
     dcg = calc_dcg(hs_scores)
@@ -218,6 +225,8 @@ def regulation_score(pair, scores, phosfun, med_phosfun, reg_sites):
     max_dcg = calc_dcg(hs_scores)
     hs_scores.sort(reverse=False)
     min_dcg = calc_dcg(hs_scores)
+    if max_dcg == min_dcg:
+        return ("NA", max(hs_scores))
     return ((dcg-min_dcg)/(max_dcg-min_dcg), max(hs_scores))
 
 
@@ -226,7 +235,7 @@ def score_network(kinase_file, out_file):
 
     ktable = pssms.read_kin_sub_data("data/psiteplus-kinase-substrates.tsv")
     aa_freqs = pssms.read_aa_freqs("data/aa-freqs.tsv")
-    psites = read_phosphosites("data/pride-phosphosites.tsv")
+    psites = read_phosphosites("data/psiteplus-phosphosites.tsv")
     kinases = read_kinase_file(kinase_file)
     # phosfun, med_phosfun = read_phosfun_file("data/phosfun-alt.tsv")
     phosfun_st, med_phosfun_st = read_phosfun_file("data/phosfun-ST.tsv")
