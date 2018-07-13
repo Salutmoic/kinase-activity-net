@@ -1,4 +1,5 @@
 suppressMessages(library(ROCR))
+library(ggplot2)
 source("src/rocr-helpers.r")
 
 argv <- commandArgs(TRUE)

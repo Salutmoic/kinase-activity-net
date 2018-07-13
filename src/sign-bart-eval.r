@@ -4,6 +4,8 @@ set_bart_machine_num_cores(1)
 suppressPackageStartupMessages(library(ROCR))
 library(reshape2)
 source("src/rocr-helpers.r")
+library(ggplot2)
+source("src/rocr-ggplot2.r")
 
 argv <- commandArgs(TRUE)
 if (length(argv) != 4){
@@ -125,7 +127,7 @@ var_select$important_vars_local_names
 ## final_feats <- c("signed.dcg", "signed.func.score", "kinact.cor.est.293",
 ##                  "kinase.type", "sub.kinase.type", "cor.est.293")
 final_feats <- c("signed.dcg", "signed.func.score",
-                 "kinase.type", "sub.kinase.type", "cor.est.293")
+                 "kinase.type", "sub.kinase.type", "cor.est.293", "cor.est.272")
 ## final_feats <- init_feats
 
 k <- 3
@@ -188,72 +190,16 @@ for (j in 1:n){
     }
 }
 
-rocr_pred <- prediction(all_probs, all_labels)
-rocr_roc <- performance(rocr_pred, measure="tpr", x.measure="fpr")
-rocr_roc2 <- performance(rocr_pred, measure="tnr", x.measure="fnr")
-rocr_prec <- performance(rocr_pred, measure="prec", x.measure="rec")
-rocr_auc <- performance(rocr_pred, "auc")
-rocr_mcc <- performance(rocr_pred, "mat")
-mean_auc <- mean(unlist(rocr_auc@y.values), na.rm=TRUE)
-se_auc <- sd(unlist(rocr_auc@y.values), na.rm=TRUE)/sqrt(k)
-act.fprs <- rocr_roc@x.values
-act.fpr0.1s <- unlist(lapply(act.fprs,
-                        function(f){
-                            fpr0.1 <-max(which(f<0.1))
-                            rocr_roc@alpha.values[[1]][fpr0.1]
-                        }))
-act.cutoff <- mean(act.fpr0.1s[!is.infinite(act.fpr0.1s)])
-inhib.fprs <- rocr_roc2@x.values
-inhib.fpr0.1s <- unlist(lapply(inhib.fprs,
-                        function(f){
-                            fpr0.1 <-max(which(f<0.1))
-                            rocr_roc2@alpha.values[[1]][fpr0.1]
-                        }))
-inhib.cutoff <- mean(inhib.fpr0.1s[!is.infinite(inhib.fpr0.1s)], na.rm=TRUE)
-rocr_balance <- performance(rocr_pred, measure="tpr", x.measure="tnr")
-avg_mccs <- perf_vert_avg(rocr_mcc)
-max_mcc_cutoff <- avg_mccs@x.values[[1]][which.max(avg_mccs@y.values[[1]])]
-max_mcc <- max(avg_mccs@y.values[[1]])
-print(max_mcc)
-avg_balance <- perf_thresh_avg(rocr_balance)
-approx_max_mcc_cutoff_i <- which.min(abs(avg_balance@alpha.values[[1]]-max_mcc_cutoff))
-max_mcc_tnr <- avg_balance@x.values[[1]][approx_max_mcc_cutoff_i]
-max_mcc_tpr <- avg_balance@y.values[[1]][approx_max_mcc_cutoff_i]
-
 file_base <- strsplit(basename(merged_pred_file), split="\\.")[[1]][1]
 img_file <- paste0(file_base, "-bart-sign")
 img_file <- paste0("img/", img_file, "-roc.pdf")
-pdf(img_file)
-plot(rocr_roc, spread.estimate="stderror", avg="vertical",
-     xlab="False 'activation' rate", ylab="Avg. true 'activation' rate",
-     main=paste("FPR=0.1 cutoff =", format(act.cutoff, digits=3)))
-abline(v=0.1, lty=2, col="blue")
-plot(rocr_roc2, spread.estimate="stderror", avg="vertical",
-     xlab="False 'inhibition' rate", ylab="Avg. true 'inhibition' rate",
-     main=paste("FPR=0.1 cutoff =", format(inhib.cutoff, digits=3)))
-abline(v=0.1, lty=2, col="blue")
-plot(rocr_mcc, spread.estimate="stderror", avg="vertical")
-abline(v=max_mcc_cutoff, col="blue", lty=2)
-points(max_mcc_cutoff, max_mcc, pch=19, col="blue")
-text(max_mcc_cutoff, max_mcc*1.05, pos=4, col="blue",
-     labels=paste("max MCC =", format(max_mcc, digits=3)))
-legend("bottomleft",
-       legend=c(paste0("max-MCC cutoff: ", format(max_mcc_cutoff, digits=2))),
-       lty=2, col=c("blue", "red"), pch=19)
-plot(rocr_balance, spread.estimate="stderror", avg="threshold", colorize=TRUE,
-     main=paste0("BART"), xlab="Average true inhibitory rate",
-     ylab="Average true activating rate")
-lines(c(max_mcc_tnr, max_mcc_tnr),
-      c(-0.03, max_mcc_tpr),
-      lty=2, col="blue")
-lines(c(-0.03, max_mcc_tnr),
-       c(max_mcc_tpr, max_mcc_tpr),
-       lty=2, col="blue")
-points(max_mcc_tnr, max_mcc_tpr, col="blue", pch=19)
-legend("bottomleft",
-       legend=c(paste0("max-MCC cutoff: ", format(max_mcc_cutoff, digits=2))),
-       lty=2, col=c("blue", "red"), pch=19)
-investigate_var_importance(bart)
+pdf(img_file, width=10.5)
+
+rocr_pred <- prediction(all_probs, all_labels)
+rocr_mcc <- build.cvperf1d.df(rocr_pred, "mat", c("BART sign prob."), n*k, TRUE)
+
+rocr2d.ggplot2(rocr_mcc, "cutoff", "MCC", n*k, NULL)
+
 dev.off()
 
 samp_size = min(nrow(subset(val_set_tbl, V3=="inhibits")),

@@ -3,6 +3,8 @@ options(java.parameters = "-Xmx32g")
 suppressPackageStartupMessages(library(bartMachine))
 set_bart_machine_num_cores(24)
 suppressPackageStartupMessages(library(ROCR))
+library(ggplot2)
+source("src/rocr-ggplot2.r")
 
 argv <- commandArgs(TRUE)
 if (length(argv) != 5){
@@ -119,6 +121,31 @@ for (n in 1:num_reps){
 }
 
 rocr_pred <- prediction(all_probs, all_labels)
+rocr_roc <- build.cvperf2d.df(rocr_pred, "fpr", "tpr", c("BART prob."),
+                              ncol(all_probs), TRUE)
+rocr_prec <- build.cvperf2d.df(rocr_pred, "rec", "prec", c("BART prob."),
+                              ncol(all_probs), TRUE)
+rocr_auc <- build.cvperf.sum.df(rocr_pred, "auc", c("BART prob."),
+                                ncol(all_probs), FALSE)
+
+file_base <- strsplit(basename(merged_pred_file), split="\\.")[[1]][1]
+img_file <- paste0(file_base, "-bart")
+if (use_rand_negs){
+    img_file <- paste(img_file, "rand-negs", sep="-")
+}
+if (directed){
+    img_file <- paste(img_file, "direct", sep="-")
+}
+img_file <- paste0("img/", img_file, "-roc.pdf")
+
+pdf(img_file, width=10.5, height=7)
+rocr2d.ggplot2(rocr_roc, "false positive rate", "true positive rate",
+               ncol(all_probs), c(0, 1))
+rocr2d.ggplot2(rocr_prec, "recall", "precision",
+               ncol(all_probs), c(0.5, 0))
+rocr.sum.ggplot2(rocr_auc, "AUROC", ncol(all_probs), c(0.5,  0))
+dev.off()
+
 rocr_roc <- performance(rocr_pred, measure="tpr", x.measure="fpr")
 rocr_prec <- performance(rocr_pred, measure="prec", x.measure="rec")
 rocr_auc <- performance(rocr_pred, "auc")
@@ -141,33 +168,3 @@ prec0.9s <- unlist(lapply(1:length(precs),
                         }))
 prec.cutoff <- mean(prec0.9s)
 message(paste("Prec 0.9 cutoff: ", prec.cutoff))
-
-file_base <- strsplit(basename(merged_pred_file), split="\\.")[[1]][1]
-img_file <- paste0(file_base, "-bart")
-if (use_rand_negs){
-    img_file <- paste(img_file, "rand-negs", sep="-")
-}
-if (directed){
-    img_file <- paste(img_file, "direct", sep="-")
-}
-img_file <- paste0("img/", img_file, "-roc.pdf")
-
-pdf(img_file)
-par(cex = 1.25, cex.main = 0.8)
-plot(rocr_roc, spread.estimate="stderror", avg="threshold",
-     main=paste0("BART\n(mean AUC=", format(mean_auc, digits=3),
-                 ", S.E.M=", format(se_auc, digits=2), ")"), colorize=TRUE,
-     lwd=2)
-## abline(v=0.1, lty=2, col="blue")
-## legend("bottomright", legend=paste0("FPR 0.1 -> ", format(fpr.cutoff, digits=3)),
-##        lty=2, col="blue")
-plot(rocr_prec, spread.estimate="stderror", avg="threshold",
-     main=paste0("BART"), ylim=c(0.0, 1.0), colorize=TRUE, lwd=2)
-## abline(h=0.9, lty=2, col="blue")
-## legend("bottomleft", legend=paste0("Prec 0.9 -> ", format(prec.cutoff, digits=3)),
-##        lty=2, col="blue")
-
-## plot(rocr_roc, 
-##      main=paste0("BART\n(mean AUC=", format(mean_auc, digits=2),
-##                  ", S.E.M=", format(se_auc, digits=2), ")"))
-dev.off()

@@ -2,7 +2,8 @@ options(java.parameters = "-Xmx16g")
 suppressPackageStartupMessages(library(bartMachine))
 set_bart_machine_num_cores(1)
 suppressPackageStartupMessages(library(ROCR))
-source("src/rocr-helpers.r")
+library(ggplot2)
+source("src/rocr-ggplot2.r")
 
 get_pos_in_domain <- function(pos, dom_start, dom_end){
     if (pos < dom_start || pos > dom_end)
@@ -263,56 +264,62 @@ for (j in 1:n){
     }
 }
 
+pdf("img/regsite-sign-bart-eval.pdf", width=10.5)
 rocr_pred <- prediction(all_probs, all_labels)
-rocr_roc <- performance(rocr_pred, measure="tpr", x.measure="fpr")
-rocr_prec <- performance(rocr_pred, measure="prec", x.measure="rec")
-rocr_auc <- performance(rocr_pred, "auc")
-rocr_mcc <- performance(rocr_pred, "mat")
-mean_auc <- mean(unlist(rocr_auc@y.values), na.rm=TRUE)
-se_auc <- sd(unlist(rocr_auc@y.values), na.rm=TRUE)/sqrt(k)
-fprs <- rocr_roc@x.values
-fpr0.05s <- unlist(lapply(fprs,
-                        function(f){
-                            fpr0.05 <-max(which(f<0.05))
-                            rocr_roc@alpha.values[[1]][fpr0.05]
-                        }))
-cutoff <- mean(fpr0.05s)
-
-rocr_balance <- performance(rocr_pred, measure="tpr", x.measure="tnr")
-
-avg_mccs <- perf_vert_avg(rocr_mcc)
-max_mcc_cutoff <- avg_mccs@x.values[[1]][which.max(avg_mccs@y.values[[1]])]
-max_mcc <- max(avg_mccs@y.values[[1]])
-avg_balance <- perf_thresh_avg(rocr_balance)
-approx_max_mcc_cutoff_i <- which.min(abs(avg_balance@alpha.values[[1]]-max_mcc_cutoff))
-max_mcc_tnr <- avg_balance@x.values[[1]][approx_max_mcc_cutoff_i]
-max_mcc_tpr <- avg_balance@y.values[[1]][approx_max_mcc_cutoff_i]
-
-message(paste("FPR 0.05 cutoff: ", cutoff))
-pdf("img/regsite-sign-bart-eval.pdf")
-plot(rocr_mcc, spread.estimate="stderror", avg="vertical")
-abline(v=max_mcc_cutoff, col="blue", lty=2)
-points(max_mcc_cutoff, max_mcc, pch=19, col="blue")
-text(max_mcc_cutoff, max_mcc*1.05, pos=4, col="blue",
-     labels=paste("max MCC =", format(max_mcc, digits=3)))
-legend("bottomleft",
-       legend=c(paste0("max-MCC cutoff: ", format(max_mcc_cutoff, digits=2))),
-       lty=2, col=c("blue", "red"), pch=19)
-plot(rocr_balance, spread.estimate="stderror", avg="threshold",
-     main=paste0("BART"), xlab="Average true inhibitory rate",
-     ylab="Average true activating rate")
-lines(c(max_mcc_tnr, max_mcc_tnr),
-      c(-0.03, max_mcc_tpr),
-      lty=2, col="blue")
-lines(c(-0.03, max_mcc_tnr),
-       c(max_mcc_tpr, max_mcc_tpr),
-       lty=2, col="blue")
-points(max_mcc_tnr, max_mcc_tpr, col="blue", pch=19)
-legend("bottomleft",
-       legend=c(paste0("max-MCC cutoff: ", format(max_mcc_cutoff, digits=2))),
-       lty=2, col=c("blue", "red"), pch=19)
-investigate_var_importance(bart)
+rocr_mcc <- build.cvperf1d.df(rocr_pred, "mat", c("BART sign prob."), n*k, TRUE)
+rocr2d.ggplot2(rocr_mcc, "cutoff", "MCC", n*k, NULL)
 dev.off()
+
+
+## rocr_roc <- performance(rocr_pred, measure="tpr", x.measure="fpr")
+## rocr_prec <- performance(rocr_pred, measure="prec", x.measure="rec")
+## rocr_auc <- performance(rocr_pred, "auc")
+## rocr_mcc <- performance(rocr_pred, "mat")
+## mean_auc <- mean(unlist(rocr_auc@y.values), na.rm=TRUE)
+## se_auc <- sd(unlist(rocr_auc@y.values), na.rm=TRUE)/sqrt(k)
+## fprs <- rocr_roc@x.values
+## fpr0.05s <- unlist(lapply(fprs,
+##                         function(f){
+##                             fpr0.05 <-max(which(f<0.05))
+##                             rocr_roc@alpha.values[[1]][fpr0.05]
+##                         }))
+## cutoff <- mean(fpr0.05s)
+
+## rocr_balance <- performance(rocr_pred, measure="tpr", x.measure="tnr")
+
+## avg_mccs <- perf_vert_avg(rocr_mcc)
+## max_mcc_cutoff <- avg_mccs@x.values[[1]][which.max(avg_mccs@y.values[[1]])]
+## max_mcc <- max(avg_mccs@y.values[[1]])
+## avg_balance <- perf_thresh_avg(rocr_balance)
+## approx_max_mcc_cutoff_i <- which.min(abs(avg_balance@alpha.values[[1]]-max_mcc_cutoff))
+## max_mcc_tnr <- avg_balance@x.values[[1]][approx_max_mcc_cutoff_i]
+## max_mcc_tpr <- avg_balance@y.values[[1]][approx_max_mcc_cutoff_i]
+
+## message(paste("FPR 0.05 cutoff: ", cutoff))
+## pdf("img/regsite-sign-bart-eval.pdf")
+## plot(rocr_mcc, spread.estimate="stderror", avg="vertical")
+## abline(v=max_mcc_cutoff, col="blue", lty=2)
+## points(max_mcc_cutoff, max_mcc, pch=19, col="blue")
+## text(max_mcc_cutoff, max_mcc*1.05, pos=4, col="blue",
+##      labels=paste("max MCC =", format(max_mcc, digits=3)))
+## legend("bottomleft",
+##        legend=c(paste0("max-MCC cutoff: ", format(max_mcc_cutoff, digits=2))),
+##        lty=2, col=c("blue", "red"), pch=19)
+## plot(rocr_balance, spread.estimate="stderror", avg="threshold",
+##      main=paste0("BART"), xlab="Average true inhibitory rate",
+##      ylab="Average true activating rate")
+## lines(c(max_mcc_tnr, max_mcc_tnr),
+##       c(-0.03, max_mcc_tpr),
+##       lty=2, col="blue")
+## lines(c(-0.03, max_mcc_tnr),
+##        c(max_mcc_tpr, max_mcc_tpr),
+##        lty=2, col="blue")
+## points(max_mcc_tnr, max_mcc_tpr, col="blue", pch=19)
+## legend("bottomleft",
+##        legend=c(paste0("max-MCC cutoff: ", format(max_mcc_cutoff, digits=2))),
+##        lty=2, col=c("blue", "red"), pch=19)
+## investigate_var_importance(bart)
+## dev.off()
 
 sink("/dev/null")
 bart <- bartMachineCV(sign_feats[final_feats], labels,
