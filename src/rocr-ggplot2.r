@@ -229,14 +229,27 @@ rocr1d.ggplot2 <- function(perf.data, y.name, n, abline){
 }
 
 rocr.sum.ggplot2 <- function(perf.data, y.name, n, abline){
-    p <- ggplot(data=perf.data, aes(feature, y, colour=feature, fill=feature)) +
-        ylim(0, 1) +
-        ylab(y.name) +
-        theme_bw(base_size=20) +
-        theme(axis.text.x = element_text(angle = 45, hjust = 1),
-              legend.position="none")
+    if (length(levels(perf.data$feature)) > 1){
+        p <- ggplot(data=perf.data, aes(feature, y, colour=feature, fill=feature)) +
+            ylim(0, 1) +
+            ylab(y.name) +
+            theme_bw(base_size=20) +
+            theme(axis.text.x = element_text(angle = 45, hjust = 1),
+                  legend.position="none")
+    }else{
+        p <- ggplot(data=perf.data, aes(y, colour=feature, fill=feature)) +
+            xlim(0, 1) +
+            xlab(y.name) +
+            theme_bw(base_size=20) +
+            theme(axis.text.x = element_text(angle = 45, hjust = 1),
+                  legend.position="none")
+    }
     if (n > 1){
-        p <- p + geom_violin(size=1.5, alpha=0.1)
+        if (length(levels(perf.data$feature)) > 1){
+            p <- p + geom_violin(size=1.5, alpha=0.1)
+        }else{
+            p <- p + geom_density(size=1.5, alpha=0.1)
+        }
     }else{
         p <- p + geom_point(size=3)
     }
