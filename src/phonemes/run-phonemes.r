@@ -1,4 +1,3 @@
-
 targets <- as.data.frame(read.csv("Data_AND_Background_Network/targets.csv"))
 targets  <- unique(as.character(targets$condition))
 #add sensible pairs
