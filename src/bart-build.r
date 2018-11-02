@@ -1,5 +1,5 @@
 suppressPackageStartupMessages(library(data.table))
-options(java.parameters = "-Xmx48g")
+options(java.parameters = "-Xmx256g")
 suppressPackageStartupMessages(library(bartMachine))
 set_bart_machine_num_cores(24)
 suppressPackageStartupMessages(library(ROCR))
@@ -62,7 +62,8 @@ if (use_rand_negs){
 possible_false_intxns <- setdiff(possible_false_intxns, true_intxns)
 possible_false_intxns <- intersect(possible_false_intxns, rownames(merged_pred))
 
-num_negs <- min(length(possible_false_intxns), length(true_intxns))
+num_negs <- min(length(possible_false_intxns),
+                8*length(true_intxns))
 
 file_base <- strsplit(merged_pred_file, split="\\.")[[1]][1]
 
@@ -71,7 +72,11 @@ if (!dir.exists(file_base)){
 }
 
 false_intxns <- sample(possible_false_intxns, num_negs)
-true_intxns <- sample(true_intxns, num_negs)
+if (num_negs <= length(true_intxns)){
+    true_intxns <- sample(true_intxns, num_negs)
+}else{
+    true_intxns <- sample(true_intxns)
+}
 
 ## Put together the tables of predictions and TRUE/FALSE labels
 intxns <- c(true_intxns, false_intxns)

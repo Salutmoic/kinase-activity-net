@@ -1,5 +1,5 @@
 suppressPackageStartupMessages(library(data.table))
-options(java.parameters = "-Xmx32g")
+options(java.parameters = "-Xmx512g")
 suppressPackageStartupMessages(library(bartMachine))
 set_bart_machine_num_cores(24)
 suppressPackageStartupMessages(library(ROCR))
@@ -55,8 +55,10 @@ if (use_rand_negs){
 }
 possible_false_intxns <- setdiff(possible_false_intxns, possible_true_intxns)
 
-sample_size <- round(0.8 * min(length(possible_false_intxns),
-                               length(possible_true_intxns)))
+## sample_size <- round(0.8 * min(length(possible_false_intxns),
+##                                length(possible_true_intxns)))
+num_negs <- min(length(possible_false_intxns),
+                8*length(possible_true_intxns))
 
 num_reps <- 20
 k <- 3
@@ -65,8 +67,14 @@ all_labels <- NULL
 
 for (n in 1:num_reps){
     message(paste("Rep.", n))
-    false_intxns <- sample(possible_false_intxns, size=sample_size)
-    true_intxns <- sample(possible_true_intxns, size=sample_size)
+    ## false_intxns <- sample(possible_false_intxns, size=sample_size)
+    ## true_intxns <- sample(possible_true_intxns, size=sample_size)
+    false_intxns <- sample(possible_false_intxns, num_negs)
+    if (num_negs <= length(possible_true_intxns)){
+        true_intxns <- sample(possible_true_intxns, num_negs)
+    }else{
+        true_intxns <- sample(possible_true_intxns)
+    }
     ## Put together the tables of predictions and TRUE/FALSE labels
     intxns <- c(true_intxns, false_intxns)
     preds <- merged_pred[intxns, 3:ncol(merged_pred)]
@@ -136,14 +144,35 @@ if (use_rand_negs){
 if (directed){
     img_file <- paste(img_file, "direct", sep="-")
 }
+rds_basename <- paste0("img/rds/", img_file)
 img_file <- paste0("img/", img_file, "-roc.pdf")
 
-pdf(img_file, width=10.5, height=7)
-rocr2d.ggplot2(rocr_roc, "false positive rate", "true positive rate",
-               ncol(all_probs), c(0, 1))
-rocr2d.ggplot2(rocr_prec, "recall", "precision",
-               ncol(all_probs), c(0.5, 0))
-rocr.sum.ggplot2(rocr_auc, "AUROC", ncol(all_probs), c(0.5,  0))
+mean_auc <- mean(rocr_auc$y, na.rm=TRUE)
+roc_plot <- rocr2d.ggplot2(rocr_roc, "false positive rate", "true positive rate",
+                           ncol(all_probs), c(0, 1))##  +
+    ## geom_text(x=1.0, y=0.1, hjust=1.0,
+##           label=paste("Mean AUC =", format(mean_auc, digits=2)))
+print(paste("Mean AUC =", format(mean_auc, digits=2)))
+if (num_negs <= length(possible_true_intxns)){
+    line_intcpt <- 0.5
+}else{
+    num_true <- length(possible_true_intxns)
+    line_intcpt <- num_true / (num_true + num_negs)
+}
+prec_plot <- rocr2d.ggplot2(rocr_prec, "recall", "precision",
+                            ncol(all_probs), c(line_intcpt, 0))
+auc_plot <- rocr.sum.ggplot2(rocr_auc, "AUROC", ncol(all_probs), c(0.5,  0)) +
+    geom_text(x=0.1, y=1, label=paste("Mean AUROC =", format(mean_auc, digits=2)))
+saveRDS(roc_plot, file=paste0(rds_basename, "-cv-roc.rds"))
+saveRDS(rocr_roc, file=paste0(rds_basename, "-cv-roc-data.rds"))
+saveRDS(prec_plot, file=paste0(rds_basename, "-cv-prec.rds"))
+saveRDS(rocr_prec, file=paste0(rds_basename, "-cv-prec-data.rds"))
+saveRDS(auc_plot, file=paste0(rds_basename, "-cv-auc.rds"))
+saveRDS(rocr_auc, file=paste0(rds_basename, "-cv-auc-data.rds"))
+pdf(img_file)
+print(roc_plot)
+print(prec_plot)
+print(auc_plot)
 dev.off()
 
 rocr_roc <- performance(rocr_pred, measure="tpr", x.measure="fpr")
