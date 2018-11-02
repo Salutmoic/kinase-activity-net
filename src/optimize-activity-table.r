@@ -8,7 +8,7 @@ filter.act.preds <- function(kin.act, phospho.anno, phospho.vals, kin.sub.tbl,
         kin.subs <- subset(kin.sub.tbl, GENE==kinase)
         kin.subs.ensp <- merge(phospho.anno, kin.subs,
                                by.x=c("gene_name", "positions"),
-                               by.y=c("SUB_GENE", "SUB_MOD_RSD"))
+                               by.y=c("SUB_GENE", "position"))
         ensp.sites <- paste(kin.subs.ensp$ensp, kin.subs.ensp$positions, "P",
                             sep="_")
         ensp.sites <- intersect(rownames(phospho.vals), ensp.sites)
@@ -23,6 +23,7 @@ filter.act.preds <- function(kin.act, phospho.anno, phospho.vals, kin.sub.tbl,
                                 function(cond) length(which(!is.na(cond))))
         bad.conds <- setdiff(colnames(phospho.vals)[which(sites.detected<min.sites)],
                              colnames(kin.act)[which(is.na(kin.act[kinase,]))])
+        bad.conds <- intersect(bad.conds, colnames(kin.act))
         kin.act[kinase, bad.conds] <- NA
         ## if (length(bad.conds) > 0){
         ##     message(paste(length(bad.conds), "conditions omitted for", kinase,

@@ -15,14 +15,13 @@ entropy.bins <- 10
 
 ## Load data
 load("data/external/esetNR.Rdata")
-load("data/log.wKSEA.kinase_condition.clean.Rdata")
+load("data/ks-kinact.Rdata")
 kin.act <- log.wKSEA.kinase_condition.clean
 cond.anno <- pData(esetNR)
 phospho.anno <- fData(esetNR)
 phospho.vals <- exprs(esetNR)
 kin.sub.tbl <- read.delim("data/psiteplus-kinase-substrates.tsv", as.is=TRUE,
                           sep="\t")
-kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
 kin.overlap <- read.delim("data/psiteplus-kinase-substrate-overlap.tsv",
                           as.is=TRUE)
 
@@ -47,7 +46,7 @@ kin.overlap.sub <- kin.overlap
 good.kins <- unique(c(kin.overlap.sub$kinase1, kin.overlap.sub$kinase2))
 
 ## Remove redundant kinases
-redundant.kins <- get.redundant.kins(kin.overlap.sub)
+redundant.kins <- get.redundant.kins(kin.overlap.sub, kin.act)
 
 kin.act <- kin.act[setdiff(good.kins, redundant.kins),]
 
