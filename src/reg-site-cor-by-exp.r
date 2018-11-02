@@ -74,6 +74,7 @@ rownames(phospho.vals) <- paste(phospho.vals.gene, phospho.vals.pos, sep="_")
 good.sites <- which(rownames(phospho.vals) %in% rownames(psites))
 phospho.vals <- phospho.vals[good.sites,]
 phospho.vals.gene <- phospho.vals.gene[good.sites]
+phospho.vals.pos <- phospho.vals.pos[good.sites]
 
 phospho.vals.norm <- normalize.quantiles(phospho.vals)
 rownames(phospho.vals.norm) <- rownames(phospho.vals)
@@ -83,6 +84,10 @@ phospho.vals <- phospho.vals.norm
 phosfun <- read.table("data/phosfun.tsv", as.is=TRUE)
 names(phosfun) <- c("prot", "pos", "score")
 rownames(phosfun) <- paste(phosfun$prot, phosfun$pos, sep="_")
+
+site.signs <- read.delim("out/reg-site-bart-sign-preds-rescaled.tsv", as.is=TRUE)
+names(site.signs) <- c("prot", "pos", "score")
+rownames(site.signs) <- paste(site.signs$prot, site.signs$pos, sep="_")
 
 kinase.conditions <- read.delim("data/external/kinase-condition-pairs.tsv",
                                 as.is=TRUE)
@@ -143,6 +148,7 @@ for (i in 1:nrow(kin.pairs)){
     pair.p.vals <- c()
     pair.cors <- c()
     pair.weights <- c()
+    pair.signs <- c()
     ## best.p.value <- -Inf
     for (kin1.site in kin1.sites){
         for (kin2.site in kin2.sites){
@@ -171,16 +177,30 @@ for (i in 1:nrow(kin.pairs)){
             kin2.phosfun.i <- rownames(phospho.vals)[kin2.site]
             kin1.phosfun <- phosfun[kin1.phosfun.i, "score"]
             kin2.phosfun <- phosfun[kin2.phosfun.i, "score"]
+            kin1.sign <- site.signs[kin1.phosfun.i, "score"]
+            kin2.sign <- site.signs[kin2.phosfun.i, "score"]
             ct <- cor.test(kin1.phospho, kin2.phospho, method="spearman",
                            use="pairwise.complete.obs")
-            p.value <- -log10(ct$p.value)
-            ## z-transformation of Spearman's rho
-            cor.est <- sqrt((length(shared.conds)-3)/1.06)*atanh(ct$estimate)
-            if (!is.infinite(p.value)){ ## && p.value > best.p.value){
-                pair.p.vals <- c(pair.p.vals, p.value)
-                pair.cors <- c(pair.cors, cor.est)
-                pair.weights <- c(pair.weights, kin1.phosfun*kin2.phosfun)
+            if (ct$p.value==0){
+                p.value <- 6
+            }else{
+                p.value <- -log10(ct$p.value)
             }
+            ## z-transformation of Spearman's rho
+            if (ct$estimate == 1){
+                estimate <- 1 - 1e-6
+            }else if (ct$estimate == -1){
+                estimate <- -1 + 1e-6
+            }else{
+                estimate <- ct$estimate
+            }
+            cor.est <- sqrt((length(shared.conds)-3)/1.06)*atanh(estimate)
+            if (sign(cor.est) != sign(kin1.sign))
+                cor.est <- NA
+            pair.p.vals <- c(pair.p.vals, p.value)
+            pair.cors <- c(pair.cors, cor.est)
+            pair.weights <- c(pair.weights, kin1.phosfun*kin2.phosfun)
+            pair.signs <- c(pair.signs, sign(kin1.sign)*sign(kin2.sign))
         }
     }
     if (length(pair.p.vals) == 0){
@@ -189,8 +209,16 @@ for (i in 1:nrow(kin.pairs)){
         mean.cor <- NA
     }else{
         p.val <- max(pair.p.vals*pair.weights, na.rm=TRUE)
-        j <- which.max(pair.p.vals*pair.weights)
-        cor.est <- pair.cors[j]*pair.weights[j]
+        cor.ests <- pair.cors * pair.weights * pair.signs
+        min.cor.est <- min(cor.ests, na.rm=TRUE)
+        max.cor.est <- max(cor.ests, na.rm=TRUE)
+        if (abs(min.cor.est) > max.cor.est){
+            cor.est <- min.cor.est
+        }else{
+            cor.est <- max.cor.est
+        }
+        ## j <- which.max(pair.p.vals*pair.weights)
+        ## cor.est <- pair.cors[j]*pair.weights[j]*pair.signs[j]
         mean.cor <- weighted.mean(pair.cors, w=pair.weights, na.rm=TRUE)
     }
     if (is.null(p.val)){
