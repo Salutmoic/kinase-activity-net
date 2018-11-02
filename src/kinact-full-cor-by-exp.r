@@ -48,7 +48,7 @@ load(kinact.file)
 kin.act <- log.wKSEA.kinase_condition.clean
 kin.sub.tbl <- read.delim("data/psiteplus-kinase-substrates.tsv", as.is=TRUE,
                           sep="\t")
-kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
+## kin.sub.tbl$SUB_MOD_RSD <- sub("[STY]", "", kin.sub.tbl$SUB_MOD_RSD)
 kin.overlap <- read.delim("data/psiteplus-kinase-substrate-overlap.tsv",
                           as.is=TRUE)
 
