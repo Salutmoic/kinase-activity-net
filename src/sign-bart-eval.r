@@ -1,6 +1,6 @@
-options(java.parameters = "-Xmx16g")
+options(java.parameters = "-Xmx32g")
 suppressPackageStartupMessages(library(bartMachine))
-set_bart_machine_num_cores(1)
+set_bart_machine_num_cores(10)
 suppressPackageStartupMessages(library(ROCR))
 library(reshape2)
 source("src/rocr-helpers.r")
@@ -192,13 +192,19 @@ for (j in 1:n){
 
 file_base <- strsplit(basename(merged_pred_file), split="\\.")[[1]][1]
 img_file <- paste0(file_base, "-bart-sign")
-img_file <- paste0("img/", img_file, "-roc.pdf")
+img_file <- paste0("img/", img_file, "-cv.pdf")
 pdf(img_file, width=10.5)
 
 rocr_pred <- prediction(all_probs, all_labels)
 rocr_mcc <- build.cvperf1d.df(rocr_pred, "mat", c("BART sign prob."), n*k, TRUE)
 
-rocr2d.ggplot2(rocr_mcc, "cutoff", "MCC", n*k, NULL)
+mcc_plot <- rocr2d.ggplot2(rocr_mcc, "cutoff", "Matthews Correlation Coefficient", n*k, NULL)
+saveRDS(mcc_plot, file="img/rds/sign-bart-pred-mcc.rds")
+write.table(rocr_mcc, "img/rds/sign-bart-pred-mcc-data.tsv", quote=FALSE, sep="\t",
+            row.names=FALSE, col.names=TRUE)
+print(mcc_plot)
+
+investigate_var_importance(bart)
 
 dev.off()
 
@@ -214,7 +220,7 @@ for (i in 1:n){
                       sample(rownames(subset(val_set_tbl, V3=="activates")),
                              samp_size))
     random_pairs <- sample(random_pairs)
-    preds <- merged_pred[random_pairs, init_feats]
+    preds <- merged_pred[random_pairs, final_feats]
     labels <- val_set_tbl[random_pairs, 3]
     bart <- bartMachineCV(preds, labels,
                           use_missing_data=TRUE,
@@ -239,7 +245,7 @@ prob_sd <- apply(prob_tbl, 1, sd, na.rm=TRUE)
 
 out_tbl <- data.frame(prot1=merged_pred$prot1,
                       prot2=merged_pred$prot2,
-                      prob.act.mean=prob_means
+                      prob.act.mean=prob_means,
                       prob.act.sd=prob_sd)
 out_tbl <- out_tbl[order(out_tbl$prot1, out_tbl$prot2),]
 
