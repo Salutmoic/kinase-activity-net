@@ -65,11 +65,12 @@ def read_reg_sites_file(reg_sites_file):
     with open(reg_sites_file) as h:
         header = h.readline().split("\t")
         geneind = header.index("GENE")
-        posind = header.index("MOD_RSD")
+        posind = header.index("position")
+        resind = header.index("residue")
         for line in h:
             line_spl = line.strip().split("\t")
             protein = line_spl[0]
-            pos = line_spl[posind].replace("-p", "")[1:]
+            pos = line_spl[posind]
             if protein not in reg_sites:
                 reg_sites[protein] = [pos]
             else:
@@ -92,7 +93,48 @@ def read_pfam_file(pfam_file, kinases):
     return kin_types
 
 
-def score_kin_pairs(ktable, kinases, aa_freqs, psites):
+def read_kinase_families(kin_fam_file):
+    kinase_fams = dict()
+    family_kins = dict()
+    with open(kin_fam_file) as h:
+        for line in h:
+            kinase, family = line.strip().split()
+            kinase_fams[kinase] = family
+            if family not in family_kins:
+                family_kins[family] = set([kinase])
+            else:
+                family_kins[family].add(kinase)
+    return (kinase_fams, family_kins)
+
+
+def read_sdr_assignments(sdr_assign_file):
+    sdr_assigns = dict()
+    with open(sdr_assign_file) as h:
+        h.readline()
+        for line in h:
+            kinase, assign, score = line.strip().split()
+            if float(score) > 0.8:
+                sdr_assigns[kinase] = assign
+            else:
+                sdr_assigns[kinase] = None
+    return sdr_assigns
+
+
+def assign_pssms_by_sdr(kinases, kinase_pssms, sdr_assigns):
+    for kinase in kinases:
+        if kinase in kinase_pssms:
+            continue
+        if kinase not in sdr_assigns:
+            continue
+        if sdr_assigns[kinase] is None:
+            continue
+        assign = sdr_assigns[kinase]
+        assign_pssm = kinase_pssms[assign][0]
+        kinase_pssms[kinase] = (assign_pssm, False)
+    return kinase_pssms
+
+
+def score_kin_pairs(kinases, kinase_pssms, psites, kinase_fams):
     # loads a netwoek of kinase-> kinase interactions and scores them
     # with the pssm it returns a dictionary with kinasa A and kinase B
     # and list of scores for each phosphosite found on B
@@ -101,52 +143,14 @@ def score_kin_pairs(ktable, kinases, aa_freqs, psites):
     # activity table
     pairs = itertools.product(kinases, repeat=2)
     scores = {}
-    full_pssms = {}
     for kin_a, kin_b in pairs:
-        if (kin_a == kin_b
-                or kin_a not in ktable
-                or len(ktable[kin_a]) < 10
-                or kin_b not in psites):
-            # if kin_a not in ktable:
-            #     print("Skipping because no substrates for {0}".format(kin_a))
-            # if kin_b not in psites:
-            #     print("Skipping because no sites for {0}".format(kin_b))
+        if kin_a == kin_b or kin_b not in psites:
             scores[(kin_a, kin_b)] = []
             continue
-
-        # # Don't use any of the substrate sequences in calculating the
-        # # PSSM to avoid circularity
-        kin_motif_seqs = []
-        for substrate, pos, res, seq in ktable[kin_a]:
-            if substrate == kin_b:
-                continue
-            if substrate not in psites:
-                continue
-            for pos_b, seq_b, res_b in psites[substrate]:
-                if pos == pos_b:
-                    kin_motif_seqs.append(seq_b)
-                    break
-        # kin_motif_seqs = [seq for substrate, pos, res, seq in ktable[kin_a]
-        #                   if substrate != kin_b and
-        #                   substrate in psites and
-        #                   (pos, seq, res) in psites[substrate]]
-        # If kin_b isn't a known substrate, check if we've already
-        # calculated the full PSSM for kin_a and, if so, take it
-        # rather than wasting time recalculating it.
-        if len(kin_motif_seqs) == len(ktable[kin_a]) and kin_a in full_pssms:
-            pssm = full_pssms[kin_a]
-        else:
-            # It's either the first time calculating a PSSM for kin_a
-            # or we need to recalculate it for a subset of its known
-            # substrates.
-            pssm = pssms.calc_pssm(kin_motif_seqs, aa_freqs)
-            if pssm is None:
-                # print("Skipping because no PSSM calculated for {0} - {1} motifs".format(kin_a, len(kin_motif_seqs)))
-                scores[(kin_a, kin_b)] = []
-                continue
-            if len(kin_motif_seqs) == len(ktable[kin_a]):
-                full_pssms[kin_a] = pssm
-
+        if kin_a not in kinase_pssms:
+            scores[(kin_a, kin_b)] = []
+            continue
+        pssm, _ = kinase_pssms[kin_a]
         # Take only tyrosine or serine/threonine motif sequences from
         # kin_b, depending on the specificity of kin_a.
         kin_a_is_tyr_kin = pssms.is_tyr_kinase(pssm)
@@ -156,7 +160,6 @@ def score_kin_pairs(ktable, kinases, aa_freqs, psites):
         if not sub_motif_seqs:
             scores[(kin_a, kin_b)] = []
             continue
-
         for pos, motif_seq, res in sub_motif_seqs:
             score = pssms.score_motif_seq(motif_seq, pssm)
             if (kin_a, kin_b) in scores:
@@ -242,13 +245,24 @@ def score_network(kinase_file, out_file):
     phosfun_y, med_phosfun_y = read_phosfun_file("data/phosfun-Y.tsv")
     reg_sites = read_reg_sites_file("data/psiteplus-reg-sites.tsv")
     kin_types = read_pfam_file("data/human-pfam.tsv", kinases)
-    scores = score_kin_pairs(ktable, kinases, aa_freqs, psites)
+    kinase_fams, family_kins = read_kinase_families("data/kinase-families.tsv")
+    sdr_assigns = read_sdr_assignments("data/sdr-pssm-assignments.tsv")
+    family_pssms = pssms.build_family_pssms(family_kins, ktable, aa_freqs)
+    kinase_pssms = pssms.build_pssms(kinases, kinase_fams, family_pssms, ktable,
+                                     aa_freqs)
+    kinase_pssms = assign_pssms_by_sdr(kinases, kinase_pssms, sdr_assigns)
+    scores = score_kin_pairs(kinases, kinase_pssms, psites, family_pssms)
     norm_scores = normalize_scores(scores)
     # scores = norm_scores
+    kinases_sorted = list(kinases)
+    kinases_sorted.sort()
+    pairs = itertools.product(kinases_sorted, repeat=2)
     with open(out_file, "w") as v:
         v.write("\t".join(["node1", "node2", "kinase.type", "sub.kinase.type",
                            "max.pssm.score", "dcg", "max.func.score"])+"\n")
-        for pair in scores:
+        for pair in pairs:
+            if pair[0] == pair[1]:
+                continue
             if pair[0] not in kin_types:
                 if pair[0] == "MTOR":
                     kin_type = "ST"
@@ -267,6 +281,7 @@ def score_network(kinase_file, out_file):
                 v.write("\t".join([pair[0], pair[1], kin_type, sub_type,
                                    "NA", "NA", "NA"])+"\n")
                 continue
+            own_pssm = str(kinase_pssms[pair[0]][1]).upper()
             residues = set([res for pos, res, score in scores[pair]])
             max_score = max([score for pos, res, score in scores[pair]])
             if residues == set(['Y']):

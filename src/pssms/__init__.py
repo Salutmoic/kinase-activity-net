@@ -194,11 +194,11 @@ def calc_num_pseudocounts(motif_seqs, m):
     return num_pc
 
 
-def calc_pssm(motif_seqs, proteome_aa_freqs):
+def calc_pssm(motif_seqs, proteome_aa_freqs, min_seqs):
     # returns a pssm matrix made from a list of known substrate
     # sequences for a kinase
 
-    if len(motif_seqs) < 10:
+    if len(motif_seqs) < min_seqs:
         return None
     seq_lens = set([len(s) for s in motif_seqs])
     if len(seq_lens) > 1:
@@ -238,6 +238,47 @@ def calc_pssm(motif_seqs, proteome_aa_freqs):
                 log(motif_aa_freqs[AMINO_ACIDS[aa], i]/proteome_aa_freqs[aa])
                 / log(2.0))
     return pssm
+
+
+def build_pssms(kinases, kinase_fams, family_pssms, ktable, aa_freqs):
+    kinase_pssms = dict()
+    for kinase in kinases:
+        if kinase not in ktable or len(ktable[kinase]) < 10:
+            if kinase not in kinase_fams:
+                continue
+            fam = kinase_fams[kinase]
+            if fam not in family_pssms:
+                continue
+            kinase_pssms[kinase] = (family_pssms[fam], "family")
+            continue
+        motif_seqs = []
+        for substrate, pos, res, seq in ktable[kinase]:
+            motif_seqs.append(seq)
+        if not motif_seqs:
+            continue
+        pssm = calc_pssm(motif_seqs, aa_freqs, 10)
+        if pssm is None:
+            continue
+        kinase_pssms[kinase] = (pssm, "own")
+    return kinase_pssms
+
+
+def build_family_pssms(family_kins, ktable, aa_freqs):
+    family_pssms = dict()
+    for family, kinases in family_kins.items():
+        motif_seqs = []
+        for kinase in kinases:
+            if kinase not in ktable:
+                continue
+            for substrate, pos, res, seq in ktable[kinase]:
+                motif_seqs.append(seq)
+        if not motif_seqs:
+            continue
+        pssm = calc_pssm(motif_seqs, aa_freqs, 10)
+        if pssm is None:
+            continue
+        family_pssms[family] = pssm
+    return family_pssms
 
 
 def is_tyr_kinase(pssm):
