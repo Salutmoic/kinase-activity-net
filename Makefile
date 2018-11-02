@@ -112,6 +112,9 @@ CELLLINE_RNASEQ_DATA_RAW = $(EXT_DATADIR)/CCLE_RNA-seq_tpm_matrix.csv
 TUMOR_EXPR_DATA_RAW = $(EXT_DATADIR)/GSM1536837_06_01_15_TCGA_24.tumor_Rsubread_TPM.txt
 # Pfam predictions
 PFAM_DATA_RAW = $(EXT_DATADIR)/Pfam-9606.31.0.tsv
+# KinHub kinase families
+KINHUB_DATA_RAW = $(EXT_DATADIR)/kinhub-families.tsv
+KINBASE_SEQS = $(EXT_DATADIR)/kinbase-sequences.fasta
 
 ######################
 ## Generated data sets
@@ -219,6 +222,9 @@ SIGN_GUESS = $(OUTDIR)/kinase-reg-sign-guess.tsv
 SIGNED_PSSM = $(OUTDIR)/kinase-pssm-signed.tsv
 REGSITE_SIGN_PREDS = $(OUTDIR)/reg-site-bart-sign-preds.tsv
 MERGED_SIGN_PRED = $(OUTDIR)/sign-merged-pred.tsv
+# Kinase families
+KINBASE_ID_MAP = $(DATADIR)/kinbase-id-map.tsv
+KINASE_FAMILIES = $(DATADIR)/kinase-families.tsv
 
 #########
 ## Images
@@ -319,6 +325,7 @@ SIGNED_PSSM_SCRIPT = $(SRCDIR)/pssm-signed.py
 PHOSFUN_FEATS_SCRIPT = $(SRCDIR)/compile-phosfun-features.r
 TRANSFORM_PHOSFUN_SCRIPT = $(SRCDIR)/transform-phosfun.r
 PRIDE_PSITES_SCRIPT = $(SRCDIR)/get-pride-phosphosites.py
+KINBASE_ID_MAP_SCRIPT = $(SRCDIR)/gen-kinbase-id-map.py
 
 # Don't delete intermediate files
 .SECONDARY:
@@ -757,6 +764,16 @@ $(CELLLINE_RNASEQ_DATA): $(CELLLINE_RNASEQ_DATA_RAW) $(HUMAN_KINOME) $(MELT_SCRI
 	rm $@.tmp3
 	sort -k1,1 -k2,2 $@.tmp4 >$@
 	rm $@.tmp4
+
+$(KINBASE_ID_MAP): $(FULL_UNIPROT_ID_MAPPING) $(KINHUB_DATA_RAW) $(KINBASE_SEQS) \
+		$(KINBASE_ID_MAP_SCRIPT)
+	$(PYTHON) $(KINBASE_ID_MAP_SCRIPT) | sort -k1,1d >$@
+
+$(KINASE_FAMILIES): $(KINBASE_SEQS) $(KINBASE_ID_MAP)
+	sed -n '/^>/{s/.*class=.*:\(.*\):.* gene=\(.*\) species.*/\2\t\1/g;p}' $(KINBASE_SEQS) \
+		| sort -k1,1d >$@.tmp
+	join -t'	' $(KINBASE_ID_MAP) $@.tmp | cut -f2,3 | sort -k1,1d >$@
+	rm $@.tmp
 
 ###########################
 ## Association score tables
