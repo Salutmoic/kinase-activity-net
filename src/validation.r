@@ -4,6 +4,7 @@ library(ggplot2)
 library(reshape2)
 library(dplyr)
 source("src/rocr-ggplot2.r")
+library(cowplot)
 
 argv <- commandArgs(TRUE)
 if (!(length(argv) %in% c(5, 6))){
@@ -86,11 +87,19 @@ for (i in pred_cols){
         n <- 1
     }
     possible_false_intxns <- setdiff(possible_false_intxns, possible_true_intxns)
-    sample_size <- round(0.8 * min(length(possible_false_intxns),
-                                   length(possible_true_intxns)))
+    ## sample_size <- round(0.8 * min(length(possible_false_intxns),
+    ##                                length(possible_true_intxns)))
+    num_negs <- min(length(possible_false_intxns),
+                    8*(2/3)*length(possible_true_intxns))
     for (j in 1:n){
-        false_intxns <- sample(possible_false_intxns, size=sample_size)
-        true_intxns <- sample(possible_true_intxns, size=sample_size)
+        ## false_intxns <- sample(possible_false_intxns, size=sample_size)
+        ## true_intxns <- sample(possible_true_intxns, size=sample_size)
+        false_intxns <- sample(possible_false_intxns, num_negs)
+        if (num_negs <= length(possible_true_intxns)){
+            true_intxns <- sample(possible_true_intxns, num_negs)
+        }else{
+            true_intxns <- sample(possible_true_intxns, (2/3)*length(possible_true_intxns))
+        }
         ## Put together the tables of predictions and TRUE/FALSE labels
         intxns <- c(true_intxns, false_intxns)
         pred_vals <- pred_score[intxns, 3]
@@ -120,8 +129,7 @@ if (directed){
     data_basename <- paste(data_basename, "direct", sep="-")
 }
 out_img <- paste0("img/", data_basename, ".pdf")
-
-pdf(out_img, title=data_basename, width=10.5, height=7)
+rds_basename <- paste0("img/rds/", data_basename)
 
 pred_score_melt <- melt(pred_score_full[,c(1, 2, pred_cols)])[c("prot1", "prot2", "variable", "value")]
 names(pred_score_melt)[3] <- "feature"
@@ -139,6 +147,8 @@ feature_names <- list(cor.p.293="CPTAC phospho.",
                       celline.sel1="Regulator cell-line spec.",
                       celline.sel2="Substrate cell-line spec.",
                       bart.pred.mean="Mean BART prob. - full",
+                      bart.pred.mean.pure="Mean BART prob. - full, pure",
+                      bart.pred.mean.hinegs="Mean BART prob. - full, hinegs",
                       assoc.pred.mean="Mean BART prob. - assoc.",
                       direct.pred.mean="Mean BART prob. - direct.")
 
@@ -146,11 +156,22 @@ pred_score_melt$feature <- factor(pred_score_melt$feature,
                                   levels=levels(pred_score_melt$feature),
                                   labels=feature_names[levels(pred_score_melt$feature)])
 
+if (length(unique(levels(pred_score_melt$feature)))==1){
+    fig_width=7
+}else{
+    fig_width=10.5
+}
+
+pdf(out_img, title=data_basename, width=fig_width, height=7)
+
 ## Density plot of prediction scores
-ggplot(pred_score_melt, aes(value, colour=feature, fill=feature)) +
-    geom_density(size=1.5, alpha=0.1) +
-    xlim(0, 1) +
-    theme_bw(base_size=20)
+dens_plot <- ggplot(pred_score_melt, aes(value, colour=feature, fill=feature)) +
+    geom_density(alpha=0.1) +
+    xlim(0, 1)
+if (length(unique(levels(pred_score_melt$feature)))==1)
+    dens_plot <- dens_plot + guides(colour=FALSE, fill=FALSE)
+saveRDS(dens_plot, file=paste0(rds_basename, "-dens.rds"))
+print(dens_plot)
 
 ## ROC curve w/ AUC info
 rocs <- build.perf2d.df(preds, "fpr", "tpr",
@@ -159,7 +180,9 @@ rocs <- build.perf2d.df(preds, "fpr", "tpr",
 rocs$feature <- factor(rocs$feature,
                        levels=levels(rocs$feature),
                        labels=feature_names[levels(rocs$feature)])
-rocr2d.ggplot2(rocs, "false postive rate", "true positive rate", n, c(0, 1))
+roc_plot <- rocr2d.ggplot2(rocs, "false postive rate", "true positive rate", n, c(0, 1))
+saveRDS(roc_plot, file=paste0(rds_basename, "-roc.rds"))
+print(roc_plot)
 
 aucs <- build.perf1d.df(preds, "auc",
                         colnames(pred_score_full)[3:ncol(pred_score_full)],
@@ -167,20 +190,25 @@ aucs <- build.perf1d.df(preds, "auc",
 aucs$feature <- factor(aucs$feature,
                        levels=levels(aucs$feature),
                        labels=feature_names[levels(aucs$feature)])
-rocr.sum.ggplot2(aucs, "AUC", n, c(0.5, 0))
+auc_plot <- rocr.sum.ggplot2(aucs, "AUC", n, c(0.5, 0))
+saveRDS(auc_plot, file=paste0(rds_basename, "-auc.rds"))
+print(auc_plot)
 
 ## Precision-Recall curve
 prs <- build.perf2d.df(preds, "rec", "prec",
                       colnames(pred_score_full)[3:ncol(pred_score_full)],
                       n, TRUE)
+
 prs$feature <- factor(prs$feature,
                       levels=levels(prs$feature),
                       labels=feature_names[levels(prs$feature)])
 
-rocr2d.ggplot2(prs, "recall", "precision", n, c(0.5, 0))
+prec_plot <- rocr2d.ggplot2(prs, "recall", "precision", n, c(1/9, 0))
+saveRDS(prec_plot, file=paste0(rds_basename, "-prec.rds"))
+print(prec_plot)
 
 ## All-vs-all precision-recall
-prs <- NULL
+prs_full <- NULL
 for (i in 1:length(preds)){
     if (is.na(preds[[i]]))
         next
@@ -198,8 +226,8 @@ for (i in 1:length(preds)){
                 rep(FALSE, length(possible_false_intxns)))
     pred_full <- prediction(pred_score[,3], labels)
     perf_pr <- performance(pred_full, measure = "prec", x.measure = "rec")
-    if (is.null(prs)){
-        prs <- data.frame(x=perf_pr@x.values[[1]],
+    if (is.null(prs_full)){
+        prs_full <- data.frame(x=perf_pr@x.values[[1]],
                           y=perf_pr@y.values[[1]],
                           feature=rep(colnames(pred_score_full)[i+2],
                                       length(perf_pr@x.values[[1]])))
@@ -208,14 +236,55 @@ for (i in 1:length(preds)){
                              y=perf_pr@y.values[[1]],
                              feature=rep(colnames(pred_score_full)[i+2],
                                          length(perf_pr@x.values[[1]])))
-        prs <- rbind(prs, new_pr)
+        prs_full <- rbind(prs_full, new_pr)
     }
 }
 
-prs$feature <- factor(prs$feature,
-                      levels=levels(prs$feature),
-                      labels=feature_names[levels(prs$feature)])
+prs_full$feature <- factor(prs_full$feature,
+                      levels=levels(prs_full$feature),
+                      labels=feature_names[levels(prs_full$feature)])
 
-rocr2d.ggplot2(prs, "recall", "precision", 1, NULL)
+prs_full$y[which(is.nan(prs_full$y))] <- NA
+prs_full$y[which(is.infinite(prs_full$y))] <- NA
+prs_full$x[which(is.nan(prs_full$x))] <- NA
+prs_full$x[which(is.infinite(prs_full$x))] <- NA
+
+prec_full_plot <- rocr2d.ggplot2(prs_full, "recall", "precision", 1, NULL)
+saveRDS(prec_full_plot, file=paste0(rds_basename, "-prec-full.rds"))
+print(prec_full_plot)
+
+prs_full$y.ci <- rep(NA, nrow(prs_full))
+prs_full$neg.set <- rep("full", nrow(prs_full))
+prs$neg.set <- rep("downsampled", nrow(prs))
+
+prs_merged <- rbind(prs, prs_full)
+prs_merged$neg.set <- as.factor(prs_merged$neg.set)
+prs_merged$y.min <- prs_merged$y - prs_merged$y.ci
+prs_merged$y.max <- prs_merged$y + prs_merged$y.ci
+errorbar_rows <- c()
+for (f in levels(prs_merged$feature)){
+    for (ns in levels(prs_merged$neg.set)){
+        prs_merged_sub <- which(prs_merged$feature==f & prs_merged$neg.set==ns)
+        rows <- prs_merged_sub[seq(1, length(prs_merged_sub), length=6)[2:5]]
+        errorbar_rows <- c(errorbar_rows, rows)
+    }
+}
+errorbar_df <- data.frame(prs_merged[errorbar_rows,])
+
+prs_poly <- rbind(prs_full, prs[nrow(prs):1,])[,1:2]
+
+prec_merged_plot <- ggplot(prs_merged, aes(x=x, y=y, colour=neg.set)) +
+    geom_polygon(data=prs_poly, aes(x=x, y=y), fill="#E9E9F7", colour="#E9E9F7") +
+    geom_line(size=1.5) +
+    scale_fill_identity() +
+    xlim(0, 1) +
+    ylim(0, 1) +
+    labs(x="recall", y="precision") +
+    geom_errorbar(mapping=aes(x=x, ymin=y.min, ymax=y.max),
+                  data=errorbar_df,
+                  inherit.aes=FALSE,
+                  width=0.025)
+saveRDS(prec_merged_plot, file=paste0(rds_basename, "-prec-merged.rds"))
+print(prec_merged_plot)
 
 dev.off()
