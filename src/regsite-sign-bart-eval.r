@@ -3,6 +3,7 @@ suppressPackageStartupMessages(library(bartMachine))
 set_bart_machine_num_cores(1)
 suppressPackageStartupMessages(library(ROCR))
 library(ggplot2)
+library(scales)
 source("src/rocr-ggplot2.r")
 
 get_pos_in_domain <- function(pos, dom_start, dom_end){
@@ -12,10 +13,10 @@ get_pos_in_domain <- function(pos, dom_start, dom_end){
 }
 
 reg_sites <- read.delim("data/psiteplus-reg-sites.tsv")
-reg_sites$MOD_RSD <- sub("^[STY]", "", reg_sites$MOD_RSD)
-reg_sites$MOD_RSD <- sub("-p$", "", reg_sites$MOD_RSD)
+## reg_sites$MOD_RSD <- sub("^[STY]", "", reg_sites$MOD_RSD)
+## reg_sites$MOD_RSD <- sub("-p$", "", reg_sites$MOD_RSD)
 ## reg_sites$ACC_ID <- sub("-[0-9]+", "", reg_sites$ACC_ID)
-rownames(reg_sites) <- paste(reg_sites$ACC_ID, reg_sites$MOD_RSD, sep="_")
+rownames(reg_sites) <- paste(reg_sites$ACC_ID, reg_sites$position, sep="_")
 
 phosfun_feat <- read.table("data/external/phosphoproteome_annotated",
                            header=TRUE, row.names=1, sep=",")
@@ -35,8 +36,8 @@ phosfun_feat <- subset(phosfun_feat, gene %in% human_kinome)
 rownames(phosfun_feat) <- paste(phosfun_feat$gene, phosfun_feat$position,
                                 sep="_")
 
-levels(phosfun_feat$residue) <- c(levels(phosfun_feat$residue), "S/T")
-phosfun_feat$residue[phosfun_feat$residue %in% as.factor(c("S", "T"))] <- as.factor("S/T")
+## levels(phosfun_feat$residue) <- c(levels(phosfun_feat$residue), "S/T")
+## phosfun_feat$residue[phosfun_feat$residue %in% as.factor(c("S", "T"))] <- as.factor("S/T")
 
 phosfun_feat$pos_perc <- sapply(1:nrow(phosfun_feat),
                               function(i){
@@ -122,22 +123,25 @@ phosfun_feat <- merge(phosfun_feat, phosfun, by.x=c("gene", "position"),
                     by.y=c("kinase", "position"))
 
 sign_feats <- merge(reg_sites, phosfun_feat,
-                    by.x=c("ACC_ID", "MOD_RSD"),
-                    by.y=c("acc", "position"))
-rownames(sign_feats) <- paste(sign_feats$GENE, sign_feats$MOD_RSD, sep="_")
+                    by.x=c("ACC_ID", "position", "residue"),
+                    by.y=c("acc", "position", "residue"))
+rownames(sign_feats) <- paste(sign_feats$GENE, sign_feats$position, sep="_")
 sign_feats$DOMAIN[which(sign_feats$DOMAIN=="")] <- NA
+
+levels(sign_feats$residue) <- c(levels(sign_feats$residue), "S/T")
+sign_feats$residue[sign_feats$residue %in% as.factor(c("S", "T"))] <- as.factor("S/T")
 
 sign_feats <- sign_feats[which(!(grepl("activity, induced", sign_feats$ON_FUNCTION) &
                                 grepl("activity, inhibited", sign_feats$ON_FUNCTION)) &
                                (grepl("activity, induced", sign_feats$ON_FUNCTION) |
                                grepl("activity, inhibited", sign_feats$ON_FUNCTION))),]
 
-rownames(sign_feats) <- paste(sign_feats$GENE, sign_feats$MOD_RSD, sep="_")
+rownames(sign_feats) <- paste(sign_feats$GENE, sign_feats$position, sep="_")
 rownames(phosfun) <- paste(phosfun$kinase, phosfun$position,  sep="_")
 phosfun_nonreg <- phosfun[which(!(rownames(phosfun) %in% rownames(sign_feats))),]
 
 ## Remove miscellaneous annotation and non-site-specific features.
-non_feats <- c("ACC_ID", "MOD_RSD", "GENE", "PROTEIN", "PROT_TYPE", "GENE_ID",
+non_feats <- c("ACC_ID", "position", "GENE", "PROTEIN", "PROT_TYPE", "GENE_ID",
                "HU_CHR_LOC", "ORGANISM", "SITE_GRP_ID", "SITE_...7_AA",
                "ON_FUNCTION", "ON_PROCESS", "ON_PROT_INTERACT",
                "ON_OTHER_INTERACT", "PMIDs", "LT_LIT", "MS_LIT", "MS_CST",
@@ -193,6 +197,7 @@ sink()
 var_select <- var_selection_by_permute(bart_init)
 
 sign_feats$sign <- labels
+
 pdf("img/regsite-sign-boxplots.pdf")
 boxplot(log10_hotspot_pval_min ~ sign, data=sign_feats, ylab="Hotspot log10 pval")
 boxplot(disopred_score ~ sign, data=sign_feats, ylab="DISOPRED score")
@@ -212,8 +217,13 @@ final_feats <- c("log10_hotspot_pval_min", "disopred_score",
                  "pos_in_domain", "pos_perc", "pfam", "residue",
                  "is_tyr_kin")
 
-k <- 5
-n <- 5
+tmp_tbl <- sign_feats[,final_feats]
+tmp_tbl$id <- rownames(tmp_tbl)
+write.table(tmp_tbl, "out/reg-site-sign-feats.tsv", sep="\t",
+            quote=FALSE, row.names=FALSE, col.names=TRUE)
+
+k <- 3
+n <- 20
 all_probs <- NULL
 all_labels <- NULL
 for (j in 1:n){
@@ -267,7 +277,11 @@ for (j in 1:n){
 pdf("img/regsite-sign-bart-eval.pdf", width=10.5)
 rocr_pred <- prediction(all_probs, all_labels)
 rocr_mcc <- build.cvperf1d.df(rocr_pred, "mat", c("BART sign prob."), n*k, TRUE)
-rocr2d.ggplot2(rocr_mcc, "cutoff", "MCC", n*k, NULL)
+mcc_plot <- rocr2d.ggplot2(rocr_mcc, "cutoff", "Matthews Correlation Coefficient", n*k, NULL)
+print(mcc_plot)
+saveRDS(mcc_plot, "img/rds/site-sign-bart-pred-mcc.rds")
+write.table(rocr_mcc, "img/rds/site-sign-bart-pred-mcc-data.tsv", quote=FALSE, sep="\t",
+            row.names=FALSE, col.names=TRUE)
 dev.off()
 
 
@@ -332,6 +346,8 @@ bart <- bartMachineCV(sign_feats[final_feats], labels,
                       serialize=FALSE)
 sink()
 
+max_mcc_cutoff <- rocr_mcc[which.max(rocr_mcc$y), "x"]
+
 new_preds <- predict(bart, phosfun_feat[final_feats],
                      type="class", prob_rule_class=(1-max_mcc_cutoff))
 
@@ -342,7 +358,10 @@ out_tbl <- data.frame(kinase=phosfun_feat$gene,
                       prob.act=(new_probs-max_mcc_cutoff))
 out_tbl <- out_tbl[order(out_tbl$kinase, out_tbl$position),]
 
-## out_tbl$prob.act <- (out_tbl$prob.act-min(out_tbl$prob.act)/(max(out_tbl$prob.act)-min(out_tbl$prob.act))
-
 write.table(out_tbl, "out/reg-site-bart-sign-preds.tsv", quote=FALSE,
             row.names=FALSE, col.names=TRUE, sep="\t")
+
+out_tbl_rescaled <- out_tbl
+out_tbl_rescaled$prob.act <- rescale_mid(out_tbl$prob.act, c(-1, 1))
+write.table(out_tbl_rescaled, "out/reg-site-bart-sign-preds-rescaled.tsv",
+            quote=FALSE, row.names=FALSE, col.names=TRUE, sep="\t")
