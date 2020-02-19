@@ -1,0 +1,1552 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=1100px" />
+    <title>TRIP Database - FKBP52/FKBP4 / TRP channels</title>
+    <link rel="stylesheet" media="screen" href="/assets/application-13b141c929698a956c57cfabff15ed10acabf280c2b6505dcd00f3f5ec90264f.css" />
+    <link rel="stylesheet" media="print" href="/assets/print-4f604579cf24d18002716315e1469ca2d65ea431e97bc57a5837fae3aafe39ab.css" />
+    <meta name="csrf-param" content="authenticity_token" />
+<meta name="csrf-token" content="MizoNOIFau8mMFjvN9tI3Evv9Y1gdABC1yI687kZG5vL1GkWpOSumvqiqQTpZC4cIJDC5R8NIoWHI+9nvnnZ7g==" />
+	<style type="text/css">
+	.ui-widget-content a {
+		color: #B30606;
+	}
+	</style>
+    <script src="/assets/application-5833a9280c3061620edb1f02b8991960c6668b82192637098a4ac7674a627fc0.js"></script>
+    
+<!-- Start of Woopra Code -->
+<script type="text/javascript">
+function woopraReady(tracker) {
+    tracker.setDomain('trpchannel.org');
+    tracker.setIdleTimeout(300000);
+    tracker.trackPageview({type:'pageview',url:window.location.pathname+window.location.search,title:document.title});
+    return false;
+}
+(function() {
+    var wsc = document.createElement('script');
+    wsc.src = document.location.protocol+'//static.woopra.com/js/woopra.js';
+    wsc.type = 'text/javascript';
+    wsc.async = true;
+    var ssc = document.getElementsByTagName('script')[0];
+    ssc.parentNode.insertBefore(wsc, ssc);
+})();
+</script>
+<!-- End of Woopra Code -->
+      <script type="text/javascript">
+
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-239280-3']);
+        _gaq.push(['_trackPageview']);
+
+        (function() {
+         var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+         ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+         var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+         })();
+
+       </script>
+   </head>
+   <body>
+     <div id="header-container">
+       <div id="header">
+         <div id="logo"><a href="/"><img src="/assets/logo-dec76c832913a1174eea21f9f5283e086f9d5270b0f1574cf05fd98f76e07d3b.gif" alt="Logo dec76c832913a1174eea21f9f5283e086f9d5270b0f1574cf05fd98f76e07d3b" /></a></div>
+         <div id="header2">
+           <h1><a href="/"><strong>TRIP</strong> Database</a></h1>
+           <div id="header2-2">
+             Mammalian <strong>TR</strong>ansient receptor potential channel-<strong>I</strong>nteracting <strong>P</strong>rotein
+           </div>
+         </div>
+         <div id="header3">
+            <form action="/search" accept-charset="UTF-8" method="post"><input name="utf8" type="hidden" value="&#x2713;" /><input type="hidden" name="authenticity_token" value="7Ku4IS5sk58ZV/F9HndKIbEeXAqMdW2mo4heuZ9nWLQVUzkDaI1X6sXFAJbAyCzh2mFrYvMMT2HziYstmAeawQ==" />
+              <div id="loginpart" ><table cellpadding="0" cellspacing="0" style="margin:0;padding:0;text-align:right">
+                 <tr>
+                   <td style="text-align:right;width:550px;"><input type="text" id="term" name="term" value="TRIP Database Search" 
+                     onfocus="if (this.value=='TRIP Database Search') this.value='';this.style.color='#000';this.style.fontWeight='bold';" 
+                     onblur="if(this.value==''){this.value='TRIP Database Search';this.style.color='#999';this.style.fontWeight='normal';}"/></td>
+                   <td><input type="submit" id="search-button" value=" Search " onclick="if ($('term').style.fontWeight!='bold') $('term').value='';"/></td>
+                 </tr>
+               </table></div>
+</form>           <div id="navigation">
+             <ul>
+               <li><a href="/">HOME</a></li>
+               <li><a href="/statistics">Statistics</a></li>
+               <li><a href="/visualization">Interaction Map</a></li>
+               <li><a href="/download">Download</a></li>
+               <li><a href="#" onclick="window.open('/tutorial', 'tutorial', 'width=860,height=800,scrollbars=yes,resizable=yes,menubar=no');return false;">Tutorial</a></li>
+               <li><a href="/aboutus">About Us</a></li>
+             </ul>
+           </div>
+         </div>
+       </div>
+     </div>
+     <div id="content-container">
+       <div id="content">
+         <div id="trp_selector" class="tree">
+           <div id="trp_title">TRP channels</div>
+           <ul>
+               <li ><strong><a href="/families/TRPC">TRPC</a></strong>
+                 <ul>
+                     <li class=""><a href="/summaries/TRPC1">TRPC1</a></li>
+                     <li class=""><a href="/summaries/TRPC2">TRPC2</a></li>
+                     <li class=""><a href="/summaries/TRPC3">TRPC3</a></li>
+                     <li class=""><a href="/summaries/TRPC4">TRPC4</a></li>
+                     <li class=""><a href="/summaries/TRPC5">TRPC5</a></li>
+                     <li class=""><a href="/summaries/TRPC6">TRPC6</a></li>
+                     <li class=""><a href="/summaries/TRPC7">TRPC7</a></li>
+                 </ul>
+               </li>
+               <li ><strong><a href="/families/TRPV">TRPV</a></strong>
+                 <ul>
+                     <li class=""><a href="/summaries/TRPV1">TRPV1</a></li>
+                     <li class=""><a href="/summaries/TRPV2">TRPV2</a></li>
+                     <li class=""><a href="/summaries/TRPV3">TRPV3</a></li>
+                     <li class=""><a href="/summaries/TRPV4">TRPV4</a></li>
+                     <li class=""><a href="/summaries/TRPV5">TRPV5</a></li>
+                     <li class=""><a href="/summaries/TRPV6">TRPV6</a></li>
+                 </ul>
+               </li>
+               <li ><strong><a href="/families/TRPM">TRPM</a></strong>
+                 <ul>
+                     <li class=""><a href="/summaries/TRPM1">TRPM1</a></li>
+                     <li class=""><a href="/summaries/TRPM2">TRPM2</a></li>
+                     <li class=""><a href="/summaries/TRPM3">TRPM3</a></li>
+                     <li class=""><a href="/summaries/TRPM4">TRPM4</a></li>
+                     <li class=""><a href="/summaries/TRPM5">TRPM5</a></li>
+                     <li class=""><a href="/summaries/TRPM6">TRPM6</a></li>
+                     <li class=""><a href="/summaries/TRPM7">TRPM7</a></li>
+                     <li class=""><a href="/summaries/TRPM8">TRPM8</a></li>
+                 </ul>
+               </li>
+               <li ><strong><a href="/families/TRPML">TRPML</a></strong>
+                 <ul>
+                     <li class=""><a href="/summaries/TRPML1">TRPML1</a></li>
+                     <li class=""><a href="/summaries/TRPML2">TRPML2</a></li>
+                     <li class=""><a href="/summaries/TRPML3">TRPML3</a></li>
+                 </ul>
+               </li>
+               <li ><strong><a href="/families/TRPP">TRPP</a></strong>
+                 <ul>
+                     <li class=""><a href="/summaries/TRPP1">TRPP1</a></li>
+                     <li class=""><a href="/summaries/TRPP2">TRPP2</a></li>
+                     <li class=""><a href="/summaries/TRPP3">TRPP3</a></li>
+                 </ul>
+               </li>
+               <li ><strong><a href="/families/TRPA">TRPA</a></strong>
+                 <ul>
+                     <li class=""><a href="/summaries/TRPA1">TRPA1</a></li>
+                 </ul>
+               </li>
+           </ul>
+  	  <div id="citation" style="text-align:left;"> &nbsp; &raquo; <a target="_blank" href="http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0047165">Citation</a></div>
+          <a target="_blank" title="Young-Cheul Shin, Soo-Yong Shin, Insuk So, Dongseop Kwon, and Ju-Hong Jeon. &quot;TRIP Database: a manually curated database of protein–protein interactions for mammalian TRP channels.&quot; Nucleic acids research 39, no. suppl 1 (2011): D356-D361." href="http://nar.oxfordjournals.org/content/39/suppl_1/D356.full"><img width="108" style="border:1px solid steelBlue" src="/assets/nar2011-9c5ccb7544ea9ea0a4b3599ccec8bea610f3995142d5da2da0189fad9f699236.gif" alt="Nar2011 9c5ccb7544ea9ea0a4b3599ccec8bea610f3995142d5da2da0189fad9f699236" /></a><a target="_blank" title="Young-Cheul Shin, Soo-Yong Shin, Jung Nyeo Chun, Hyeon Sung Cho, Jin Muk Lim, Hong-Gee Kim, Insuk So, Dongseop Kwon, and Ju-Hong Jeon. &quot;TRIP Database 2.0: A Manually Curated Information Hub for Accessing TRP Channel Interaction Network.&quot; PloS one 7, no. 10 (2012): e47165." href="http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0047165"><img width="108" style="border:1px solid steelBlue" src="/assets/plos2012-71954aaff6a4569630a779eb6502d687ff86630adfca3a1cc207b9836b808980.png" alt="Plos2012 71954aaff6a4569630a779eb6502d687ff86630adfca3a1cc207b9836b808980" /></a><a target="_blank" title="Jung Nyeo Chun, Jin Muk Lim, Young Kang, Eung Hee Kim, Young-Cheul Shin, Hong-Gee Kim, Dayk Jang, Dongseop Kwon, Soo-Yong Shin, Insuk So, Ju-Hong Jeon. &quot;A network perspective on unraveling the role of TRP channels in biology and disease.&quot;Pflügers Archiv - European Journal of Physiology February 2014, Volume 466, Issue 2, pp 173-182" href="http://link.springer.com/article/10.1007%2Fs00424-013-1292-2"><img width="108" style="border:1px solid steelBlue" src="/assets/pf2013-33c9f49bb4f61555bed5365c90448ebe56e96eb338f5692f7ef4b8a5db693247.jpg" alt="Pf2013 33c9f49bb4f61555bed5365c90448ebe56e96eb338f5692f7ef4b8a5db693247" /></a>
+                </li>
+         </div>
+         <div id="main-content">
+           <div id="main-buttons">
+             <button id="comment_button" >
+               Comment 
+             </button>
+             <button id="print_button" onclick="window.print();">
+               Print
+             </button>
+            <div class="clear"></div>
+           </div>
+            <div class="clear"></div>
+              <h1>FKBP52/FKBP4 / TRP channels</h1>
+             <div>
+  <div id="info_tab">
+    <ul>
+      <li class="selected"><a href="#tab1">Basic Information</a></li>
+      <li><a href="#tab2">External Database </a></li>
+      <li><a href="#tab3">PPI pairs (4)</a></li>
+      <li><a href="#tab4">Biological Process (10)</a></li>
+      <li><a href="#tab5">Disease (0)</a></li>
+    </ul>            
+    <div id="tab1" >
+      <div style="margin-top:10px;">
+  <strong>Name:</strong> Peptidyl-prolyl cis-trans isomerase FKBP4  
+  (FKBP52/FKBP4)
+</div>
+<div style="margin-top:10px;">
+  <strong>Official Symbol:</strong> FKBP4
+  <span style="color:#999;background:#eee;padding:2px 5px;font-size:8pt;-moz-border-radius: 5px; border-radius: 5px;">
+    provided by <a target="_blank" href="http://www.genenames.org/">HGNC</a>
+  </span>
+</div>
+<div style="margin-top:10px;">
+  <strong>Function:</strong>
+  <div style="margin-left:20px;line-height:160%;">Immunophilin protein with PPIase and co-chaperone activities (By similarity). Component of unligated steroid receptors heterocomplexes through interaction with heat-shock protein 90 (HSP90). May play a role in the intracellular trafficking of heterooligomeric forms of steroid hormone receptors between cytoplasm and nuclear compartments (By similarity). The isomerase activity controls neuronal growth cones via regulation of TRPC1 channel opening. Acts also as a regulator of microtubule dynamics by inhibiting MAPT/TAU ability to promote microtubule assembly. May have a protective role against oxidative stress in mitochondria.</div>
+</div>
+<div style="margin:10px;-webkit-border-radius: 5px; -moz-border-radius: 5px; border-radius: 5px;padding:10px;background:#eee;font-size:8pt;color:#aaa;font-family:Helvetica, Times new roman;">
+Source: Reorganizing the protein space at the Universal Protein Resource (UniProt)
+<a target="_blank" href="http://nar.oxfordjournals.org/content/40/D1/D71">Nucleic Acids Res. 40: D71-D75 (2012)</a>.
+</div>
+
+    </div>
+    <div id="tab2"  >
+      <style type="text/css">
+  .desc-tab {
+    background:#eee;
+    border:#444 1px solid;
+    font-weight:normal;
+    color:#444;
+    border-collapse:collapse;
+    border-spacing:0;
+    text-align:left;
+  }
+
+</style>
+<table class="tab" style="width:100%;margin-left:0;">
+  <thead>
+    <tr>
+      <th class="c1" rowspan="2">Species</th>
+      <th colspan = "10" class="title" style="font-size:12px;">
+        External DB
+        <a href="#" onclick="$('#db-desc').toggle();return false;"><img src="/assets/questionmark-c7dcdfe7852228a510704064c33a0706d8c0e915bceea718517e77f7950c2984.gif" alt="Questionmark c7dcdfe7852228a510704064c33a0706d8c0e915bceea718517e77f7950c2984" /></a>
+        <div id="db-desc" style="display:none">
+          <table width="100%" onclick="$('#db-desc').toggle();" class="desc-tab">
+            <tr>
+              <th style="border-color:#444;background:#444;color:#eee;width:100px;">Name</th>
+              <th style="border-color:#444;background:#444;color:#eee;">Description</th>
+            </tr>
+              <tr>
+                <td><b>Entrez Gene</b></td>
+                <td>A database that contains genome-centered information</td>
+              </tr>
+              <tr>
+                <td><b>UniprotKB</b></td>
+                <td>The central hub for collection of functional information on proteins</td>
+              </tr>
+              <tr>
+                <td><b>DIP</b></td>
+                <td>A database that documents experimentally determined PPIs</td>
+              </tr>
+              <tr>
+                <td><b>IntAct</b></td>
+                <td>An open source database and software suite for modeling, storing and analyzing molecular interaction data</td>
+              </tr>
+              <tr>
+                <td><b>MINT</b></td>
+                <td>A database that collects experimentally verified PPIs in a binary or complex representation</td>
+              </tr>
+              <tr>
+                <td><b>BioGRID</b></td>
+                <td>A database of known and predicted PPIs</td>
+              </tr>
+              <tr>
+                <td><b>STRING</b></td>
+                <td>An online interaction repository with data</td>
+              </tr>
+              <tr>
+                <td><b>IUPHAR-DB</b></td>
+                <td>Integrated pharmacological and pathophysiological information on GPCR and voltage-gated &amp; ligand-gated ion channels</td>
+              </tr>
+              <tr>
+                <td><b>KEGG</b></td>
+                <td>A database resource consisting of 16 main databases, categorized into systems information, genomic information, and chemical information</td>
+              </tr>
+              <tr>
+                <td><b>OMIM</b></td>
+                <td>A database of  human genes and genetic disorders</td>
+              </tr>
+          </table>
+        </div>
+      </th>
+    </tr>
+    <tr>
+        <th class="c0" title="A database that contains genome-centered information">
+          Entrez Gene
+        </th>
+        <th class="c0" title="The central hub for collection of functional information on proteins">
+          UniprotKB
+        </th>
+        <th class="c0" title="A database that documents experimentally determined PPIs">
+          DIP
+        </th>
+        <th class="c0" title="An open source database and software suite for modeling, storing and analyzing molecular interaction data">
+          IntAct
+        </th>
+        <th class="c0" title="A database that collects experimentally verified PPIs in a binary or complex representation">
+          MINT
+        </th>
+        <th class="c0" title="A database of known and predicted PPIs">
+          BioGRID
+        </th>
+        <th class="c0" title="An online interaction repository with data">
+          STRING
+        </th>
+        <th class="c0" title="Integrated pharmacological and pathophysiological information on GPCR and voltage-gated &amp; ligand-gated ion channels">
+          IUPHAR-DB
+        </th>
+        <th class="c0" title="A database resource consisting of 16 main databases, categorized into systems information, genomic information, and chemical information">
+          KEGG
+        </th>
+        <th class="c0" title="A database of  human genes and genetic disorders">
+          OMIM
+        </th>
+    </tr>
+  </thead>
+  <tbody>
+      <tr>
+        <td class="c1" align="center">
+          Human
+            <br>
+            <a href="#" onclick="window.open(\"/proteins/seq?uniprot=Q02790&type=human&name=FKBP52%2FFKBP4\",'seq_win', 'height=600,width=610,scrollbars=yes');return false;"><img src="/assets/seq-055e86e69a1b9fa3c345494da0168454ea5fcb72eb0f6a154a55bbbbbcb46d2f.gif" alt="Seq 055e86e69a1b9fa3c345494da0168454ea5fcb72eb0f6a154a55bbbbbcb46d2f" /></a>
+        </td>
+          <td class="c0" align="center"><a href='http://www.ncbi.nlm.nih.gov/sites/entrez?db=gene&term=2288' target='_blank'>2288<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://www.uniprot.org/uniprot/Q02790' target='_blank'>Q02790<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://dip.doe-mbi.ucla.edu/dip/Browse.cgi?ID=DIP-50866N' target='_blank'>DIP-50866N<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://www.ebi.ac.uk/intact/pages/interactions/interactions.xhtml?query=Q02790' target='_blank'>Q02790<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://mint.bio.uniroma2.it/mint/search/search.do?queryType=protein&amp;interactorAc=MINT-3024864' target='_blank'>MINT-3024864<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://thebiogrid.org/108578' target='_blank'>108578<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://string-db.org/newstring_cgi/show_network_section.pl?identifier=Q02790' target='_blank'>Q02790<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center">&nbsp;</td>
+          <td class="c0" align="center"><a href='http://www.genome.jp/dbget-bin/www_bget?hsa:2288' target='_blank'>hsa:2288<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://www.ncbi.nlm.nih.gov/sites/entrez?cmd=Retrieve&amp;db=omim&amp;dopt=Detailed&amp;tmpl=dispomimTemplate&amp;list_uids=600611' target='_blank'>600611<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+      </tr>
+      <tr>
+        <td class="c1" align="center">
+          Mouse
+            <br>
+            <a href="#" onclick="window.open(\"/proteins/seq?uniprot=P30416&type=mouse&name=FKBP52%2FFKBP4\",'seq_win', 'height=600,width=610,scrollbars=yes');return false;"><img src="/assets/seq-055e86e69a1b9fa3c345494da0168454ea5fcb72eb0f6a154a55bbbbbcb46d2f.gif" alt="Seq 055e86e69a1b9fa3c345494da0168454ea5fcb72eb0f6a154a55bbbbbcb46d2f" /></a>
+        </td>
+          <td class="c0" align="center"><a href='http://www.ncbi.nlm.nih.gov/sites/entrez?db=gene&term=14228' target='_blank'>14228<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://www.uniprot.org/uniprot/P30416' target='_blank'>P30416<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://dip.doe-mbi.ucla.edu/dip/Browse.cgi?ID=DIP-34700N' target='_blank'>DIP-34700N<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://www.ebi.ac.uk/intact/pages/interactions/interactions.xhtml?query=P30416' target='_blank'>P30416<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://mint.bio.uniroma2.it/mint/search/search.do?queryType=protein&amp;interactorAc=MINT-1869690' target='_blank'>MINT-1869690<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://thebiogrid.org/199685' target='_blank'>199685<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://string-db.org/newstring_cgi/show_network_section.pl?identifier=P30416' target='_blank'>P30416<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center">&nbsp;</td>
+          <td class="c0" align="center"><a href='http://www.genome.jp/dbget-bin/www_bget?mmu:14228' target='_blank'>mmu:14228<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center">&nbsp;</td>
+      </tr>
+      <tr>
+        <td class="c1" align="center">
+          Rat
+            <br>
+            <a href="#" onclick="window.open(\"/proteins/seq?uniprot=Q9QVC8&type=rat&name=FKBP52%2FFKBP4\",'seq_win', 'height=600,width=610,scrollbars=yes');return false;"><img src="/assets/seq-055e86e69a1b9fa3c345494da0168454ea5fcb72eb0f6a154a55bbbbbcb46d2f.gif" alt="Seq 055e86e69a1b9fa3c345494da0168454ea5fcb72eb0f6a154a55bbbbbcb46d2f" /></a>
+        </td>
+          <td class="c0" align="center"><a href='http://www.ncbi.nlm.nih.gov/sites/entrez?db=gene&term=260321' target='_blank'>260321<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://www.uniprot.org/uniprot/Q9QVC8' target='_blank'>Q9QVC8<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://dip.doe-mbi.ucla.edu/dip/Browse.cgi?ID=DIP-59214N' target='_blank'>DIP-59214N<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center">&nbsp;</td>
+          <td class="c0" align="center"><a href='http://mint.bio.uniroma2.it/mint/search/search.do?queryType=protein&amp;interactorAc=MINT-4607651' target='_blank'>MINT-4607651<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://thebiogrid.org/251740' target='_blank'>251740<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center"><a href='http://string-db.org/newstring_cgi/show_network_section.pl?identifier=Q9QVC8' target='_blank'>Q9QVC8<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center">&nbsp;</td>
+          <td class="c0" align="center"><a href='http://www.genome.jp/dbget-bin/www_bget?rno:260321' target='_blank'>rno:260321<img src='/assets/external.gif?1270441146' alt='External' width='16' height='16'/></a></td>
+          <td class="c0" align="center">&nbsp;</td>
+      </tr>
+  </tbody>
+</table>
+
+    </div>
+    <div id="tab3" >
+      <strong>PPI pairs:</strong>
+<div style="margin-top:10px;">
+  <table width="860px" style="margin-left:20px;">
+      <tr>
+        <td><a title="see interaction" href="/interactions/show?trp=TRPC1&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor">TRPC1</a><a title="in detail" href="/proteins/show?id=TRPC1"><img src="/assets/detail-bc8838fa5bd2464c5553a5a10de82d112f40db7d921ce377f414735e0504230c.gif" alt="Detail bc8838fa5bd2464c5553a5a10de82d112f40db7d921ce377f414735e0504230c" /></a></td>
+        
+      
+        <td><a title="see interaction" href="/interactions/show?trp=TRPC4&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor">TRPC4</a><a title="in detail" href="/proteins/show?id=TRPC4"><img src="/assets/detail-bc8838fa5bd2464c5553a5a10de82d112f40db7d921ce377f414735e0504230c.gif" alt="Detail bc8838fa5bd2464c5553a5a10de82d112f40db7d921ce377f414735e0504230c" /></a></td>
+        
+      
+        <td><a title="see interaction" href="/interactions/show?trp=TRPC5&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor">TRPC5</a><a title="in detail" href="/proteins/show?id=TRPC5"><img src="/assets/detail-bc8838fa5bd2464c5553a5a10de82d112f40db7d921ce377f414735e0504230c.gif" alt="Detail bc8838fa5bd2464c5553a5a10de82d112f40db7d921ce377f414735e0504230c" /></a></td>
+        
+      
+        <td><a title="see interaction" href="/interactions/show?trp=TRPV5&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor">TRPV5</a><a title="in detail" href="/proteins/show?id=TRPV5"><img src="/assets/detail-bc8838fa5bd2464c5553a5a10de82d112f40db7d921ce377f414735e0504230c.gif" alt="Detail bc8838fa5bd2464c5553a5a10de82d112f40db7d921ce377f414735e0504230c" /></a></td>
+        
+    </tr>
+</table>
+</div>
+
+
+    </div>
+    <div id="tab4" >
+      <div style="margin-top:10px;">
+    <strong>Biological Process:</strong>
+    <div style="line-height:160%;">
+      <ul>
+          <li><a target="_blank" href="http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=GO:0030521">GO:0030521 <img src="/assets/external-2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c.gif" alt="External 2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c" /></a> : androgen receptor signaling pathway </li>
+          <li><a target="_blank" href="http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=GO:0006825">GO:0006825 <img src="/assets/external-2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c.gif" alt="External 2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c" /></a> : copper ion transport </li>
+          <li><a target="_blank" href="http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=GO:0007566">GO:0007566 <img src="/assets/external-2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c.gif" alt="External 2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c" /></a> : embryo implantation </li>
+          <li><a target="_blank" href="http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=GO:0046661">GO:0046661 <img src="/assets/external-2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c.gif" alt="External 2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c" /></a> : male sex differentiation </li>
+          <li><a target="_blank" href="http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=GO:0031111">GO:0031111 <img src="/assets/external-2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c.gif" alt="External 2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c" /></a> : negative regulation of microtubule polymerization or depolymerization </li>
+          <li><a target="_blank" href="http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=GO:0010977">GO:0010977 <img src="/assets/external-2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c.gif" alt="External 2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c" /></a> : negative regulation of neuron projection development </li>
+          <li><a target="_blank" href="http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=GO:0030850">GO:0030850 <img src="/assets/external-2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c.gif" alt="External 2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c" /></a> : prostate gland development </li>
+          <li><a target="_blank" href="http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=GO:0031503">GO:0031503 <img src="/assets/external-2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c.gif" alt="External 2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c" /></a> : protein complex localization </li>
+          <li><a target="_blank" href="http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=GO:0006457">GO:0006457 <img src="/assets/external-2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c.gif" alt="External 2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c" /></a> : protein folding </li>
+          <li><a target="_blank" href="http://amigo.geneontology.org/cgi-bin/amigo/term_details?term=GO:0006463">GO:0006463 <img src="/assets/external-2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c.gif" alt="External 2231691f894ba696de1310221b0a0dbbb31a7251e75115c265587c3d9d5f507c" /></a> : steroid hormone receptor complex assembly </li>
+      </ul>
+    </div>
+<div style="margin:10px;-webkit-border-radius: 5px; -moz-border-radius: 5px; border-radius: 5px;padding:10px;background:#eee;font-size:8pt;color:#aaa;font-family:Helvetica, Times new roman;">
+Source: The Gene Ontology Consortium. Gene ontology: tool for the unification of biology. Nat. Genet.. May 2000;25(1):25-9.
+<br>
+World Wide Web URL: <a target="_blank" href="http://www.geneontology.org/">http://www.geneontology.org/</a>
+</div>
+</div>
+
+
+    </div>
+    <div id="tab5" >
+        <div style="margin-top:10px;">
+    <strong>Disease:</strong>
+  No information in OMIM 
+<div style="margin:10px;-webkit-border-radius: 5px; -moz-border-radius: 5px; border-radius: 5px;padding:10px;background:#eee;font-size:8pt;color:#aaa;font-family:Helvetica, Times new roman;">
+Source: Online Mendelian Inheritance in Man, OMIM®. McKusick-Nathans Institute of Genetic Medicine, 
+Johns Hopkins University (Baltimore, MD), May, 2012. 
+<br>
+World Wide Web URL: <a target="_blank" href="http://omim.org/">http://omim.org/</a>
+</div>
+</div>
+
+    </div>
+  </div>
+
+
+
+
+
+  <div style="margin-top:15px">
+    <a name="screening"></a>
+<table width="100%" class="navi">
+  <tr>
+    <td align="left" style="font-family:Verdana;font-size:9px;">
+      <a class="s_navi" href="#screening"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Screening</a>
+      <a class="s_navi" href="#invitro"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Validation: <i>In vitro</i> validation</a>
+      <a class="s_navi" href="#invivo"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Validation: <i>In vivo</i> validation</a>
+      <img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Characterization
+      <a class="s_navi" href="#function"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Functional consequence</a>
+    </td>
+    <td align="right">
+      <a href="#" onclick="window.scroll(0,0); return false;" class="s_navi"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> top</a>
+    </td>
+  </tr>
+</table>
+
+<table width="100%" class="tab">
+  <thead>
+    <tr>
+      <th colspan="11" class="title">Screening
+        <a href="#" onclick="$('.screening_toggle').toggle(); return false;" title="show / hide the content of this section"><img src="/assets/toggle-893349bafcc528f8346c51dc3420151d67b0126b2c122dd1017121c03fa0f69b.png" alt="Toggle 893349bafcc528f8346c51dc3420151d67b0126b2c122dd1017121c03fa0f69b" /></a>
+      </th>
+    </tr>
+    <tr class="screening_toggle">
+      <th colspan="4" rowspan="2" class="c0">&nbsp;</th>
+      <th colspan="5" rowspan="1" class="c1">Experimental screening</th>
+      <th colspan="1" rowspan="3" class="c2">Non-experimental screening</th>
+      <th rowspan="3" class="c3">Reference</th>
+    </tr>
+    <tr class="screening_toggle">
+      <th colspan="2" class="c1">TRP channel construct</th>
+      <th colspan="3" class="c1">Interactor source</th>
+    </tr>
+    <tr class="screening_toggle">
+      <th class="c0">TRP channel</th>
+        <th class="c0"></th>
+      <th class="c0">Interactor</th>
+      <th class="c0">Method</th>
+      <th class="c1">Species</th>
+      <th class="c1">Region</th>
+      <th class="c1">Species</th>
+      <th class="c1">Organ/tissue</th>
+      <th class="c1">Sample type</th>
+    </tr>
+  </thead>
+  <tbody class="screening_toggle">
+      <tr>
+        <td class="c0">TRPC1</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC1&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Inference</td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c2">Prediction</td>
+        <td class="c3"><a title="J Biol Chem. 2004 Aug 13;279(33):34521-9. Epub 2004 Jun 15., Association of immunophilins with mammalian TRPC channels." href="/references/15199065">15199065</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPC4</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC4&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Inference</td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c2">Prediction</td>
+        <td class="c3"><a title="J Biol Chem. 2004 Aug 13;279(33):34521-9. Epub 2004 Jun 15., Association of immunophilins with mammalian TRPC channels." href="/references/15199065">15199065</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPC5</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC5&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Inference</td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c2">Prediction</td>
+        <td class="c3"><a title="J Biol Chem. 2004 Aug 13;279(33):34521-9. Epub 2004 Jun 15., Association of immunophilins with mammalian TRPC channels." href="/references/15199065">15199065</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPV5</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPV5&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Inference</td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c1"></td>
+        <td class="c2">Prediction</td>
+        <td class="c3"><a title="Am J Physiol Renal Physiol. 2006 May;290(5):F1253-9. Epub 2005 Dec 13., The immunophilin FKBP52 inhibits the activity of the epithelial Ca2+ channel TRPV5." href="/references/16352746">16352746</a></td>
+      </tr>
+  </tbody>
+</table>
+<div style="color:gray;margin:0;font-size:8pt;" class="click_icon_help">
+  (<img style="vertical-align:bottom;" src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" />: 
+  click the arrow icon to show interactions only between the corresponding TRP channel and the interactor)
+</div>
+
+
+  </div>
+  <div style="margin-top:15px">
+    <a name="invitro"></a>
+<table width="100%" class="navi">
+  <tr>
+    <td align="left" style="font-family:Verdana;font-size:9px;">
+      <a class="s_navi" href="#screening"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Screening</a>
+      <a class="s_navi" href="#invitro"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Validation: <i>In vitro</i> validation</a>
+      <a class="s_navi" href="#invivo"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Validation: <i>In vivo</i> validation</a>
+      <img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Characterization
+      <a class="s_navi" href="#function"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Functional consequence</a>
+    </td>
+    <td align="right">
+      <a href="#" onclick="window.scroll(0,0); return false;" class="s_navi"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> top</a>
+    </td>
+  </tr>
+</table>
+
+<table width="100%" class="tab">
+  <thead>
+    <tr>
+      <th colspan="11" class="title">Validation: <font color="white"><i>In vitro</i> validation
+      </font>
+        <a href="#" onclick="$('.in_vitro_toggle').toggle(); return false;" title="show / hide the content of this section"><img src="/assets/toggle-893349bafcc528f8346c51dc3420151d67b0126b2c122dd1017121c03fa0f69b.png" alt="Toggle 893349bafcc528f8346c51dc3420151d67b0126b2c122dd1017121c03fa0f69b" /></a>
+      </th>
+    </tr>
+    <tr class="in_vitro_toggle">
+      <th rowspan="2" colspan="4" class="c0">&nbsp;</th>
+      <th colspan="6" class="c1">Assay with recombinant proteins</th>
+      <th rowspan="3" class="c2">Reference</th>
+    </tr>
+    <tr class="in_vitro_toggle">
+      <th colspan="3" class="c1">TRP channel construct</th>
+      <th colspan="3" class="c1">Interactor construct</th>
+    </tr>
+    <tr class="in_vitro_toggle">
+      <th class="c0">TRP channel</th>
+        <th class="c0"></th>
+      <th class="c0">Interactor</th>
+      <th class="c0">Method</th>
+      <th class="c1">Species</th>
+      <th class="c1">Region</th>
+      <th class="c1">Expression system</th>
+      <th class="c1">Species</th>
+      <th class="c1">Region</th>
+      <th class="c1">Expression system</th>
+    </tr>
+  </thead>
+  <tbody class="in_vitro_toggle">
+      <tr>
+        <td class="c0">TRPC1</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC1&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunoprecipitation</td>
+        <td class="c1">Human</td>
+        <td class="c1">Full-length</td>
+        <td class="c1">Sf9 lysates</td>
+        <td class="c1">Human</td>
+        <td class="c1">Full-length</td>
+        <td class="c1">Sf9 lysates</td>
+        <td class="c2"><a title="J Biol Chem. 2004 Aug 13;279(33):34521-9. Epub 2004 Jun 15., Association of immunophilins with mammalian TRPC channels." href="/references/15199065">15199065</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPC1</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC1&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Fusion protein-pull down assay</td>
+        <td class="c1">Human</td>
+        <td class="c1">1-316</td>
+        <td class="c1">HEK293 lysates</td>
+        <td class="c1">Human</td>
+        <td class="c1">Full-length</td>
+        <td class="c1">E. coli</td>
+        <td class="c2"><a title="Neuron. 2009 Nov 25;64(4):471-83. doi: 10.1016/j.neuron.2009.09.025., Peptidyl-prolyl isomerase FKBP52 controls chemotropic guidance of neuronal growth cones via regulation of TRPC1 channel opening." href="/references/19945390">19945390</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPC4</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC4&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunoprecipitation</td>
+        <td class="c1">Bovine</td>
+        <td class="c1">Full-length</td>
+        <td class="c1">Sf9 lysates</td>
+        <td class="c1">Human</td>
+        <td class="c1">Full-length</td>
+        <td class="c1">Sf9 lysates</td>
+        <td class="c2"><a title="J Biol Chem. 2004 Aug 13;279(33):34521-9. Epub 2004 Jun 15., Association of immunophilins with mammalian TRPC channels." href="/references/15199065">15199065</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPC5</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC5&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunoprecipitation</td>
+        <td class="c1">Mouse</td>
+        <td class="c1">Full-length</td>
+        <td class="c1">Sf9 lysates</td>
+        <td class="c1">Human</td>
+        <td class="c1">Full-length</td>
+        <td class="c1">Sf9 lysates</td>
+        <td class="c2"><a title="J Biol Chem. 2004 Aug 13;279(33):34521-9. Epub 2004 Jun 15., Association of immunophilins with mammalian TRPC channels." href="/references/15199065">15199065</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPV5</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPV5&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Fusion protein-pull down assay</td>
+        <td class="c1">Mouse</td>
+        <td class="c1">Full-length</td>
+        <td class="c1">In vitro translation</td>
+        <td class="c1">Mouse</td>
+        <td class="c1">Full-length</td>
+        <td class="c1">E. coli</td>
+        <td class="c2"><a title="Am J Physiol Renal Physiol. 2006 May;290(5):F1253-9. Epub 2005 Dec 13., The immunophilin FKBP52 inhibits the activity of the epithelial Ca2+ channel TRPV5." href="/references/16352746">16352746</a></td>
+      </tr>
+  </tbody>
+</table>
+<div style="color:gray;margin:0;font-size:8pt;" class="click_icon_help">
+  (<img style="vertical-align:bottom;" src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" />: 
+  click the arrow icon to show interactions only between the corresponding TRP channel and the interactor)
+</div>
+
+
+  </div>
+  <div style="margin-top:15px">
+    <a name="invivo"></a>
+<table width="100%" class="navi">
+  <tr>
+    <td align="left" style="font-family:Verdana;font-size:9px;">
+      <a class="s_navi" href="#screening"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Screening</a>
+      <a class="s_navi" href="#invitro"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Validation: <i>In vitro</i> validation</a>
+      <a class="s_navi" href="#invivo"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Validation: <i>In vivo</i> validation</a>
+      <img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Characterization
+      <a class="s_navi" href="#function"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Functional consequence</a>
+    </td>
+    <td align="right">
+      <a href="#" onclick="window.scroll(0,0); return false;" class="s_navi"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> top</a>
+    </td>
+  </tr>
+</table>
+
+<table width="100%" class="tab">
+  <thead>
+    <tr>
+      <th colspan="11" class="title">Validation: <font color="white"><i>In vivo</i> validation</font>
+        <a href="#" onclick="$('.in_vivo_toggle').toggle(); return false;" title="show / hide the content of this section"><img src="/assets/toggle-893349bafcc528f8346c51dc3420151d67b0126b2c122dd1017121c03fa0f69b.png" alt="Toggle 893349bafcc528f8346c51dc3420151d67b0126b2c122dd1017121c03fa0f69b" /></a>
+      </th>
+    </tr>
+    <tr class="in_vivo_toggle">
+      <th colspan="4" rowspan="2" class="c0">&nbsp;</th>
+      <th colspan="1" class="c1">Assay with endogenous proteins</th>
+      <th colspan="5" class="c2">Assay with overexpressed proteins</th>
+      <th rowspan="3" class="c3">Reference</th>
+    </tr>
+    <tr class="in_vivo_toggle">
+      <th rowspan="2" class="c1">Cell or tissue</th>
+      <th rowspan="2" class="c2">Cell or tissue</th>
+      <th colspan="2" class="c2">TRP channel construct</th>
+      <th colspan="2" class="c2">Interactor construct</th>
+    </tr>
+    <tr class="in_vivo_toggle">
+      <th rowspan="1" class="c0">TRP channel</th>
+        <th class="c0"></th>
+      <th rowspan="1" class="c0">Interactor</th>
+      <th rowspan="1" class="c0">Method</th>
+      <th class="c2">Species</th>
+      <th class="c2">Region</th>
+      <th class="c2">Species</th>
+      <th class="c2">Region</th>
+    </tr>
+  </thead>
+  <tbody class="in_vivo_toggle">
+      <tr>
+        <td class="c0">TRPC1</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC1&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunoprecipitation</td>
+        <td class="c1">Rat cerebral cortex</td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c3"><a title="J Biol Chem. 2004 Aug 13;279(33):34521-9. Epub 2004 Jun 15., Association of immunophilins with mammalian TRPC channels." href="/references/15199065">15199065</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPC1</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC1&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunoprecipitation</td>
+        <td class="c1">Human platelets</td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c3"><a title="Biochim Biophys Acta. 2013 Mar;1833(3):652-62. doi: 10.1016/j.bbamcr.2012.11.029. Epub 2012 Dec 8., FKBP52 is involved in the regulation of SOCE channels in the human platelets and MEG 01 cells." href="/references/23228564">23228564</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPC1</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC1&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunoprecipitation</td>
+        <td class="c1">MEG-01</td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c3"><a title="Biochim Biophys Acta. 2013 Mar;1833(3):652-62. doi: 10.1016/j.bbamcr.2012.11.029. Epub 2012 Dec 8., FKBP52 is involved in the regulation of SOCE channels in the human platelets and MEG 01 cells." href="/references/23228564">23228564</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPC1</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC1&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunoprecipitation</td>
+        <td class="c1"></td>
+        <td class="c2">HEK293</td>
+        <td class="c2">Human</td>
+        <td class="c2">Full-length</td>
+        <td class="c2">Not used</td>
+        <td class="c2"></td>
+        <td class="c3"><a title="Neuron. 2009 Nov 25;64(4):471-83. doi: 10.1016/j.neuron.2009.09.025., Peptidyl-prolyl isomerase FKBP52 controls chemotropic guidance of neuronal growth cones via regulation of TRPC1 channel opening." href="/references/19945390">19945390</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPC4</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC4&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunoprecipitation</td>
+        <td class="c1">Rat cerebral cortex</td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c3"><a title="J Biol Chem. 2004 Aug 13;279(33):34521-9. Epub 2004 Jun 15., Association of immunophilins with mammalian TRPC channels." href="/references/15199065">15199065</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPC4</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC4&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunoprecipitation</td>
+        <td class="c1">Rat pumonary aortic endothelial cell</td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c3"><a title="Cell Calcium. 2013 Apr;53(4):275-85. doi: 10.1016/j.ceca.2012.12.008. Epub 2013 Feb 1., Regulation of store-operated calcium entry by FK506-binding immunophilins." href="/references/23375350">23375350</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPC5</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC5&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunoprecipitation</td>
+        <td class="c1">Rat cerebral cortex</td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c3"><a title="J Biol Chem. 2004 Aug 13;279(33):34521-9. Epub 2004 Jun 15., Association of immunophilins with mammalian TRPC channels." href="/references/15199065">15199065</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPV5</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPV5&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunofluorescence staining</td>
+        <td class="c1">Mouse kidney section</td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c2"></td>
+        <td class="c3"><a title="Am J Physiol Renal Physiol. 2006 May;290(5):F1253-9. Epub 2005 Dec 13., The immunophilin FKBP52 inhibits the activity of the epithelial Ca2+ channel TRPV5." href="/references/16352746">16352746</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPV5</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPV5&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Co-immunoprecipitation</td>
+        <td class="c1"></td>
+        <td class="c2">HEK293</td>
+        <td class="c2">Mouse</td>
+        <td class="c2">Full-length</td>
+        <td class="c2">Not used</td>
+        <td class="c2"></td>
+        <td class="c3"><a title="Am J Physiol Renal Physiol. 2006 May;290(5):F1253-9. Epub 2005 Dec 13., The immunophilin FKBP52 inhibits the activity of the epithelial Ca2+ channel TRPV5." href="/references/16352746">16352746</a></td>
+      </tr>
+  </tbody>
+</table>
+<div style="color:gray;margin:0;font-size:8pt;" class="click_icon_help">
+  (<img style="vertical-align:bottom;" src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" />: 
+  click the arrow icon to show interactions only between the corresponding TRP channel and the interactor)
+</div>
+
+
+  </div>
+  <div style="margin-top:15px">
+    
+  </div>
+  <div style="margin-top:15px">
+    <a name="function"></a>
+<table width="100%" class="navi">
+  <tr>
+    <td align="left" style="font-family:Verdana;font-size:9px;">
+      <a class="s_navi" href="#screening"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Screening</a>
+      <a class="s_navi" href="#invitro"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Validation: <i>In vitro</i> validation</a>
+      <a class="s_navi" href="#invivo"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Validation: <i>In vivo</i> validation</a>
+      <img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Characterization
+      <a class="s_navi" href="#function"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> Functional consequence</a>
+    </td>
+    <td align="right">
+      <a href="#" onclick="window.scroll(0,0); return false;" class="s_navi"><img src="/assets/arrow2-1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b.gif" alt="Arrow2 1fb2b8a5ad55723bad55961567d092af30310a7cf44ded6f695fc2aa4753ec2b" /> top</a>
+    </td>
+  </tr>
+</table>
+
+<table width="100%" class="tab">
+  <thead>
+    <tr>
+      <th colspan="13" class="title">Functional consequence
+        <a href="#" onclick="$('.func_toggle').toggle(); return false;" title="show / hide the content of this section"><img src="/assets/toggle-893349bafcc528f8346c51dc3420151d67b0126b2c122dd1017121c03fa0f69b.png" alt="Toggle 893349bafcc528f8346c51dc3420151d67b0126b2c122dd1017121c03fa0f69b" /></a>
+      </th>
+    </tr>
+    <tr class="func_toggle">
+      <th class="c0">TRP channel</th>
+        <th class="c0"></th>
+      <th class="c0">Interactor</th>
+      <th class="c0">Method</th>
+      <th class="c1">Post-translational modification</th>
+      <th class="c2">Subcellular trafficking</th>
+      <th class="c3">Activity</th>
+      <th class="c4">Reference</th>
+    </tr>
+  </thead>
+  <tbody class="func_toggle">
+      <tr>
+        <td class="c0">TRPC1</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPC1&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Patch clamp</td>
+        <td class="c1"></td>
+        <td class="c2"></td>
+        <td class="c3">Inhibition</td>
+        <td class="c4"><a title="Neuron. 2009 Nov 25;64(4):471-83. doi: 10.1016/j.neuron.2009.09.025., Peptidyl-prolyl isomerase FKBP52 controls chemotropic guidance of neuronal growth cones via regulation of TRPC1 channel opening." href="/references/19945390">19945390</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPV5</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPV5&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Calcium measurement</td>
+        <td class="c1"></td>
+        <td class="c2"></td>
+        <td class="c3">Inhibition</td>
+        <td class="c4"><a title="Am J Physiol Renal Physiol. 2006 May;290(5):F1253-9. Epub 2005 Dec 13., The immunophilin FKBP52 inhibits the activity of the epithelial Ca2+ channel TRPV5." href="/references/16352746">16352746</a></td>
+      </tr>
+      <tr>
+        <td class="c0">TRPV5</td>
+          <td class="c0">
+            <a title="see interaction" href="/interactions/show?trp=TRPV5&amp;interactor=FKBP52%2FFKBP4&amp;type=Interactor"><img src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" /></a>
+          </td>
+        <td class="c0" title="Peptidyl-prolyl cis-trans isomerase FKBP4">FKBP52/FKBP4</td>
+        <td class="c0">Patch clamp</td>
+        <td class="c1"></td>
+        <td class="c2"></td>
+        <td class="c3">Inhibition</td>
+        <td class="c4"><a title="Am J Physiol Renal Physiol. 2006 May;290(5):F1253-9. Epub 2005 Dec 13., The immunophilin FKBP52 inhibits the activity of the epithelial Ca2+ channel TRPV5." href="/references/16352746">16352746</a></td>
+      </tr>
+  </tbody>
+</table>
+<div style="color:gray;margin:0;font-size:8pt;" class="click_icon_help">
+  (<img style="vertical-align:bottom;" src="/assets/link-2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4.gif" alt="Link 2bd4d11adb659cddf58197a94e201f0a44c55d8d7cb427c624971b42e122c0a4" />: 
+  click the arrow icon to show interactions only between the corresponding TRP channel and the interactor)
+</div>
+
+
+  </div>
+</div>
+
+<script>
+  $(function() {
+    $("#info_tab").tabs();
+  });
+</script>
+
+           </div>
+
+         </div>
+       </div>
+       <div id="footer-container">
+         <div id="footer">
+           <b>TRIP Database</b>: http://www.trpchannel.org, 
+           operated since 5th June, 2010  (last updated on
+           21 April, 2017 UTC)
+           |
+           Contact us: <a href="mailto:jhjeon2@snu.ac.kr">jhjeon2@snu.ac.kr</a>
+           <br/>
+           Copyright ⓒ 2010 
+           Department of Physiology, 
+           Seoul National University College of Medicine 
+           &amp; 
+           Department of Computer Engineering, College of Engineering, 
+           Myongji University. 
+           <br/>
+           To cite TRIP Database, please reference following papers:
+           <ul>
+                <li><a target="_blank" href="http://nar.oxfordjournals.org/content/39/suppl_1/D356.full">Young-Cheul Shin, Soo-Yong Shin, Insuk So, Dongseop Kwon, and Ju-Hong Jeon. &quot;TRIP Database: a manually curated database of protein–protein interactions for mammalian TRP channels.&quot; Nucleic acids research 39, no. suppl 1 (2011): D356-D361.</a>
+                </li>
+                <li><a target="_blank" href="http://www.plosone.org/article/info%3Adoi%2F10.1371%2Fjournal.pone.0047165">Young-Cheul Shin, Soo-Yong Shin, Jung Nyeo Chun, Hyeon Sung Cho, Jin Muk Lim, Hong-Gee Kim, Insuk So, Dongseop Kwon, and Ju-Hong Jeon. &quot;TRIP Database 2.0: A Manually Curated Information Hub for Accessing TRP Channel Interaction Network.&quot; PloS one 7, no. 10 (2012): e47165.</a>
+                </li>
+                <li><a target="_blank" href="http://link.springer.com/article/10.1007%2Fs00424-013-1292-2">Jung Nyeo Chun, Jin Muk Lim, Young Kang, Eung Hee Kim, Young-Cheul Shin, Hong-Gee Kim, Dayk Jang, Dongseop Kwon, Soo-Yong Shin, Insuk So, Ju-Hong Jeon. &quot;A network perspective on unraveling the role of TRP channels in biology and disease.&quot;Pflügers Archiv - European Journal of Physiology February 2014, Volume 466, Issue 2, pp 173-182</a>
+                </li>
+            </ul>
+           Disclaimer:
+           TRIP Database staffs have endeavored to ensure the scientific accuracy of all entries to the database, 
+           but cannot take any responsibility for errors. <br/>
+           &nbsp; &nbsp; &nbsp;  &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;
+
+           To confirm the accuracy of any database entry, users must refer to original publications cited.
+         </div>
+       </div>
+<div id="dialog-comment" title="Comment/Suggest">
+  <form accept-charset="UTF-8" action="/comments" class="new_comment" id="new_comment" method="post">
+    <fieldset>
+      <label for="name">Name</label>
+      <input type="text" name="comment[name]" id="comment_name" class="text ui-widget-content ui-corner-all" />
+      <label for="email">Email</label>
+      <input type="text" name="comment[email]" id="comment_email" value="" class="text ui-widget-content ui-corner-all" />
+      <label for="email">Title<span class="required">*</span></label>
+      <input type="text" name="comment[title]" id="comment_title" value="" class="text ui-widget-content ui-corner-all" />
+      <label for="comment">Comment<span class="required">*</span></label>
+      <textarea class="text ui-widget-content ui-corner-all" name="comment[body]" rows="5" id="comment_body"></textarea>
+      <input type="hidden" value="http://www.trpchannel.org/proteins/show?id=FKBP52%2FFKBP4" readonly="true" class="text ui-widget-content ui-corner-all" name="comment[url]">
+      TRP 
+      <select name="comment[trp]">
+        <option value="">---</option>
+          <option value="TRPC1" >TRPC1</option>
+          <option value="TRPC2" >TRPC2</option>
+          <option value="TRPC3" >TRPC3</option>
+          <option value="TRPC4" >TRPC4</option>
+          <option value="TRPC5" >TRPC5</option>
+          <option value="TRPC6" >TRPC6</option>
+          <option value="TRPC7" >TRPC7</option>
+          <option value="TRPV1" >TRPV1</option>
+          <option value="TRPV2" >TRPV2</option>
+          <option value="TRPV3" >TRPV3</option>
+          <option value="TRPV4" >TRPV4</option>
+          <option value="TRPV5" >TRPV5</option>
+          <option value="TRPV6" >TRPV6</option>
+          <option value="TRPM1" >TRPM1</option>
+          <option value="TRPM2" >TRPM2</option>
+          <option value="TRPM3" >TRPM3</option>
+          <option value="TRPM4" >TRPM4</option>
+          <option value="TRPM5" >TRPM5</option>
+          <option value="TRPM6" >TRPM6</option>
+          <option value="TRPM7" >TRPM7</option>
+          <option value="TRPM8" >TRPM8</option>
+          <option value="TRPML1" >TRPML1</option>
+          <option value="TRPML2" >TRPML2</option>
+          <option value="TRPML3" >TRPML3</option>
+          <option value="TRPP1" >TRPP1</option>
+          <option value="TRPP2" >TRPP2</option>
+          <option value="TRPP3" >TRPP3</option>
+          <option value="TRPA1" >TRPA1</option>
+      </select>
+      /
+      Interactor
+      <select name="comment[interactor]">
+        <option value="">---</option>
+          <option value="14-3-3 protein Ƣ/ơ" >14-3-3 protein Ƣ/ơ</option>
+          <option value="14-3-3 protein ƥ" >14-3-3 protein ƥ</option>
+          <option value="14-3-3 protein ƨ" >14-3-3 protein ƨ</option>
+          <option value="14-3-3ƣ" >14-3-3ƣ</option>
+          <option value="5-HT1B" >5-HT1B</option>
+          <option value="80K-H" >80K-H</option>
+          <option value="ABHD12" >ABHD12</option>
+          <option value="ACBD3" >ACBD3</option>
+          <option value="Aconitase" >Aconitase</option>
+          <option value="Actin" >Actin</option>
+          <option value="ADT1" >ADT1</option>
+          <option value="AKAP5/AKAP150" >AKAP5/AKAP150</option>
+          <option value="Akt" >Akt</option>
+          <option value="ALDOC" >ALDOC</option>
+          <option value="ALG-2/PDCD6" >ALG-2/PDCD6</option>
+          <option value="AMPKơ2" >AMPKơ2</option>
+          <option value="Annexin 1" >Annexin 1</option>
+          <option value="Annexin 5" >Annexin 5</option>
+          <option value="AP2A2" >AP2A2</option>
+          <option value="AP2B1" >AP2B1</option>
+          <option value="Apolipoprotein O" >Apolipoprotein O</option>
+          <option value="AQP-2" >AQP-2</option>
+          <option value="AQP-4" >AQP-4</option>
+          <option value="AQP-5" >AQP-5</option>
+          <option value="AT1aR" >AT1aR</option>
+          <option value="ATP synthase Ƣ" >ATP synthase Ƣ</option>
+          <option value="ATP13A1" >ATP13A1</option>
+          <option value="BAG2" >BAG2</option>
+          <option value="Basp1" >Basp1</option>
+          <option value="Bkca" >Bkca</option>
+          <option value="BMPR-2" >BMPR-2</option>
+          <option value="BRI3BP" >BRI3BP</option>
+          <option value="BSPRY" >BSPRY</option>
+          <option value="CaBP1" >CaBP1</option>
+          <option value="Calbindin-D28K" >Calbindin-D28K</option>
+          <option value="Calcineurin" >Calcineurin</option>
+          <option value="Calmodulin" >Calmodulin</option>
+          <option value="Calnexin" >Calnexin</option>
+          <option value="Calreticulin" >Calreticulin</option>
+          <option value="CaMKII" >CaMKII</option>
+          <option value="CaMKIIƢ" >CaMKIIƢ</option>
+          <option value="CAND1" >CAND1</option>
+          <option value="Caskin-1" >Caskin-1</option>
+          <option value="Caspase-1" >Caspase-1</option>
+          <option value="Caspase-4/Caspase-11" >Caspase-4/Caspase-11</option>
+          <option value="CaSR" >CaSR</option>
+          <option value="Catenin-ơ2" >Catenin-ơ2</option>
+          <option value="Catenin-Ƥ2" >Catenin-Ƥ2</option>
+          <option value="Cav1.2" >Cav1.2</option>
+          <option value="Caveolin-1" >Caveolin-1</option>
+          <option value="Caveolin-3" >Caveolin-3</option>
+          <option value="CB1" >CB1</option>
+          <option value="Cbl" >Cbl</option>
+          <option value="CD2AP" >CD2AP</option>
+          <option value="Cdc42" >Cdc42</option>
+          <option value="CDK12" >CDK12</option>
+          <option value="CDK5" >CDK5</option>
+          <option value="CDKAL1" >CDKAL1</option>
+          <option value="CHERP" >CHERP</option>
+          <option value="CISD2" >CISD2</option>
+          <option value="Citrate synthase" >Citrate synthase</option>
+          <option value="CK1" >CK1</option>
+          <option value="Clathrin-H1" >Clathrin-H1</option>
+          <option value="Contactin-1" >Contactin-1</option>
+          <option value="Cortactin" >Cortactin</option>
+          <option value="Cullin-1" >Cullin-1</option>
+          <option value="Cyclophilin B" >Cyclophilin B</option>
+          <option value="CYLD" >CYLD</option>
+          <option value="Cytochrome c oxidase 2" >Cytochrome c oxidase 2</option>
+          <option value="Cytochrome c oxidase 5A" >Cytochrome c oxidase 5A</option>
+          <option value="D2R" >D2R</option>
+          <option value="DAP-150" >DAP-150</option>
+          <option value="DAZAP2" >DAZAP2</option>
+          <option value="DHRS7B" >DHRS7B</option>
+          <option value="DIAP1/DRF1" >DIAP1/DRF1</option>
+          <option value="Drebrin" >Drebrin</option>
+          <option value="DRP-2" >DRP-2</option>
+          <option value="Dynamin-1" >Dynamin-1</option>
+          <option value="Dynamin-1 heavy chain 1" >Dynamin-1 heavy chain 1</option>
+          <option value="Dynamin-1L" >Dynamin-1L</option>
+          <option value="Dystrophin" >Dystrophin</option>
+          <option value="E-cadherin" >E-cadherin</option>
+          <option value="EF2" >EF2</option>
+          <option value="Eferin/Rab11-FIP3" >Eferin/Rab11-FIP3</option>
+          <option value="EFHC1" >EFHC1</option>
+          <option value="EGFR" >EGFR</option>
+          <option value="eIF2ơ" >eIF2ơ</option>
+          <option value="Enkurin" >Enkurin</option>
+          <option value="eNOS" >eNOS</option>
+          <option value="EPHA2" >EPHA2</option>
+          <option value="Epo-R" >Epo-R</option>
+          <option value="ERIGC3" >ERIGC3</option>
+          <option value="ERLIN2" >ERLIN2</option>
+          <option value="EWSR1" >EWSR1</option>
+          <option value="Ezrin" >Ezrin</option>
+          <option value="FAF1" >FAF1</option>
+          <option value="FAF2" >FAF2</option>
+          <option value="FGFR-1" >FGFR-1</option>
+          <option value="Fibronectin" >Fibronectin</option>
+          <option value="Filamin-A" >Filamin-A</option>
+          <option value="FKBP12" >FKBP12</option>
+          <option value="FKBP5" >FKBP5</option>
+          <option value="FKBP52/FKBP4" >FKBP52/FKBP4</option>
+          <option value="Fumarase" >Fumarase</option>
+          <option value="FYN" >FYN</option>
+          <option value="GABARAP" >GABARAP</option>
+          <option value="Galectin-1" >Galectin-1</option>
+          <option value="GATE16" >GATE16</option>
+          <option value="GC-A" >GC-A</option>
+          <option value="GCN5" >GCN5</option>
+          <option value="GJA1" >GJA1</option>
+          <option value="Glucose 6 phosphatase" >Glucose 6 phosphatase</option>
+          <option value="GLUD1" >GLUD1</option>
+          <option value="GLUT-4" >GLUT-4</option>
+          <option value="Glycogen phosphorylase" >Glycogen phosphorylase</option>
+          <option value="Gơi2" >Gơi2</option>
+          <option value="Gơi3" >Gơi3</option>
+          <option value="Gơq" >Gơq</option>
+          <option value="Gơq/11" >Gơq/11</option>
+          <option value="GPR179" >GPR179</option>
+          <option value="Gz-ơ" >Gz-ơ</option>
+          <option value="ƣ-actin" >ƣ-actin</option>
+          <option value="ƣ-adaptin" >ƣ-adaptin</option>
+          <option value="Ƣ-arrestin 1" >Ƣ-arrestin 1</option>
+          <option value="Ƣ-arrestin 2" >Ƣ-arrestin 2</option>
+          <option value="Ƣ-catenin" >Ƣ-catenin</option>
+          <option value="Ƣ-Trcp1" >Ƣ-Trcp1</option>
+          <option value="Ƣ-Trcp2" >Ƣ-Trcp2</option>
+          <option value="Ƣ-tubulin-3" >Ƣ-tubulin-3</option>
+          <option value="Ƣ-tubulin-5" >Ƣ-tubulin-5</option>
+          <option value="ƣENaC" >ƣENaC</option>
+          <option value="ƢII-spectrin" >ƢII-spectrin</option>
+          <option value="ƢIII-spectrin" >ƢIII-spectrin</option>
+          <option value="ƢV-spectrin" >ƢV-spectrin</option>
+          <option value="H2-D1" >H2-D1</option>
+          <option value="H2-K1" >H2-K1</option>
+          <option value="HAX-1" >HAX-1</option>
+          <option value="HCK" >HCK</option>
+          <option value="HDAC6" >HDAC6</option>
+          <option value="HERP" >HERP</option>
+          <option value="Homer" >Homer</option>
+          <option value="Homer-1" >Homer-1</option>
+          <option value="Homer-2" >Homer-2</option>
+          <option value="Homer-3" >Homer-3</option>
+          <option value="HOP/STI1" >HOP/STI1</option>
+          <option value="HSC70" >HSC70</option>
+          <option value="HSP40/DNAJA1" >HSP40/DNAJA1</option>
+          <option value="HSP40/DNAJB1" >HSP40/DNAJB1</option>
+          <option value="HSP40/DNAJC14" >HSP40/DNAJC14</option>
+          <option value="HSP90" >HSP90</option>
+          <option value="I-MFA" >I-MFA</option>
+          <option value="ID2" >ID2</option>
+          <option value="Idh3B" >Idh3B</option>
+          <option value="IFIT1" >IFIT1</option>
+          <option value="IFT57" >IFT57</option>
+          <option value="IP3R1" >IP3R1</option>
+          <option value="IP3R2" >IP3R2</option>
+          <option value="IP3R3" >IP3R3</option>
+          <option value="ITCH/AIP4" >ITCH/AIP4</option>
+          <option value="ITM2C" >ITM2C</option>
+          <option value="JMJD2C" >JMJD2C</option>
+          <option value="Junctate" >Junctate</option>
+          <option value="Junctophilin-2" >Junctophilin-2</option>
+          <option value="KCNQ2" >KCNQ2</option>
+          <option value="KCNQ3" >KCNQ3</option>
+          <option value="KIF13B" >KIF13B</option>
+          <option value="KIF2A" >KIF2A</option>
+          <option value="KIF3A" >KIF3A</option>
+          <option value="KIF3B" >KIF3B</option>
+          <option value="KIM1/TIM1" >KIM1/TIM1</option>
+          <option value="Klotho" >Klotho</option>
+          <option value="KPNƢ1" >KPNƢ1</option>
+          <option value="KRAS" >KRAS</option>
+          <option value="KvƢ2" >KvƢ2</option>
+          <option value="LAP2/TMPO" >LAP2/TMPO</option>
+          <option value="LAPTM4a" >LAPTM4a</option>
+          <option value="LAPTM4b" >LAPTM4b</option>
+          <option value="LAPTM5" >LAPTM5</option>
+          <option value="LCK" >LCK</option>
+          <option value="LETM1" >LETM1</option>
+          <option value="LETMD1" >LETMD1</option>
+          <option value="LYN" >LYN</option>
+          <option value="M1 mAChR" >M1 mAChR</option>
+          <option value="MAP2" >MAP2</option>
+          <option value="MAP7" >MAP7</option>
+          <option value="MARCKS" >MARCKS</option>
+          <option value="MDH1" >MDH1</option>
+          <option value="MDH2" >MDH2</option>
+          <option value="MG29" >MG29</option>
+          <option value="MGLUR1" >MGLUR1</option>
+          <option value="MGST1" >MGST1</option>
+          <option value="MxA" >MxA</option>
+          <option value="Myosin-10" >Myosin-10</option>
+          <option value="Myosin-5a" >Myosin-5a</option>
+          <option value="Myosin-HIIA" >Myosin-HIIA</option>
+          <option value="NCAM1" >NCAM1</option>
+          <option value="NCS-1" >NCS-1</option>
+          <option value="NCX1" >NCX1</option>
+          <option value="NDKA" >NDKA</option>
+          <option value="NEK8" >NEK8</option>
+          <option value="Nephrin" >Nephrin</option>
+          <option value="Neurabin-1" >Neurabin-1</option>
+          <option value="Neurabin-2" >Neurabin-2</option>
+          <option value="Neurofascin" >Neurofascin</option>
+          <option value="Neuromodulin" >Neuromodulin</option>
+          <option value="Neuronatin" >Neuronatin</option>
+          <option value="NHERF1" >NHERF1</option>
+          <option value="NHERF2" >NHERF2</option>
+          <option value="NHERF4" >NHERF4</option>
+          <option value="Nipsnap1" >Nipsnap1</option>
+          <option value="NKAơ1" >NKAơ1</option>
+          <option value="NKAơ2" >NKAơ2</option>
+          <option value="NKAơ3" >NKAơ3</option>
+          <option value="NKX2.2" >NKX2.2</option>
+          <option value="NMDAR1" >NMDAR1</option>
+          <option value="NMDAR2B" >NMDAR2B</option>
+          <option value="NOMO1" >NOMO1</option>
+          <option value="NovelProtein/NP9" >NovelProtein/NP9</option>
+          <option value="Numb" >Numb</option>
+          <option value="Nup155" >Nup155</option>
+          <option value="Nyctalopin" >Nyctalopin</option>
+          <option value="ơ-actinin" >ơ-actinin</option>
+          <option value="ơ-actinin-1" >ơ-actinin-1</option>
+          <option value="ơ-actinin-2" >ơ-actinin-2</option>
+          <option value="ơ-actinin-4" >ơ-actinin-4</option>
+          <option value="ơ-tubulin-1A" >ơ-tubulin-1A</option>
+          <option value="ơ-tubulin-1B" >ơ-tubulin-1B</option>
+          <option value="ơ1-syntrophin" >ơ1-syntrophin</option>
+          <option value="ơ2-actin" >ơ2-actin</option>
+          <option value="ơ2-integrin" >ơ2-integrin</option>
+          <option value="ơENaC" >ơENaC</option>
+          <option value="OGDH" >OGDH</option>
+          <option value="ơII-spectrin" >ơII-spectrin</option>
+          <option value="OPRM1" >OPRM1</option>
+          <option value="Orai1" >Orai1</option>
+          <option value="Orai2" >Orai2</option>
+          <option value="Orai3" >Orai3</option>
+          <option value="ORP-150" >ORP-150</option>
+          <option value="OS-9" >OS-9</option>
+          <option value="ơSNAP" >ơSNAP</option>
+          <option value="P2RX3" >P2RX3</option>
+          <option value="p97/VCP" >p97/VCP</option>
+          <option value="PACS-1" >PACS-1</option>
+          <option value="PACS-2" >PACS-2</option>
+          <option value="Pacsin1" >Pacsin1</option>
+          <option value="Pacsin2" >Pacsin2</option>
+          <option value="Pacsin3" >Pacsin3</option>
+          <option value="Paraoxonase 3" >Paraoxonase 3</option>
+          <option value="PDE3A" >PDE3A</option>
+          <option value="PDIA3/GRP58" >PDIA3/GRP58</option>
+          <option value="PEA-15" >PEA-15</option>
+          <option value="PEBP1" >PEBP1</option>
+          <option value="Pericentrin" >Pericentrin</option>
+          <option value="PERK" >PERK</option>
+          <option value="Peroxisomal membrane protein 2" >Peroxisomal membrane protein 2</option>
+          <option value="PEX10" >PEX10</option>
+          <option value="PEX16" >PEX16</option>
+          <option value="PGAM5" >PGAM5</option>
+          <option value="PGK1" >PGK1</option>
+          <option value="PI3K-p85Ƣ" >PI3K-p85Ƣ</option>
+          <option value="PI3K-p85ơ" >PI3K-p85ơ</option>
+          <option value="Piezo1" >Piezo1</option>
+          <option value="PIGEA-14/CBY1" >PIGEA-14/CBY1</option>
+          <option value="PIP5K1A" >PIP5K1A</option>
+          <option value="PIRT" >PIRT</option>
+          <option value="PKA" >PKA</option>
+          <option value="PKARIIơ" >PKARIIơ</option>
+          <option value="PKC" >PKC</option>
+          <option value="PKCƢ" >PKCƢ</option>
+          <option value="PKCơ" >PKCơ</option>
+          <option value="PKCƥ" >PKCƥ</option>
+          <option value="PKD1/Polycystin-1" >PKD1/Polycystin-1</option>
+          <option value="PKD1L1/Polycystin-1L1" >PKD1L1/Polycystin-1L1</option>
+          <option value="PKD1L3/Polycystin-1L3" >PKD1L3/Polycystin-1L3</option>
+          <option value="PKG1" >PKG1</option>
+          <option value="PKHD1/FPC" >PKHD1/FPC</option>
+          <option value="PLAGL1" >PLAGL1</option>
+          <option value="PLCƢ1" >PLCƢ1</option>
+          <option value="PLCƣ2" >PLCƣ2</option>
+          <option value="PLCƢ3" >PLCƢ3</option>
+          <option value="PLCƤ1" >PLCƤ1</option>
+          <option value="PMCA" >PMCA</option>
+          <option value="PMCA2" >PMCA2</option>
+          <option value="PMCA3" >PMCA3</option>
+          <option value="PMCA4" >PMCA4</option>
+          <option value="Podocin" >Podocin</option>
+          <option value="POLR2G" >POLR2G</option>
+          <option value="POLR3D" >POLR3D</option>
+          <option value="PPARơ" >PPARơ</option>
+          <option value="PRKD1/PKCƬ" >PRKD1/PKCƬ</option>
+          <option value="Protein 4.1" >Protein 4.1</option>
+          <option value="PSMD7" >PSMD7</option>
+          <option value="PTEN" >PTEN</option>
+          <option value="PTP1B" >PTP1B</option>
+          <option value="PTPL1" >PTPL1</option>
+          <option value="Pyruvate kinase M1/M2" >Pyruvate kinase M1/M2</option>
+          <option value="Rab11a" >Rab11a</option>
+          <option value="RAB12" >RAB12</option>
+          <option value="RAB14" >RAB14</option>
+          <option value="RAB18" >RAB18</option>
+          <option value="RAB21" >RAB21</option>
+          <option value="RAB26" >RAB26</option>
+          <option value="RAB7" >RAB7</option>
+          <option value="RAB8b" >RAB8b</option>
+          <option value="Rab9" >Rab9</option>
+          <option value="Rac1" >Rac1</option>
+          <option value="Rac2" >Rac2</option>
+          <option value="RACK1" >RACK1</option>
+          <option value="RAD50" >RAD50</option>
+          <option value="RANBP9" >RANBP9</option>
+          <option value="RAP1A" >RAP1A</option>
+          <option value="RAP1B" >RAP1B</option>
+          <option value="RCHY1/PIRH2" >RCHY1/PIRH2</option>
+          <option value="REA" >REA</option>
+          <option value="RFP/TRIM27" >RFP/TRIM27</option>
+          <option value="RGA/RAG1AP1" >RGA/RAG1AP1</option>
+          <option value="RGS2" >RGS2</option>
+          <option value="RhoA" >RhoA</option>
+          <option value="RhoG" >RhoG</option>
+          <option value="Ribophorin I" >Ribophorin I</option>
+          <option value="Ribophorin II" >Ribophorin II</option>
+          <option value="Ribosomal protein L9" >Ribosomal protein L9</option>
+          <option value="RNF24" >RNF24</option>
+          <option value="RP2" >RP2</option>
+          <option value="RPL12" >RPL12</option>
+          <option value="RPS27A" >RPS27A</option>
+          <option value="RTP1" >RTP1</option>
+          <option value="RTP4" >RTP4</option>
+          <option value="RyR" >RyR</option>
+          <option value="RyR1" >RyR1</option>
+          <option value="RyR2" >RyR2</option>
+          <option value="S100A10" >S100A10</option>
+          <option value="SEC13" >SEC13</option>
+          <option value="SEC22B" >SEC22B</option>
+          <option value="SEC31A" >SEC31A</option>
+          <option value="SEC61B" >SEC61B</option>
+          <option value="Secretogranin3" >Secretogranin3</option>
+          <option value="SERCA2" >SERCA2</option>
+          <option value="SERCA3" >SERCA3</option>
+          <option value="SESTD1" >SESTD1</option>
+          <option value="SGPL1" >SGPL1</option>
+          <option value="SGT" >SGT</option>
+          <option value="SHANK" >SHANK</option>
+          <option value="SKP1" >SKP1</option>
+          <option value="Slc1a2" >Slc1a2</option>
+          <option value="Slc1a3" >Slc1a3</option>
+          <option value="SLC35E1" >SLC35E1</option>
+          <option value="SMA3" >SMA3</option>
+          <option value="SNAP23" >SNAP23</option>
+          <option value="SNAP25" >SNAP25</option>
+          <option value="SNAP91" >SNAP91</option>
+          <option value="SNAPIN" >SNAPIN</option>
+          <option value="SNF8" >SNF8</option>
+          <option value="snRNP 70" >snRNP 70</option>
+          <option value="SOD2" >SOD2</option>
+          <option value="SRA-1" >SRA-1</option>
+          <option value="SRC" >SRC</option>
+          <option value="SRPRB" >SRPRB</option>
+          <option value="SSFA2" >SSFA2</option>
+          <option value="ST7" >ST7</option>
+          <option value="Stathmin1" >Stathmin1</option>
+          <option value="Stathmin2" >Stathmin2</option>
+          <option value="Stathmin3" >Stathmin3</option>
+          <option value="Stathmin4" >Stathmin4</option>
+          <option value="STIM1" >STIM1</option>
+          <option value="STIM2" >STIM2</option>
+          <option value="STOML1" >STOML1</option>
+          <option value="SUN3" >SUN3</option>
+          <option value="SUR1/ABCC8" >SUR1/ABCC8</option>
+          <option value="SV2A" >SV2A</option>
+          <option value="Synapsin1" >Synapsin1</option>
+          <option value="Synaptotagmin 1" >Synaptotagmin 1</option>
+          <option value="Synaptotagmin 4" >Synaptotagmin 4</option>
+          <option value="SYNE1" >SYNE1</option>
+          <option value="Syntaxin1a" >Syntaxin1a</option>
+          <option value="Syntaxin3" >Syntaxin3</option>
+          <option value="Syntaxin5" >Syntaxin5</option>
+          <option value="TAK1" >TAK1</option>
+          <option value="TAP1" >TAP1</option>
+          <option value="TAP2" >TAP2</option>
+          <option value="Tapasin" >Tapasin</option>
+          <option value="TARBP2" >TARBP2</option>
+          <option value="TAZ/WWTR1" >TAZ/WWTR1</option>
+          <option value="TBL2" >TBL2</option>
+          <option value="Tenascin-R" >Tenascin-R</option>
+          <option value="TFRC" >TFRC</option>
+          <option value="TGM2" >TGM2</option>
+          <option value="TGS1" >TGS1</option>
+          <option value="Thrombospondin-3" >Thrombospondin-3</option>
+          <option value="TMEM115" >TMEM115</option>
+          <option value="TMEM120a" >TMEM120a</option>
+          <option value="TMEM163" >TMEM163</option>
+          <option value="TMEM16A/ANO1" >TMEM16A/ANO1</option>
+          <option value="TMEM209" >TMEM209</option>
+          <option value="TMEM48/NDC1" >TMEM48/NDC1</option>
+          <option value="TMEM59" >TMEM59</option>
+          <option value="TOR1AIP1/LAB1B" >TOR1AIP1/LAB1B</option>
+          <option value="TPC1" >TPC1</option>
+          <option value="TPC2" >TPC2</option>
+          <option value="TRF1" >TRF1</option>
+          <option value="TRF2" >TRF2</option>
+          <option value="TRIM59" >TRIM59</option>
+          <option value="TrkA" >TrkA</option>
+          <option value="TrkB" >TrkB</option>
+          <option value="Tropomyosin 1" >Tropomyosin 1</option>
+          <option value="Troponin I 1" >Troponin I 1</option>
+          <option value="Troponin I 2" >Troponin I 2</option>
+          <option value="Troponin I 3" >Troponin I 3</option>
+          <option value="TRPA1" >TRPA1</option>
+          <option value="TRPC1" >TRPC1</option>
+          <option value="TRPC2" >TRPC2</option>
+          <option value="TRPC3" >TRPC3</option>
+          <option value="TRPC4" >TRPC4</option>
+          <option value="TRPC5" >TRPC5</option>
+          <option value="TRPC6" >TRPC6</option>
+          <option value="TRPC7" >TRPC7</option>
+          <option value="TRPM1" >TRPM1</option>
+          <option value="TRPM2" >TRPM2</option>
+          <option value="TRPM3" >TRPM3</option>
+          <option value="TRPM4" >TRPM4</option>
+          <option value="TRPM5" >TRPM5</option>
+          <option value="TRPM6" >TRPM6</option>
+          <option value="TRPM7" >TRPM7</option>
+          <option value="TRPM8" >TRPM8</option>
+          <option value="TRPML1" >TRPML1</option>
+          <option value="TRPML2" >TRPML2</option>
+          <option value="TRPML3" >TRPML3</option>
+          <option value="TRPP1" >TRPP1</option>
+          <option value="TRPP2" >TRPP2</option>
+          <option value="TRPP3" >TRPP3</option>
+          <option value="TRPV1" >TRPV1</option>
+          <option value="TRPV2" >TRPV2</option>
+          <option value="TRPV3" >TRPV3</option>
+          <option value="TRPV4" >TRPV4</option>
+          <option value="TRPV5" >TRPV5</option>
+          <option value="TRPV6" >TRPV6</option>
+          <option value="TTC35" >TTC35</option>
+          <option value="TUBGCP2" >TUBGCP2</option>
+          <option value="TUBGCP3" >TUBGCP3</option>
+          <option value="Tubulin" >Tubulin</option>
+          <option value="TYW1" >TYW1</option>
+          <option value="UBC" >UBC</option>
+          <option value="UBP5" >UBP5</option>
+          <option value="UCH-L1" >UCH-L1</option>
+          <option value="UHRF1" >UHRF1</option>
+          <option value="Unnamed protein (BAE)" >Unnamed protein (BAE)</option>
+          <option value="USE1" >USE1</option>
+          <option value="VAMP" >VAMP</option>
+          <option value="VAMP2" >VAMP2</option>
+          <option value="VAMPA" >VAMPA</option>
+          <option value="VAMPB" >VAMPB</option>
+          <option value="VASP" >VASP</option>
+          <option value="VAT2" >VAT2</option>
+          <option value="VDAC1" >VDAC1</option>
+          <option value="VDAC3" >VDAC3</option>
+          <option value="VE-cadherin" >VE-cadherin</option>
+          <option value="Viperin" >Viperin</option>
+          <option value="VRK2" >VRK2</option>
+          <option value="VTI1B" >VTI1B</option>
+          <option value="WNK4" >WNK4</option>
+          <option value="YES" >YES</option>
+          <option value="YIF1B" >YIF1B</option>
+          <option value="ZBTB17" >ZBTB17</option>
+          <option value="ZO-1" >ZO-1</option>
+      </select>
+      <br>
+      <br>To prevent spam comments, we use 
+      <a target="_blank" href="http://www.google.com/recaptcha">reCAPTCHA</a>. 
+      Please type correct words into the following box.
+      <script src="//www.google.com/recaptcha/api.js" async defer></script>
+<div class="g-recaptcha" data-sitekey="6LcHKtMSAAAAAOBl0LRy-FK-EXJuhZr-9pHXiac1" ></div>
+<noscript><div style="width: 302px; height: 352px;">  <div style="width: 302px; height: 352px; position: relative;">    <div style="width: 302px; height: 352px; position: absolute;">      <iframe src="//www.google.com/recaptcha/api/fallback?k=6LcHKtMSAAAAAOBl0LRy-FK-EXJuhZr-9pHXiac1"                frameborder="0" scrolling="no"                style="width: 302px; height:352px; border-style: none;">        </iframe>      </div>      <div style="width: 250px; height: 80px; position: absolute; border-style: none;              bottom: 21px; left: 25px; margin: 0px; padding: 0px; right: 25px;">        <textarea id="g-recaptcha-response" name="g-recaptcha-response"                   class="g-recaptcha-response"                   style="width: 250px; height: 80px; border: 1px solid #c1c1c1;                   margin: 0px; padding: 0px; resize: none;" value="">         </textarea>      </div>    </div>  </div></noscript>
+
+    </fieldset>
+  </form>
+</div>
+       
+<script>
+  $(function() {
+    $(".anything_else").delay(3000).slideUp();
+    $("#print_button").button({icons:{primary:"ui-icon-print"}});
+    $("#comment_button").button({icons:{primary:"ui-icon-comment"}}).parent().buttonset();
+    $("#read_comment_button").button({icons:{primary:"ui-icon-comment"}}).click(function(){
+      $("#dialog-read-comment").dialog("open");
+    });
+    $("#comment_button").click(function() {$("#dialog-comment").dialog("open");});
+    $("#dialog-comment").dialog({
+			autoOpen: false,
+			height: 590,
+			width: 600,
+			modal: true,
+			buttons: {
+                          "Save": function() {
+                                  if ($("#comment_body").val() == "" || $("#comment_title").val() == "") {
+                                    alert("Please fill in title and comment.");
+                                    return false;
+                                  }
+
+                                  $("#dialog-comment form").submit();
+				},
+				Cancel: function() {
+					$( this ).dialog( "close" );
+                                },
+                                "View all comments": function() {
+                                  location = 'http://www.trpchannel.org/comments ';
+                                }
+
+			},
+			close: function() {
+				allFields.val( "" ).removeClass( "ui-state-error" );
+			}
+		});
+                $("#dialog-read-comment").dialog({
+                  modal:true,
+                  autoOpen:false,
+                  width:800,
+                  height:600
+		});
+    
+  });
+</script>
+
+  </body>
+</html>

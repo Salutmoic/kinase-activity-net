@@ -132,12 +132,12 @@ if (!is.null(score_co)){
     ## }
     ## network <- network.filt
 
-    co.p <- unlist(apply(network[,c("bart.pred.mean", "bart.pred.sd")], 1,
-                         function(row){
-                             pred.mean <- row[1]
-                             pred.sd <- row[2]
-                             return(pnorm(score_co, mean=pred.mean, sd=pred.sd))
-                         }))
+    ## co.p <- unlist(apply(network[,c("bart.pred.mean", "bart.pred.sd")], 1,
+    ##                      function(row){
+    ##                          pred.mean <- row[1]
+    ##                          pred.sd <- row[2]
+    ##                          return(pnorm(score_co, mean=pred.mean, sd=pred.sd))
+    ##                      }))
     p.cutoff <- 0.05
     network$missing <- known & (is.na(network$bart.pred.mean) |
                                 network$bart.pred.mean < score_co)

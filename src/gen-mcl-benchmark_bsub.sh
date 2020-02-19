@@ -1,7 +1,7 @@
 #!/bin/bash
 
 COR_DIR=out
-COR_TBL=kinase-associations-pruned
+COR_TBL=kinase-associations-clean
 
 LOG_DIR=log/${COR_TBL}
 COS=$(seq 0.0 0.02 0.98)

@@ -5,12 +5,6 @@ suppressMessages(library(dplyr))
 
 make_graph = function(netw,scaled){
 
-	# Remove B-A if A-B is in the network
-	net = t(apply(netw[,1:2],1,sort))
-	inds = which(duplicated(net))
-	if(length(inds)>0){
-		netw = netw[-inds,]
-	}
 	#make graph from the edgelist
 	graph  = graph_from_edgelist(as.matrix(netw[,1:2]), directed = F)
 	weights = as.numeric(netw[,3])
@@ -18,8 +12,8 @@ make_graph = function(netw,scaled){
 		weights = scale(weights)
 	}	
 	return(list(graph,weights))
+	
 }
-
 
 
 cluster = function(graph, method,w){
@@ -30,25 +24,26 @@ cluster = function(graph, method,w){
 	}
 	if(method == "Louvain"){
 		community = cluster_louvain(graph,weights = w)	
+#		print(modularity(community))
 	}
 	
 	cnames =  names(table(membership(community)))
 	clust.mat = c()
 
 	for(i in 1:length(cnames)){
-		print(cnames)
+#		print(cnames)
 		genes = names(which(membership(community)==cnames[i]))
 		gene.mat = cbind(genes,rep(i,length(genes)))
 		clust.mat = rbind(clust.mat,gene.mat)
 	}
 	
-	return(clust.mat) 
+	return(list(clust.mat,modularity(community))) 
 }
 
 
 scale = function(values){
-	print(head(values))
-	scale = 1.0/(1.0-min(values))
+
+	scale = 1/(max(values)-min(values))	
 	values = values-min(values)
 
 	values = scale*values
@@ -80,12 +75,14 @@ if(separated == T){
 	network = network[which(network[,1] %in% cl[,1] & network[,2] %in% cl[,1]),]
 }
 
+
 graphv = make_graph(network,scaled)
 w = graphv[[2]]
 print(summary(w))
 graph = graphv[[1]]
 
 clusts = cluster(graph, method,w)
+clusts = clusts[[1]]
 
 prefix = "" 
 if(length(grep("pruned",netfile))>0){
@@ -101,22 +98,17 @@ if(scaled == T){
 }
 
 if(separated ==F){
-write.table(clusts,paste("clusters/",prefix,method,"-",threshold,".tsv",sep =""),sep = "\t",quote = F,row.names = F)
+ write.table(clusts,paste("clusters/",prefix,method,"-",threshold,"-round5.tsv",sep =""),sep = "\t",quote = F,row.names = F)
 
-clusters = names(table(clusts[,2]))
+ clusters = names(table(clusts[,2]))
 
 for(cluster in clusters){
-	write.table(clusts[which(clusts[,2] %in% cluster),],paste("Separated_clusters/",prefix,method,"-",threshold,"-",cluster,".tsv",sep =""),sep = "\t",quote = F,row.names = F)	
+	write.table(clusts[which(clusts[,2] %in% cluster),],paste("Separated_clusters/",prefix,method,"-",threshold,"-",cluster,"-round5.tsv",sep =""),sep = "\t",quote = F,row.names = F)	
 }
 
 }else{
-write.table(clusts,paste("Sperated_scluster_res/",prefix,method,"-",threshold,"-",length(list.files("Sperated_scluster_res"))+1,".tsv",sep =""),sep = "\t",quote = F,row.names = F)
+write.table(clusts,paste("clusters/",prefix,method,"-",threshold,"-",cl[1,2],"-round5.tsv",sep =""),sep = "\t",quote = F,row.names = F)
 }
-
-
-
-
-
 
 
 

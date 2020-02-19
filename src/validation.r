@@ -182,6 +182,7 @@ rocs$feature <- factor(rocs$feature,
                        labels=feature_names[levels(rocs$feature)])
 roc_plot <- rocr2d.ggplot2(rocs, "false postive rate", "true positive rate", n, c(0, 1))
 saveRDS(roc_plot, file=paste0(rds_basename, "-roc.rds"))
+saveRDS(rocs, file=paste0(rds_basename, "-roc-data.rds"))
 print(roc_plot)
 
 aucs <- build.perf1d.df(preds, "auc",
@@ -192,6 +193,7 @@ aucs$feature <- factor(aucs$feature,
                        labels=feature_names[levels(aucs$feature)])
 auc_plot <- rocr.sum.ggplot2(aucs, "AUC", n, c(0.5, 0))
 saveRDS(auc_plot, file=paste0(rds_basename, "-auc.rds"))
+saveRDS(aucs, file=paste0(rds_basename, "-auc-data.rds"))
 print(auc_plot)
 
 ## Precision-Recall curve
@@ -205,6 +207,7 @@ prs$feature <- factor(prs$feature,
 
 prec_plot <- rocr2d.ggplot2(prs, "recall", "precision", n, c(1/9, 0))
 saveRDS(prec_plot, file=paste0(rds_basename, "-prec.rds"))
+saveRDS(prs, file=paste0(rds_basename, "-prec-data.rds"))
 print(prec_plot)
 
 ## All-vs-all precision-recall
@@ -251,6 +254,7 @@ prs_full$x[which(is.infinite(prs_full$x))] <- NA
 
 prec_full_plot <- rocr2d.ggplot2(prs_full, "recall", "precision", 1, NULL)
 saveRDS(prec_full_plot, file=paste0(rds_basename, "-prec-full.rds"))
+saveRDS(prs_full, file=paste0(rds_basename, "-prec-full-data.rds"))
 print(prec_full_plot)
 
 prs_full$y.ci <- rep(NA, nrow(prs_full))

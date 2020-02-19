@@ -1,6 +1,7 @@
 suppressMessages(library("ReactomePA"))
 suppressMessages(library("clusterProfiler"))
 suppressMessages(library("UpSetR"))
+suppressMessages(library("UpSetR"))
 
 convert = function(gene.list,id.map){
 	entrez.list = id.map[which(id.map[,1] %in% gene.list),2]
@@ -18,15 +19,20 @@ find.paths= function(tbl,path.tbl,file,universe,id.map){
 		entrez.genes = convert(genes,id.map)
 		x = enrichPathway(as.character(entrez.genes),pvalueCutoff=0.05,pAdjustMethod = "BH", readable=T,universe = as.character(universe))
 		paths = x$Description
-		ind = which(as.numeric(x$p.adjust) == min(as.numeric(x$p.adjust)))
-		if(length(ind) > 0){
-			no.genes = strsplit(x$GeneRatio[ind[1]],"/")[[1]][1]
-		}else{
+		react = x$ID
+
+		pvals = x$p.adjust
+		
+		if(length(paths) > 0){
+			no.genes = sapply(x$GeneRatio,function(x) strsplit(x,"/")[[1]][1])
+			geneids = x$geneID
+ 		}else{
 			no.genes = NULL
+			geneids = NULL
 		}
 		
-		tbl.sect =rbind(tbl.sect,cbind(rep(cluster,length(paths)),paths,rep(length(clusters),length(paths)),rep(no.genes,length(paths)),rep(length(genes),length(paths))))
-		
+		tbl.sect =rbind(tbl.sect,cbind(rep(cluster,length(paths)),paths,react,pvals,rep(length(clusters),length(paths)),no.genes,rep(length(genes),length(paths)),geneids))
+
 	}
 	
 	if(!is.null(tbl.sect)){
@@ -41,7 +47,6 @@ method = argv[1]
 
 if(method == "louvain"){
 	dirs = "clusters" 
-
 	print(dirs)
 }
 
@@ -50,6 +55,10 @@ if(method == "greedy"){
 	dirs = list.dirs("clusters/greedy") 
 
 	print(dirs)
+}
+
+if(method == "Separated"){
+	dirs = "Separated_clusters"
 }
 
 if(method == "mcl"){
@@ -75,17 +84,21 @@ for(dir in dirs){
 
 	files = list.files(dir)
 	files = files[grep("\\.tsv",files)]
-	for(file in files){
+	for(file in files){	
+		path.tbl = c()
+
 		print(file)
 		tbl = read.delim(paste(dir,file,sep ="/"))
 		path.tbl = find.paths(tbl,path.tbl,file,universe,id.map)
-		print(dim(path.tbl))		
+		print(dim(path.tbl))
+
 	}
+
 }
 
-colnames(path.tbl) = c("file","cluster","pathways","no_clusters","no_genes_in_top_enriched","no_genes_in_cluster")
+colnames(path.tbl) = c("file","cluster","pathways","reactome","p-values","no_clusters","no_genes_in_top_enriched","no_genes_in_cluster","geneids")
 print(head(path.tbl))
 
-write.table(path.tbl,paste("enrichments/",method,"-pathway-enrichments.tsv",sep = ""),quote = F,sep = "\t",row.names = F)
-
+write.table(path.tbl,paste("enrichments/reactome-",method,"-pathway-enrichments-round9.tsv",sep = ""),quote = F,sep = "\t",row.names = F)
+write.table(path.tbl,paste("Random_test/reactome-",method,"-pathway-enrichments-round9.tsv",sep = ""),quote = F,sep = "\t",row.names = F)
 
